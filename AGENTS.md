@@ -1,0 +1,75 @@
+# Agent instructions
+
+This project is built in vertical slices using spec-driven development. Each slice is specified, built, reviewed by a human, and recorded, so that a future session with no memory can extend the project safely.
+
+## Read before changing anything
+
+Read in this order, and stop as soon as you have enough context:
+
+1. This file.
+2. `docs/system/`: what is true **now**. This is the source of truth for current behaviour.
+3. `HISTORY.md`: the timeline of slices.
+4. Only the `slices/NNN-*/record.md` files and `docs/adr/` entries relevant to the work.
+
+If a closed slice disagrees with `docs/system/`, `docs/system/` wins. Closed slices describe the past.
+
+## Workflow
+
+Each step is a skill that the human invokes. Details are in `docs/workflow.md`.
+
+| Step | Skill | Ends with |
+|---|---|---|
+| Requirements into backlog and slices | `/intake` | Gate 1: human approves the slicing |
+| Spec, design and tasks | `/slice-spec NNN` | Gate 2: human approves the spec |
+| Build | `/slice-build NNN` | All tasks done, tests pass |
+| Prepare the human review | `/slice-review NNN` | Gate 3: human gives a verdict |
+| Record the verdict and act on it | `/slice-verdict NNN approve\|changes\|reject [notes]` | Accepted, or fixes, or rejected |
+| Write history and finish | `/slice-close NNN` | Closed, PR opened |
+
+All skills accept `--project <path>` to work on a project other than the repo root, for example `--project examples/task-tracker`.
+
+## Workflow settings
+
+Skills read these lines from the project's `AGENTS.md`. A missing line means the default shown here. Fast mode changes which steps stop for the human, as described under "Fast lane" in `docs/workflow.md`.
+
+- Mode: standard
+- Auto-push: no
+
+## Hard rules
+
+- **Never give or assume a human verdict.** Record a verdict only from the human's own message. Never mark a gate as passed on their behalf.
+- **Closed slices are frozen.** Don't edit anything in a slice whose status is `closed`. Correct mistakes with a new slice.
+- **Requirement IDs are permanent.** Never reuse or renumber a `REQ-NNN`. A changed requirement gets a new ID that supersedes the old one.
+- **ADRs are append-only.** Supersede an ADR with a new one; only its status line may change.
+- **Stay in scope.** Build what the spec says. New ideas go to the backlog, not into the current slice.
+- **Test first where the output can be tested.** Tests cite the requirement IDs they cover.
+- **Never put secrets in the repo.** That includes `review.md` and `.mcp.json`. Refer to an environment variable or vault entry by name.
+- **Report honestly.** If a step wasn't run or a check failed, say so in the review or record.
+
+## Commits
+
+Use Conventional Commits, with a trailer linking the commit to its slice:
+
+```
+feat(tasks): add task creation
+
+Slice: 001
+```
+
+## Commands
+
+The app's stack hasn't been chosen yet. Add its test, run and lint commands here in the first slice that needs them.
+
+| Purpose | Command |
+|---|---|
+| Check docs and traceability | `python scripts/check_docs.py [project-path]` |
+
+## Where things go
+
+- `docs/product/`: vision, backlog, raw intake notes.
+- `docs/system/`: current capabilities, architecture, data model, glossary.
+- `docs/adr/`: architecture decisions.
+- `docs/tooling.md`: when to use a skill, subagent, hook, MCP server, and so on, and what's installed.
+- `slices/NNN-slug/`: everything about one slice.
+- `templates/`: starting point for each document.
+- `examples/task-tracker/`: a complete worked example. It isn't part of the app, so don't import from it or add app work to it.

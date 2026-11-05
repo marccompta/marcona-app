@@ -1,0 +1,23 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Check docs and traceability
+        run: python scripts/check_docs.py
+      # Remove the two steps below if you delete examples/task-tracker.
+      - name: Check demo docs and traceability
+        run: python scripts/check_docs.py examples/task-tracker
+      - name: Run demo tests
+        working-directory: examples/task-tracker
+        run: python -m unittest discover

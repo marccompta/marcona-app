@@ -1,0 +1,14 @@
+# Personal Claude Code overrides (see docs/tooling.md)
+.claude/settings.local.json
+
+# Secrets
+.env
+.env.*
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Local data
+*.db
