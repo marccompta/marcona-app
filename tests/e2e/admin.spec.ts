@@ -115,6 +115,7 @@ test.describe('adjusting marcones', () => {
 
     await expect(page.getByRole('button', { name: /^anna/ })).toContainText('15 marcones')
     expect(calls.ledger).toHaveLength(1)
+    expect(calls.adjustments).toHaveLength(1)
   })
 
   test('REQ-062: a retry after a lost response sends the same request ID', async ({ page }) => {

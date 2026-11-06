@@ -45,7 +45,11 @@ describe('what the screens read', () => {
 
     expect(concepts.indexOf('Tercera')).toBeLessThan(concepts.indexOf('Segona'))
     expect(concepts.indexOf('Segona')).toBeLessThan(concepts.indexOf('Primera'))
-    expect(movements[0]).toEqual({
+    const ids = movements.map((movement) => movement.id)
+    expect(ids).toEqual([...ids].sort((a, b) => b - a))
+
+    // Other test files add movements at the same time, so find this one by its user.
+    expect(movements.find((movement) => movement.user_id === anna.userId)).toEqual({
       id: expect.any(Number),
       user_id: anna.userId,
       delta: 20,
