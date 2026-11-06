@@ -1,6 +1,6 @@
 # 0006. Catalan interface, English project
 
-- **Status:** proposed
+- **Status:** accepted
 - **Date:** 2026-11-06
 - **Slice:** 001
 
