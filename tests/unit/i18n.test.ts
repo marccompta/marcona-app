@@ -1,8 +1,28 @@
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { errorMessage } from '../../src/i18n/errors'
 import { formatDate, formatMarcones, formatNumber } from '../../src/i18n/format'
 import { text } from '../../src/i18n/text'
+
+// Words written straight into JSX, or into an attribute people can read.
+const hardcoded = (source: string) => [
+  ...[...source.matchAll(/>\s*([^<>{}]*\p{L}{2,}[^<>{}]*?)\s*<\//gu)].map((match) => match[1]),
+  ...[...source.matchAll(/\b(?:aria-label|title|placeholder|alt)="([^"]+)"/g)].map((match) => match[1]),
+]
+
+describe('one text module', () => {
+  it('REQ-018: spots text written straight into a component', () => {
+    expect(hardcoded('<p>Hola</p>')).toEqual(['Hola'])
+    expect(hardcoded('<nav aria-label="Menú" />')).toEqual(['Menú'])
+    expect(hardcoded('<p>{text.login.title}</p>')).toEqual([])
+  })
+
+  it('REQ-018: keeps all interface text out of the components', () => {
+    const components = readdirSync('src', { recursive: true, encoding: 'utf8' }).filter((file) => file.endsWith('.tsx'))
+    expect(components.length).toBeGreaterThan(0)
+    for (const file of components) expect(hardcoded(readFileSync(`src/${file}`, 'utf8')), file).toEqual([])
+  })
+})
 
 describe('formatting', () => {
   it('REQ-016: formats numbers for ca-ES', () => {

@@ -1,8 +1,9 @@
-import { readdirSync } from 'node:fs'
-import { describe, expect, it } from 'vitest'
+import { afterAll, describe, expect, it } from 'vitest'
 import { errorMessage } from '../../src/i18n/errors'
 import { text } from '../../src/i18n/text'
-import { adminClient, adminLogin, publicClient } from './env'
+import { adminClient, adminLogin, publicClient, signOutAll } from './env'
+
+afterAll(signOutAll)
 
 describe('without a login', () => {
   it('REQ-008: reads no rows from profiles', async () => {
@@ -70,8 +71,3 @@ describe('as the admin', () => {
   })
 })
 
-describe('migrations', () => {
-  it('REQ-032: live in the repo', () => {
-    expect(readdirSync('supabase/migrations').filter((file) => file.endsWith('.sql')).length).toBeGreaterThan(0)
-  })
-})

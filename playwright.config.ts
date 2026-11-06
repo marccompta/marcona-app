@@ -2,7 +2,8 @@ import { defineConfig } from '@playwright/test'
 
 const deployed = process.env.E2E_BASE_URL
 
-// WebKit can't launch on this machine, so phones are emulated in Chromium.
+// Both engines run at the same phone size. WebKit is Safari's engine, but it
+// isn't an iPhone, so the review still checks a real one.
 export default defineConfig({
   testDir: 'tests/e2e',
   fullyParallel: true,
@@ -16,6 +17,10 @@ export default defineConfig({
     locale: 'ca-ES',
     timezoneId: 'Europe/Madrid',
   },
+  projects: [
+    { name: 'chromium', use: { browserName: 'chromium' } },
+    { name: 'webkit', use: { browserName: 'webkit' } },
+  ],
   webServer: deployed
     ? undefined
     : {

@@ -14,8 +14,8 @@ test('REQ-001: every asset loads under the base path', async ({ page }) => {
   })
 
   await page.goto('')
-  await page.evaluate(() => document.fonts.ready)
   await expect(page.locator('[data-screen]')).toBeVisible()
+  await page.evaluate(() => document.fonts.ready)
 
   expect(failed).toEqual([])
   expect(outside).toEqual([])
@@ -47,8 +47,9 @@ test('REQ-022: every font comes from the site itself', async ({ page }) => {
   })
 
   await page.goto('')
+  await expect(page.locator('[data-screen]')).toBeVisible()
   await page.evaluate(() => document.fonts.ready)
 
-  expect(fonts.length).toBeGreaterThan(0)
+  await expect.poll(() => fonts.length).toBeGreaterThan(0)
   for (const font of fonts) expect(new URL(font).origin).toBe(base.origin)
 })

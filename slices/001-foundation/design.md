@@ -31,6 +31,7 @@ A new `profiles` table holds `user_id`, `username`, `role` and `created_at`. Row
 - [ADR 0006](../../docs/adr/0006-catalan-interface-english-project.md): Catalan interface, English project.
 - The Supabase URL and publishable key go in a committed config file, because `.gitignore` excludes `.env.*`.
 - Hosted tests read the admin's password from `.env.test.local`, which is already gitignored.
+- The visual direction is B, "Saló privat", chosen by the human on 2026-11-06 from the three in `evidence/directions/`.
 
 ## Tooling needed
 

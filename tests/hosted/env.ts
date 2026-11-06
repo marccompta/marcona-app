@@ -28,10 +28,18 @@ export const publicClient = () =>
     auth: { persistSession: false, autoRefreshToken: false },
   })
 
+const openClients: ReturnType<typeof publicClient>[] = []
+
 export async function adminClient() {
   const client = publicClient()
+  openClients.push(client)
   const { email, password } = adminLogin()
   const { error } = await client.auth.signInWithPassword({ email, password })
   if (error) throw error
   return client
+}
+
+// Ends the sessions these tests opened.
+export async function signOutAll() {
+  await Promise.all(openClients.splice(0).map((client) => client.auth.signOut({ scope: 'local' })))
 }
