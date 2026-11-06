@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { byCode, errorMessage } from '../../src/i18n/errors'
-import { formatCount, formatSigned } from '../../src/i18n/format'
+import { formatCount, formatMoment, formatSigned } from '../../src/i18n/format'
 import { text } from '../../src/i18n/text'
 import type { Movement } from '../../src/lib/data'
 import { movementLabel } from '../../src/screens/Movements'
@@ -50,6 +50,11 @@ describe('amounts', () => {
   it('REQ-069: signs every amount', () => {
     expect(formatSigned(5)).toBe('+5')
     expect(formatSigned(-1234)).toBe('-1.234')
+  })
+
+  it('REQ-016, REQ-069: gives a short time in Madrid, which fits on one line', () => {
+    expect(formatMoment(new Date('2026-11-06T19:00:00Z'))).toBe('6 de nov., 20:00')
+    expect(formatMoment(new Date('2026-12-31T23:30:00Z'))).toBe('1 de gen., 00:30')
   })
 
   it('REQ-017: counts people with the right plural', () => {

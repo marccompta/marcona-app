@@ -29,7 +29,7 @@ test('REQ-069: each row shows who, the amount, the concept, the balance after an
   await expect(newest.locator('.delta')).toHaveText('-4')
   await expect(newest.locator('.movement-label')).toHaveText('Correcció')
   await expect(newest.locator('.movement-after')).toHaveText('Saldo: 6 marcones')
-  await expect(newest.locator('time')).toHaveText('6 de novembre del 2026, a les 20:00')
+  await expect(newest.locator('time')).toHaveText('6 de nov., 20:00')
 })
 
 test('REQ-068: filtering by a person shows only their movements', async ({ page }) => {

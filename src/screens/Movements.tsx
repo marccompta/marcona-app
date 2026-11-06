@@ -1,4 +1,4 @@
-import { formatDate, formatMarcones, formatSigned } from '../i18n/format'
+import { formatMarcones, formatMoment, formatSigned } from '../i18n/format'
 import { text } from '../i18n/text'
 import type { Loaded, Movement } from '../lib/data'
 
@@ -17,7 +17,7 @@ export function Movements({ movements, showWho = true }: { movements: Movement[]
             {showWho && <strong className="movement-who">{movement.who.username}</strong>}
             <span className="movement-label">{movementLabel(movement)}</span>
             <time className="movement-time" dateTime={movement.created_at}>
-              {formatDate(new Date(movement.created_at))}
+              {formatMoment(new Date(movement.created_at))}
             </time>
           </div>
           <div className="movement-money">
