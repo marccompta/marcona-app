@@ -1,6 +1,6 @@
 import { afterAll, describe, expect, it } from 'vitest'
 import { callAdminUsers } from '../../src/lib/adminUsers'
-import { adminClient, createTestUser, logInAs, publicClient, signOutAll, testPassword, testUsername } from './env'
+import { adminClient, createTestAccount, createTestUser, logInAs, publicClient, signOutAll, testPassword, testUsername } from './env'
 
 afterAll(signOutAll)
 
@@ -21,7 +21,7 @@ describe('creating users', () => {
   })
 
   it('REQ-037: rejects a username that already exists', async () => {
-    const user = await createTestUser('doble')
+    const user = await createTestAccount('doble')
     await expect(create(user.username)).rejects.toEqual({ code: 'username_taken' })
   })
 

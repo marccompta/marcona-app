@@ -31,17 +31,24 @@ export const publicClient = () =>
 
 const openClients: ReturnType<typeof publicClient>[] = []
 
-export async function adminClient() {
-  const client = publicClient()
-  openClients.push(client)
-  const { email, password } = adminLogin()
-  const { error } = await client.auth.signInWithPassword({ email, password })
-  if (error) throw error
-  return client
+// One admin login per test file, to stay under the Auth rate limit.
+let admin: Promise<ReturnType<typeof publicClient>> | null = null
+
+export function adminClient() {
+  admin ??= (async () => {
+    const client = publicClient()
+    openClients.push(client)
+    const { email, password } = adminLogin()
+    const { error } = await client.auth.signInWithPassword({ email, password })
+    if (error) throw error
+    return client
+  })()
+  return admin
 }
 
 // Ends the sessions these tests opened.
 export async function signOutAll() {
+  admin = null
   await Promise.all(openClients.splice(0).map((client) => client.auth.signOut({ scope: 'local' })))
 }
 
@@ -51,14 +58,8 @@ const runId = Date.now().toString(36).slice(-6)
 export const testPassword = 'proves-de-la-marcona-1'
 export const testUsername = (name: string) => `t${runId}-${name}`
 
-export type TestUser = {
-  userId: string
-  username: string
-  password: string
-  client: ReturnType<typeof publicClient>
-}
-
-const testUsers: TestUser[] = []
+export type TestAccount = { userId: string; username: string; password: string }
+export type TestUser = TestAccount & { client: ReturnType<typeof publicClient> }
 
 export async function logInAs(username: string, password: string) {
   const client = publicClient()
@@ -68,11 +69,20 @@ export async function logInAs(username: string, password: string) {
   return client
 }
 
-export async function createTestUser(name: string): Promise<TestUser> {
-  const admin = await adminClient()
+// An account nobody logs in to. Logging in is what the rate limit counts, and
+// test accounts can all read each other, so one logged-in account can check it.
+export async function createTestAccount(name: string): Promise<TestAccount> {
   const username = testUsername(name)
-  const { userId } = await callAdminUsers(admin, { action: 'create', username, password: testPassword, isTest: true })
-  const user = { userId, username, password: testPassword, client: await logInAs(username, testPassword) }
-  testUsers.push(user)
-  return user
+  const { userId } = await callAdminUsers(await adminClient(), {
+    action: 'create',
+    username,
+    password: testPassword,
+    isTest: true,
+  })
+  return { userId, username, password: testPassword }
+}
+
+export async function createTestUser(name: string): Promise<TestUser> {
+  const account = await createTestAccount(name)
+  return { ...account, client: await logInAs(account.username, account.password) }
 }
