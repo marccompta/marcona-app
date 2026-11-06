@@ -66,6 +66,8 @@ Type these in the Claude Code prompt:
 
 Claude adds `.mcp.json` first, scoped to this project.
 
+The Playwright server needs Chrome installed on the machine.
+
 1. Restart Claude Code, then continue this session with `claude --continue`.
 2. Approve the project's MCP servers when asked.
 3. Run `/mcp`, choose `supabase`, and sign in with your browser.
