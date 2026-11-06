@@ -2,15 +2,15 @@
 
 ## 1. What to look at
 
-MarcOna is live at its public address, in the Saló privat direction you chose. You can log in with your admin account, stay logged in, log out, and see the styled, empty ranking in Catalan. The bottom tabs work, but the screens behind them are placeholders until later slices.
+MarcOna is live at its public address, in "Saló privat", the visual direction you chose (direction B). You can log in with your admin account, stay logged in, log out, and see the styled, empty ranking in Catalan. The bottom tabs work, but the screens behind them are placeholders until later slices.
 
 This should take 5 to 10 minutes on your phone.
 
 ## 2. Before you start
 
-- **You need:** your phone, and the admin username and password you created in `docs/setup.md`, step 7. The password stays with you, and it isn't in this file.
+- **You need:** your phone, a computer, and the admin username and password you created in `docs/setup.md`, step 7. The password stays with you, and it isn't in this file.
 - **Setup:** None.
-- **Reset afterwards:** Log out at the end, as in step 8.
+- **Reset afterwards:** Log out on each device, as in steps 8 and 9.
 
 ## 3. How to review
 
@@ -22,12 +22,12 @@ This should take 5 to 10 minutes on your phone.
 4. Tap each of the five tabs. **Esdeveniments**, **Ruleta**, **Auditoria** and **Administració** should each show its title and "Aquesta pantalla arribarà aviat.", as in [placeholder.png](evidence/screens/placeholder.png).
 5. On any tab, reload the page. You should stay logged in, on that same screen.
 6. Look at the top and bottom edges. Nothing should sit under the notch or the home bar, and nothing should scroll sideways.
-7. Judge the look against your "Casino Tokens" artifact. You should recognise the colours and the logo, and it should feel premium and be comfortable to read.
+7. Open your [Casino Tokens artifact](https://claude.ai/artifact/F4JoKy6K6LLs7RUFoUwBX7) and compare. You should recognise the colours and the logo, and the site should feel premium and be comfortable to read. Every word you've seen should be natural Catalan.
 8. Tap **Surt**, at the top right. You should return to the login screen, and a reload should leave you there.
 
 **On a computer:**
 
-9. Open the same address in a desktop browser. You should see a centred column rather than a stretched page, as in [desktop.png](evidence/screens/desktop.png).
+9. Open the same address in a desktop browser and log in. You should see a centred column rather than a stretched page, as in [desktop.png](evidence/screens/desktop.png). Then click **Surt**.
 
 **The directions you chose from:**
 
@@ -35,7 +35,7 @@ This should take 5 to 10 minutes on your phone.
 
 **Docs, if you want to spot-check them:**
 
-11. Open `docs/setup.md` and `docs/tooling.md`. Every step you did by hand should be in the first, and each tool should have a clear job in the second.
+11. Open `docs/setup.md`: every step you did by hand should be there. Open `docs/tooling.md`: each tool should have a clear job, and its source should be named. Open `.mcp.json`: the Supabase URL should end in `project_ref=ndkgmenntqhjojalqbdm`.
 
 ## 4. Checklist
 
@@ -49,45 +49,49 @@ This should take 5 to 10 minutes on your phone.
 | 4 | REQ-006, REQ-007 | Steps 5, 8 | You stay logged in, then log out |
 | 5 | REQ-008, REQ-009 | Automatic | No rows without a login, and the RLS report is empty |
 | 6 | REQ-010 | Automatic | Public sign-up is rejected |
-| 7 | REQ-011, REQ-012 | Steps 3, 4 | A styled empty state, and a tab bar that stays put |
+| 7 | REQ-011, REQ-012 | Steps 3, 4, plus automatic | A styled empty state. The screens are too short to scroll, so a test proves the tab bar stays put |
 | 8 | REQ-013 | Step 4, plus automatic | You see Administració. A player doesn't, tested with a fake player only |
-| 9 | REQ-014, REQ-015, REQ-018 | Steps 1 to 8 | Every word is natural Catalan |
+| 9 | REQ-014, REQ-015, REQ-018 | Step 7, plus automatic | Every word is natural Catalan. Tests check `lang="ca"` and that all wording is in one module |
 | 10 | REQ-016, REQ-017 | Automatic | "1.234 marcones", "1 marcona" and a ca-ES date in Madrid time |
 | 11 | REQ-020, REQ-021, REQ-026 | Step 7 | It's recognisably "Casino Tokens", premium and readable |
 | 12 | REQ-022 | Automatic | Every font comes from the site itself |
 | 13 | REQ-023, REQ-024 | Step 6, plus automatic | Nothing scrolls sideways, and targets are at least 44px |
 | 14 | REQ-025, REQ-027 | Steps 6, 9 | Clear of the notch and home bar, and usable on a desktop |
 | 15 | REQ-028 | Step 10 | Three directions were shown, and the site matches B |
-| 16 | REQ-029, REQ-030, REQ-034 | Step 11 | The tools and setup are written down, and Supabase MCP is scoped to this project |
+| 16 | REQ-029, REQ-030, REQ-034 | Step 11, plus automatic | Tools and setup are written down, and Supabase MCP is scoped to this project with no allow rule. Manual approval also relies on you never choosing "always allow" |
 | 17 | REQ-031 | Automatic | The secret scan finds nothing |
-| 18 | REQ-032 | Automatic | `supabase/migrations/` matches the two migrations applied to the project |
+| 18 | REQ-032 | Automatic | [supabase-checks.md](evidence/supabase-checks.md) shows the repo's two migrations are the two applied |
 | 19 | REQ-033 | Step 1 | The public site shows this slice |
 
 ## 5. Already checked automatically
 
+You don't need to rerun these. To do so, use Git Bash at the repo root, after `npm ci` and `npx playwright install chromium webkit`.
+
 | Check | Command | Result |
 |---|---|---|
-| Unit tests, including the secret scan | `npm test` | 38 passed |
-| Hosted project tests | `npm run test:hosted` | 10 passed |
-| Browser tests at 360px, on a local build | `npm run test:e2e` | 25 passed |
-| Browser tests on the deployed site | `E2E_BASE_URL=https://marccompta.github.io/marcona-app/ npm run test:e2e` | 25 passed |
+| Unit tests, including the secret scan | `npm test` | 46 passed |
+| Hosted project tests | `npm run test:hosted` | 9 passed |
+| Browser tests at 360px, on a local build | `npm run test:e2e` | 50 passed |
+| Browser tests on the deployed site | `E2E_BASE_URL=https://marccompta.github.io/marcona-app/ npm run test:e2e` | 50 passed |
 | Build, including the type check | `npm run build` | Passed, locally and in the deploy workflow |
-| Docs | `python scripts/check_docs.py` | Passed |
-| Supabase security advisor | `get_advisors` through the MCP server | 2 warnings, both about `rls_auto_enable()`. See section 6 |
+| Docs | `python scripts/check_docs.py` | Passed, locally and in CI |
+| CI and deploy on GitHub | Run by pushing this branch | Both passed |
+| Migrations and security advisor | Through the Supabase MCP server | Migrations match. 3 warnings, no errors, see section 6 |
 
-Two of the 25 browser tests use the real project and your real admin login. The other 23 use a fake Supabase, so they can test cases the real project can't produce on demand.
+The browser tests are 25 tests, each run in Chromium and in WebKit, Safari's engine. Of the 25, 18 use a fake Supabase, so they can test cases the real project can't produce on demand. Another 5 need no backend, and 2 use the real project. The hosted tests and those 2 browser tests need `.env.test.local`, so the browser count drops by 4 without it.
 
-Instructions run as written: pending. Audit by `slice-auditor`: pending.
+Instructions run as written: yes for steps 1 to 5 and 8 to 11, by Claude and `slice-auditor`, using scripted browsers. Steps 6 and 7 need your eyes on a real phone. Audit by `slice-auditor`: the first pass failed this document, with no failed tests. It's fixed, and the outcome is in the review log.
 
 ## 6. Known limitations
 
-- **Real iPhone not tested:** WebKit won't launch on this machine, so browser tests use Chromium with phone emulation. Steps 1 to 8 are the first real Safari check.
+- **Real iPhone not tested:** the tests run Safari's engine, but with phone emulation on Windows. The real notch, home bar and Safari itself are only checked by you, in steps 1 to 8.
 - **Real player not tested:** no one can create players until slice 002, so hiding Administració from a player is tested only with a fake one.
 - **Empty ranking:** it shows the empty state whoever exists, because the player list arrives in slice 002.
 - **Placeholder screens:** Esdeveniments, Ruleta, Auditoria and Administració hold no features yet.
-- **Advisor warnings:** both are about `public.rls_auto_enable()`, which Supabase added itself. It's an event trigger that turns on RLS for new tables, and it can't be called through the API, so it stays as it is.
+- **Leaked password protection is off:** this advisor warning can't be cleared, because the feature needs the paid Pro plan. Choose strong passwords for accounts.
+- **Other advisor warnings:** two are about `rls_auto_enable()`, a Supabase trigger that turns on RLS for new tables. It can't be called through the API, so it stays. The details are in [supabase-checks.md](evidence/supabase-checks.md). It's the one thing on the project that isn't in `supabase/migrations/`.
 - **Settings not read back:** "Require current password when updating" and the sign-in rate limit can't be checked from outside. They rest on your confirmation during setup.
-- **Hosted tests:** they run only from this machine, because they need `.env.test.local`. CI runs the docs check, unit tests and build.
+- **Tests that CI doesn't run:** hosted tests need `.env.test.local`, so they run only from this machine. Browser tests aren't in CI either. CI runs the docs check, unit tests and build.
 
 ## 7. Your verdict
 
@@ -96,6 +100,8 @@ Type one of these in a Claude Code session started at the repo root:
 - `/slice-verdict 001 approve`
 - `/slice-verdict 001 changes <what to fix>`
 - `/slice-verdict 001 reject <why>`
+
+**Approving closes the slice straight away.** This project is in fast lane with auto-push on, so `approve` carries on to `/slice-close` with no further stop, and merges the slice into `main` and pushes it.
 
 ## Review log
 
