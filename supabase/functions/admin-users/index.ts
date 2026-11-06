@@ -68,6 +68,53 @@ async function createUser({ username, password, isTest }: Body) {
   return reply(200, { userId, username })
 }
 
+// Only the secret key can call this. Admin sign-out needs the user's own token,
+// so the function deletes their rows in auth.sessions instead.
+async function endSessions(userId: string) {
+  const { error } = await supabase.rpc('revoke_sessions', { p_user_id: userId })
+  if (error) throw error
+}
+
+async function findProfile(userId: unknown) {
+  if (typeof userId !== 'string') return null
+  const { data } = await supabase.from('profiles').select('removed_at').eq('user_id', userId).maybeSingle()
+  return data
+}
+
+async function resetPassword({ userId, password }: Body) {
+  if (typeof password !== 'string' || !password) return fail('weak_password')
+  const profile = await findProfile(userId)
+  if (!profile || profile.removed_at) return fail('user_not_found')
+
+  const { error } = await supabase.auth.admin.updateUserById(userId as string, { password })
+  if (error) return fail(authErrorCode(error.code))
+
+  await endSessions(userId as string)
+  return reply(200, { ok: true })
+}
+
+// REQ-053: the database goes first, so removal takes effect at once. Every step
+// is safe to repeat, so a removal that fails halfway can simply be retried.
+async function removeUser({ userId }: Body, adminId: string) {
+  if (userId === adminId) return fail('cannot_remove_self')
+  const profile = await findProfile(userId)
+  if (!profile) return fail('user_not_found')
+
+  if (!profile.removed_at) {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ removed_at: new Date().toISOString() })
+      .eq('user_id', userId as string)
+    if (error) throw error
+  }
+
+  const { error } = await supabase.auth.admin.updateUserById(userId as string, { ban_duration: '876000h' })
+  if (error) throw error
+
+  await endSessions(userId as string)
+  return reply(200, { ok: true })
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
   if (req.method !== 'POST') return fail('not_allowed', 405)
@@ -78,6 +125,8 @@ Deno.serve(async (req) => {
 
     const body: Body = await req.json()
     if (body.action === 'create') return await createUser(body)
+    if (body.action === 'reset') return await resetPassword(body)
+    if (body.action === 'remove') return await removeUser(body, adminId)
     return fail('unknown_action')
   } catch (error) {
     console.error(error)

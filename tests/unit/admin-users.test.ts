@@ -1,6 +1,8 @@
+import { readdirSync, readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { authErrorCode, emailDomain, isValidUsername, usernameToEmail } from '../../supabase/functions/admin-users/validate'
 import { isValidUsername as loginRule, usernameToEmail as loginEmail } from '../../src/auth/username'
+import { publicFunctions } from '../hosted/public-functions'
 
 describe('admin-users rules', () => {
   it('REQ-036: accepts 3 to 20 lowercase characters of a-z, 0-9, _ and -', () => {
@@ -27,5 +29,18 @@ describe('admin-users rules', () => {
     expect(authErrorCode('email_exists')).toBe('username_taken')
     expect(authErrorCode('anything_else')).toBe('failed')
     expect(authErrorCode(undefined)).toBe('failed')
+  })
+})
+
+describe('public functions', () => {
+  it('REQ-053: the removed-user test covers every public function in the migrations', () => {
+    const sql = readdirSync('supabase/migrations')
+      .map((file) => readFileSync(`supabase/migrations/${file}`, 'utf8'))
+      .join('\n')
+    const inMigrations = [...sql.matchAll(/create (?:or replace )?function public\.(\w+)/g)].map((match) => match[1])
+    const covered = Object.keys(publicFunctions('id'))
+
+    expect(inMigrations.length).toBeGreaterThan(0)
+    for (const name of inMigrations) expect(covered, name).toContain(name)
   })
 })
