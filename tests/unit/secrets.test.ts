@@ -10,7 +10,7 @@ const patterns: Record<string, RegExp> = {
   'database URL with a password': new RegExp('postgres(ql)?://[^:/ ]+:[^@ ]+@'),
   'private key': new RegExp('-----BEGIN [A-Z ]*PRIVATE' + ' KEY-----'),
   'GitHub token': new RegExp('(gh' + 'p_[A-Za-z0-9]{30,}|github_' + 'pat_[A-Za-z0-9_]{30,})'),
-  'assigned secret': new RegExp('(SERVICE_ROLE|SECRET_KEY|DB_PASSWORD|ADMIN_' + 'PASSWORD)[A-Z_]* *= *[^ <$"\'`\\r\\n]'),
+  'assigned secret': new RegExp('(SERVICE_ROLE|SECRET_KEY|DB_PASSWORD|ADMIN_' + 'PASSWORD)[A-Z_]* *= *[^ <$("\'`\\r\\n]'),
 }
 
 const scan = (content: string) =>
