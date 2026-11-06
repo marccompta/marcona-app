@@ -35,7 +35,7 @@ The project had no tables and no migrations before the first one.
   {"code":"0A000","details":null,"hint":null,"message":"cannot display a value of type event_trigger"}
   ```
 
-So the warning has no effect in practice, and the trigger backs up REQ-009 for later slices.
+That call used the publishable key only. A logged-in call hasn't been tried, so this covers the anonymous warning, not the signed-in one. The trigger backs up REQ-009 for later slices.
 
 ## Anonymous access (REQ-008, REQ-009, REQ-010)
 

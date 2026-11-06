@@ -39,9 +39,9 @@ Which mechanism to use for what, and what's installed in this repo. Project tool
 | `.github/workflows/deploy.yml` | CI | Tests, builds and deploys `main` and `slice/**` to GitHub Pages. The last push wins. |
 | Supabase MCP server | MCP, in `.mcp.json` | Migrations, queries, logs and docs. Scoped to this project with `project_ref`. `permissions.ask` in `.claude/settings.json` lists every tool that can change something, and auto mode must be off for Supabase work. Sign in with `/mcp`, so there's no token in the repo. Checked against https://supabase.com/docs/guides/getting-started/mcp. |
 | Playwright MCP server | MCP, in `.mcp.json` | Interactive phone-sized checks and review screenshots. `@playwright/mcp` is pinned, and uses Chrome. Checked against https://github.com/microsoft/playwright-mcp. |
-| `frontend-design` | Plugin, enabled in `.claude/settings.json` | Visual quality when building screens. |
-| `supabase`, `supabase-postgres-best-practices` | Skills, from the official `supabase/agent-skills` repo | Supabase and Postgres practice for migrations and Row Level Security. Markdown only, and pinned by hash in `skills-lock.json`. |
-| Vitest, Testing Library, Playwright | npm packages | Unit tests, and browser tests at 360px in Chromium and WebKit. The commands are in `AGENTS.md`. |
+| `frontend-design` | Plugin, enabled in `.claude/settings.json` | Visual quality when building screens. From the official marketplace, `claude-plugins-official`. The install command in `docs/setup.md` ran successfully. |
+| `supabase`, `supabase-postgres-best-practices` | Skills, from the official `supabase/agent-skills` repo | Supabase and Postgres practice for migrations and Row Level Security. Markdown only, and pinned by hash in `skills-lock.json`. The install command matches the one Supabase's MCP server recommends, and ran successfully. |
+| Vitest, Testing Library, Playwright | npm packages | Unit tests, and browser tests at 360px in Chromium and WebKit. The commands are in `AGENTS.md`. Installed from `package.json` with `npm ci`, which has run successfully on a clean clone. |
 
 ## Not installed yet
 
