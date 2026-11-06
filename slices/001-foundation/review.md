@@ -1,0 +1,106 @@
+# Slice 001 review
+
+## 1. What to look at
+
+MarcOna is live at its public address, in the Saló privat direction you chose. You can log in with your admin account, stay logged in, log out, and see the styled, empty ranking in Catalan. The bottom tabs work, but the screens behind them are placeholders until later slices.
+
+This should take 5 to 10 minutes on your phone.
+
+## 2. Before you start
+
+- **You need:** your phone, and the admin username and password you created in `docs/setup.md`, step 7. The password stays with you, and it isn't in this file.
+- **Setup:** None.
+- **Reset afterwards:** Log out at the end, as in step 8.
+
+## 3. How to review
+
+**On your phone, ideally in a dim room:**
+
+1. Open https://marccompta.github.io/marcona-app/. You should see the login screen: the gold ♠ MarcOna logo inside a double gold frame, with two fields and a gold **Entra** button. Compare it with [login.png](evidence/screens/login.png).
+2. Enter your username and a wrong password, then tap **Entra**. You should stay on the login screen and see "El nom d'usuari o la contrasenya no són correctes.", as in [login-error.png](evidence/screens/login-error.png).
+3. Enter the right password and tap **Entra**. You should see **Classificació** with "La taula està buida", as in [ranking.png](evidence/screens/ranking.png). No email address should appear anywhere.
+4. Tap each of the five tabs. **Esdeveniments**, **Ruleta**, **Auditoria** and **Administració** should each show its title and "Aquesta pantalla arribarà aviat.", as in [placeholder.png](evidence/screens/placeholder.png).
+5. On any tab, reload the page. You should stay logged in, on that same screen.
+6. Look at the top and bottom edges. Nothing should sit under the notch or the home bar, and nothing should scroll sideways.
+7. Judge the look against your "Casino Tokens" artifact. You should recognise the colours and the logo, and it should feel premium and be comfortable to read.
+8. Tap **Surt**, at the top right. You should return to the login screen, and a reload should leave you there.
+
+**On a computer:**
+
+9. Open the same address in a desktop browser. You should see a centred column rather than a stretched page, as in [desktop.png](evidence/screens/desktop.png).
+
+**The directions you chose from:**
+
+10. Compare [direction-a.png](evidence/directions/direction-a.png), [direction-b.png](evidence/directions/direction-b.png) and [direction-c.png](evidence/directions/direction-c.png). The site should match B. The chip stacks in B arrive with the player list in slice 002.
+
+**Docs, if you want to spot-check them:**
+
+11. Open `docs/setup.md` and `docs/tooling.md`. Every step you did by hand should be in the first, and each tool should have a clear job in the second.
+
+## 4. Checklist
+
+"Automatic" means section 5 already covers it, so you only need to read the result.
+
+| # | Requirement | Check | Expected result |
+|---|---|---|---|
+| 1 | REQ-001, REQ-002 | Steps 1, 5 | The site loads, and a reload keeps the screen |
+| 2 | REQ-003, REQ-004 | Step 3 | You see the ranking, and no email appears |
+| 3 | REQ-005, REQ-019 | Step 2 | You stay on login, with a Catalan error |
+| 4 | REQ-006, REQ-007 | Steps 5, 8 | You stay logged in, then log out |
+| 5 | REQ-008, REQ-009 | Automatic | No rows without a login, and the RLS report is empty |
+| 6 | REQ-010 | Automatic | Public sign-up is rejected |
+| 7 | REQ-011, REQ-012 | Steps 3, 4 | A styled empty state, and a tab bar that stays put |
+| 8 | REQ-013 | Step 4, plus automatic | You see Administració. A player doesn't, tested with a fake player only |
+| 9 | REQ-014, REQ-015, REQ-018 | Steps 1 to 8 | Every word is natural Catalan |
+| 10 | REQ-016, REQ-017 | Automatic | "1.234 marcones", "1 marcona" and a ca-ES date in Madrid time |
+| 11 | REQ-020, REQ-021, REQ-026 | Step 7 | It's recognisably "Casino Tokens", premium and readable |
+| 12 | REQ-022 | Automatic | Every font comes from the site itself |
+| 13 | REQ-023, REQ-024 | Step 6, plus automatic | Nothing scrolls sideways, and targets are at least 44px |
+| 14 | REQ-025, REQ-027 | Steps 6, 9 | Clear of the notch and home bar, and usable on a desktop |
+| 15 | REQ-028 | Step 10 | Three directions were shown, and the site matches B |
+| 16 | REQ-029, REQ-030, REQ-034 | Step 11 | The tools and setup are written down, and Supabase MCP is scoped to this project |
+| 17 | REQ-031 | Automatic | The secret scan finds nothing |
+| 18 | REQ-032 | Automatic | `supabase/migrations/` matches the two migrations applied to the project |
+| 19 | REQ-033 | Step 1 | The public site shows this slice |
+
+## 5. Already checked automatically
+
+| Check | Command | Result |
+|---|---|---|
+| Unit tests, including the secret scan | `npm test` | 38 passed |
+| Hosted project tests | `npm run test:hosted` | 10 passed |
+| Browser tests at 360px, on a local build | `npm run test:e2e` | 25 passed |
+| Browser tests on the deployed site | `E2E_BASE_URL=https://marccompta.github.io/marcona-app/ npm run test:e2e` | 25 passed |
+| Build, including the type check | `npm run build` | Passed, locally and in the deploy workflow |
+| Docs | `python scripts/check_docs.py` | Passed |
+| Supabase security advisor | `get_advisors` through the MCP server | 2 warnings, both about `rls_auto_enable()`. See section 6 |
+
+Two of the 25 browser tests use the real project and your real admin login. The other 23 use a fake Supabase, so they can test cases the real project can't produce on demand.
+
+Instructions run as written: pending. Audit by `slice-auditor`: pending.
+
+## 6. Known limitations
+
+- **Real iPhone not tested:** WebKit won't launch on this machine, so browser tests use Chromium with phone emulation. Steps 1 to 8 are the first real Safari check.
+- **Real player not tested:** no one can create players until slice 002, so hiding Administració from a player is tested only with a fake one.
+- **Empty ranking:** it shows the empty state whoever exists, because the player list arrives in slice 002.
+- **Placeholder screens:** Esdeveniments, Ruleta, Auditoria and Administració hold no features yet.
+- **Advisor warnings:** both are about `public.rls_auto_enable()`, which Supabase added itself. It's an event trigger that turns on RLS for new tables, and it can't be called through the API, so it stays as it is.
+- **Settings not read back:** "Require current password when updating" and the sign-in rate limit can't be checked from outside. They rest on your confirmation during setup.
+- **Hosted tests:** they run only from this machine, because they need `.env.test.local`. CI runs the docs check, unit tests and build.
+
+## 7. Your verdict
+
+Type one of these in a Claude Code session started at the repo root:
+
+- `/slice-verdict 001 approve`
+- `/slice-verdict 001 changes <what to fix>`
+- `/slice-verdict 001 reject <why>`
+
+## Review log
+
+### Round 1
+
+- Verdict: pending
+- Date:
+- Notes:
