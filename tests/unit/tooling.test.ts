@@ -19,6 +19,22 @@ describe('tooling', () => {
     expect(allowed.filter((rule) => rule.includes('supabase'))).toEqual([])
   })
 
+  it('REQ-034: always asks before any Supabase tool that can change something', () => {
+    const asked: string[] = settings.permissions?.ask ?? []
+    const tools = [
+      'apply_migration',
+      'execute_sql',
+      'deploy_edge_function',
+      'create_edge_function_secret',
+      'create_branch',
+      'delete_branch',
+      'merge_branch',
+      'rebase_branch',
+      'reset_branch',
+    ]
+    for (const tool of tools) expect(asked, tool).toContain(`mcp__supabase__${tool}`)
+  })
+
   it('REQ-029: names every MCP server in docs/tooling.md', () => {
     const tooling = readFileSync('docs/tooling.md', 'utf8').toLowerCase()
     for (const server of Object.keys(mcp)) expect(tooling, server).toContain(`${server} mcp server`)

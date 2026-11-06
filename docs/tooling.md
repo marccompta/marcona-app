@@ -37,7 +37,7 @@ Which mechanism to use for what, and what's installed in this repo. Project tool
 | `scripts/protect_closed_slices.py` | `PreToolUse` hook | Blocks Claude's Edit and Write tools inside closed slices. It doesn't cover shell commands or non-Claude tools. |
 | `.github/workflows/ci.yml` | CI | Runs the docs check, the unit tests, the build and the demo's tests on each PR. |
 | `.github/workflows/deploy.yml` | CI | Tests, builds and deploys `main` and `slice/**` to GitHub Pages. The last push wins. |
-| Supabase MCP server | MCP, in `.mcp.json` | Migrations, queries, logs and docs. Scoped to this project with `project_ref`, with manual approval kept on. Sign in with `/mcp`, so there's no token in the repo. Checked against https://supabase.com/docs/guides/getting-started/mcp. |
+| Supabase MCP server | MCP, in `.mcp.json` | Migrations, queries, logs and docs. Scoped to this project with `project_ref`. `permissions.ask` in `.claude/settings.json` lists every tool that can change something, and auto mode must be off for Supabase work. Sign in with `/mcp`, so there's no token in the repo. Checked against https://supabase.com/docs/guides/getting-started/mcp. |
 | Playwright MCP server | MCP, in `.mcp.json` | Interactive phone-sized checks and review screenshots. `@playwright/mcp` is pinned, and uses Chrome. Checked against https://github.com/microsoft/playwright-mcp. |
 | `frontend-design` | Plugin, enabled in `.claude/settings.json` | Visual quality when building screens. |
 | `supabase`, `supabase-postgres-best-practices` | Skills, from the official `supabase/agent-skills` repo | Supabase and Postgres practice for migrations and Row Level Security. Markdown only, and pinned by hash in `skills-lock.json`. |
