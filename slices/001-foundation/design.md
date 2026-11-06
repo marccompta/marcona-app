@@ -26,11 +26,12 @@ A new `profiles` table holds `user_id`, `username`, `role` and `created_at`. Row
 ## Decisions
 
 - [ADR 0001](../../docs/adr/0001-static-react-site-on-github-pages.md): static React site on GitHub Pages.
-- [ADR 0002](../../docs/adr/0002-one-hosted-supabase-project.md): one hosted Supabase project.
+- [ADR 0007](../../docs/adr/0007-one-hosted-project-with-unattended-migrations.md): one hosted Supabase project, with migrations that don't need manual approval. It replaces ADR 0002.
 - [ADR 0003](../../docs/adr/0003-supabase-auth-with-hidden-emails.md): Supabase Auth with hidden emails.
 - [ADR 0006](../../docs/adr/0006-catalan-interface-english-project.md): Catalan interface, English project.
 - The Supabase URL and publishable key go in a committed config file, because `.gitignore` excludes `.env.*`.
 - Hosted tests read the admin's password from `.env.test.local`, which is already gitignored.
+- The visual direction is B, "Saló privat", chosen by the human on 2026-11-06 from the three in `evidence/directions/`.
 
 ## Tooling needed
 
@@ -38,7 +39,7 @@ Install commands get checked against official docs before use.
 
 | Item | Job | Who does it |
 |---|---|---|
-| Supabase MCP | Migrations, queries, logs and docs, scoped with `project_ref`, manual approval on | Claude configures, the human authorises |
+| Supabase MCP | Migrations, queries, logs and docs, scoped with `project_ref` | Claude configures, the human authorises |
 | Playwright MCP | Interactive phone-sized checks and review screenshots, using `--device` | Claude configures, the human approves |
 | `frontend-design` plugin | Distinctive visual quality | The human runs `/plugin install frontend-design@claude-plugins-official` |
 | Supabase agent skills | Postgres and Row Level Security practice, from the official `supabase/agent-skills` repo | Claude installs |

@@ -9,40 +9,40 @@ Every requirement has a permanent ID. Raw input is kept in `docs/product/intake/
 
 | ID | Requirement | Status | Slice | Verification |
 |---|---|---|---|---|
-| REQ-001 | The system shall be served as a static site from GitHub Pages at `https://marccompta.github.io/marcona-app/`, with every asset loaded under the `/marcona-app/` base path. | planned | 001 | test |
-| REQ-002 | The system shall use hash-based routes, so that reloading a screen or opening a link to it at the public URL shows that screen. | planned | 001 | test |
-| REQ-003 | When a person submits a correct username and password, the system shall start a Supabase Auth session and show the ranking. | planned | 001 | test |
-| REQ-004 | The system shall ask people only for a username and a password, and shall map each username to a hidden placeholder email that never appears in the interface. | planned | 001 | test |
-| REQ-005 | If a login attempt fails, then the system shall show a Catalan error and keep the person on the login screen. | planned | 001 | test |
-| REQ-006 | While a session is valid, the system shall keep the user logged in across page reloads. | planned | 001 | test |
-| REQ-007 | When a user logs out, the system shall end their session and show the login screen. | planned | 001 | test |
-| REQ-008 | If a request has no logged-in session, then the system shall return no data from any table. | planned | 001 | test |
-| REQ-009 | The system shall have Row Level Security enabled on every table. | planned | 001 | test |
-| REQ-010 | If anyone tries to sign up through the public Auth API, then the system shall reject the request. | planned | 001 | test |
-| REQ-011 | While no other players exist, the system shall show the ranking screen with a styled Catalan empty state. | planned | 001 | test |
-| REQ-012 | While a user is logged in, the system shall show a fixed bottom tab bar. | planned | 001 | test |
-| REQ-013 | The system shall show the Administració tab only to the admin. | planned | 001 | test |
-| REQ-014 | The system shall show every visible word in natural Catalan, including errors, empty states, confirmations, the page title and metadata. | planned | 001 | manual |
-| REQ-015 | The system shall set `lang="ca"` on the document. | planned | 001 | test |
-| REQ-016 | The system shall format dates and numbers with `Intl` using the `ca-ES` locale and the `Europe/Madrid` time zone. | planned | 001 | test |
-| REQ-017 | The system shall use the correct Catalan singular and plural forms for amounts, such as 1 marcona and 2 marcones. | planned | 001 | test |
-| REQ-018 | The system shall keep all interface text in one place in the code. | planned | 001 | manual |
-| REQ-019 | If Supabase returns an error, then the system shall show a Catalan message and never the raw English text. | planned | 001 | test |
-| REQ-020 | The system shall keep the identity of the "Casino Tokens" artifact: felt greens `#073b2b`, `#0d5439` and `#116a49` with a soft radial glow, gold `#f0c24b`, ivory text `#f6f1dc`, sage secondary text `#9cc7b1`, serif headings, an italic gold logo with a ♠, rounded cards with fine borders, and pill status tags. | planned | 001 | manual |
-| REQ-021 | The system shall look premium rather than like a template, using felt texture, gold foil detail and refined transitions. | planned | 001 | manual |
-| REQ-022 | The system shall load all fonts from the site itself, with no requests to third-party font services. | planned | 001 | test |
-| REQ-023 | The system shall fit screens from 360px wide without horizontal scrolling. | planned | 001 | test |
-| REQ-024 | The system shall give every tappable control a tap target of at least 44px. | planned | 001 | test |
-| REQ-025 | The system shall respect device safe areas, such as the iPhone notch and home bar. | planned | 001 | manual |
-| REQ-026 | The system shall keep text contrast high enough to read comfortably in a dim room. | planned | 001 | manual |
-| REQ-027 | Where the site is opened in a desktop browser, the system shall remain usable. | planned | 001 | manual |
-| REQ-028 | When slice 001 is reviewed, the project shall show 2 or 3 rendered phone-sized visual directions from the "Casino Tokens" family, so the human can choose one before later screens are built. | planned | 001 | manual |
-| REQ-029 | The project shall record each installed tool and its job in `docs/tooling.md`, after checking its install command against official docs. | planned | 001 | manual |
-| REQ-030 | The project shall provide `docs/setup.md` with exact steps for everything the human must do: making the repo public, creating the Supabase project in an EU region, Auth settings, GitHub Pages and Actions settings, authorising MCP servers, installing plugins, and creating the admin account. | planned | 001 | manual |
-| REQ-031 | The repository shall contain no Supabase credential other than the project URL and publishable key, and no real password. | planned | 001 | test |
-| REQ-032 | The project shall keep migrations in `supabase/migrations/` and apply them to the hosted project, without relying on Docker or the local Supabase stack. | planned | 001 | manual |
-| REQ-033 | When a slice is under review, the project shall deploy that slice's branch to the public site. | planned | 001 | manual |
-| REQ-034 | The project shall scope the Supabase MCP server to this one project, with manual approval kept on. | planned | 001 | manual |
+| REQ-001 | The system shall be served as a static site from GitHub Pages at `https://marccompta.github.io/marcona-app/`, with every asset loaded under the `/marcona-app/` base path. | active | 001 | test |
+| REQ-002 | The system shall use hash-based routes, so that reloading a screen or opening a link to it at the public URL shows that screen. | active | 001 | test |
+| REQ-003 | When a person submits a correct username and password, the system shall start a Supabase Auth session and show the ranking. | active | 001 | test |
+| REQ-004 | The system shall ask people only for a username and a password, and shall map each username to a hidden placeholder email that never appears in the interface. | active | 001 | test |
+| REQ-005 | If a login attempt fails, then the system shall show a Catalan error and keep the person on the login screen. | active | 001 | test |
+| REQ-006 | While a session is valid, the system shall keep the user logged in across page reloads. | active | 001 | test |
+| REQ-007 | When a user logs out, the system shall end their session and show the login screen. | active | 001 | test |
+| REQ-008 | If a request has no logged-in session, then the system shall return no data from any table. | active | 001 | test |
+| REQ-009 | The system shall have Row Level Security enabled on every table. | active | 001 | test |
+| REQ-010 | If anyone tries to sign up through the public Auth API, then the system shall reject the request. | active | 001 | test |
+| REQ-011 | While no other players exist, the system shall show the ranking screen with a styled Catalan empty state. | active | 001 | test |
+| REQ-012 | While a user is logged in, the system shall show a fixed bottom tab bar. | active | 001 | test |
+| REQ-013 | The system shall show the Administració tab only to the admin. | active | 001 | test |
+| REQ-014 | The system shall show every visible word in natural Catalan, including errors, empty states, confirmations, the page title and metadata. | active | 001 | manual |
+| REQ-015 | The system shall set `lang="ca"` on the document. | active | 001 | test |
+| REQ-016 | The system shall format dates and numbers with `Intl` using the `ca-ES` locale and the `Europe/Madrid` time zone. | active | 001 | test |
+| REQ-017 | The system shall use the correct Catalan singular and plural forms for amounts, such as 1 marcona and 2 marcones. | active | 001 | test |
+| REQ-018 | The system shall keep all interface text in one place in the code. | active | 001 | manual |
+| REQ-019 | If Supabase returns an error, then the system shall show a Catalan message and never the raw English text. | active | 001 | test |
+| REQ-020 | The system shall keep the identity of the "Casino Tokens" artifact: felt greens `#073b2b`, `#0d5439` and `#116a49` with a soft radial glow, gold `#f0c24b`, ivory text `#f6f1dc`, sage secondary text `#9cc7b1`, serif headings, an italic gold logo with a ♠, rounded cards with fine borders, and pill status tags. | active | 001 | manual |
+| REQ-021 | The system shall look premium rather than like a template, using felt texture, gold foil detail and refined transitions. | active | 001 | manual |
+| REQ-022 | The system shall load all fonts from the site itself, with no requests to third-party font services. | active | 001 | test |
+| REQ-023 | The system shall fit screens from 360px wide without horizontal scrolling. | active | 001 | test |
+| REQ-024 | The system shall give every tappable control a tap target of at least 44px. | active | 001 | test |
+| REQ-025 | The system shall respect device safe areas, such as the iPhone notch and home bar. | active | 001 | manual |
+| REQ-026 | The system shall keep text contrast high enough to read comfortably in a dim room. | active | 001 | manual |
+| REQ-027 | Where the site is opened in a desktop browser, the system shall remain usable. | active | 001 | manual |
+| REQ-028 | When slice 001 is reviewed, the project shall show 2 or 3 rendered phone-sized visual directions from the "Casino Tokens" family, so the human can choose one before later screens are built. | active | 001 | manual |
+| REQ-029 | The project shall record each installed tool and its job in `docs/tooling.md`, after checking its install command against official docs. | active | 001 | manual |
+| REQ-030 | The project shall provide `docs/setup.md` with exact steps for everything the human must do: making the repo public, creating the Supabase project in an EU region, Auth settings, GitHub Pages and Actions settings, authorising MCP servers, installing plugins, and creating the admin account. | active | 001 | manual |
+| REQ-031 | The repository shall contain no Supabase credential other than the project URL and publishable key, and no real password. | active | 001 | test |
+| REQ-032 | The project shall keep migrations in `supabase/migrations/` and apply them to the hosted project, without relying on Docker or the local Supabase stack. | active | 001 | manual |
+| REQ-033 | When a slice is under review, the project shall deploy that slice's branch to the public site. | active | 001 | manual |
+| REQ-034 | The project shall scope the Supabase MCP server to this one project, with manual approval kept on. | superseded by REQ-206 | 001 | manual |
 | REQ-035 | When the admin submits a valid new username and password, the system shall create the user with 0 marcones. | planned | 002 | test |
 | REQ-036 | If a new username isn't 3 to 20 characters of lowercase `[a-z0-9_-]`, then the system shall reject it. | planned | 002 | test |
 | REQ-037 | If a new username matches an existing user, including a removed one, then the system shall reject it. | planned | 002 | test |
@@ -214,12 +214,13 @@ Every requirement has a permanent ID. Raw input is kept in `docs/product/intake/
 | REQ-203 | When a duel tap is saved, the system shall make that button glow clearly for two seconds, and shall give no other feedback. | planned | 005 | test |
 | REQ-204 | If a duel tap arrives after both players have picked, then the system shall leave the choices as they were and show the reveal. | planned | 005 | test |
 | REQ-205 | If a player tries to change a locked-in choice in La minoria, then the system shall reject it. | planned | 007 | test |
+| REQ-206 | The project shall scope the Supabase MCP server to this one project. Auto mode may stay on, and migrations don't need the human's manual approval. The other Supabase tools that can change something keep their `ask` rules. | active | 001 | test |
 
 ## Slice roadmap
 
 | Slice | Goal | Requirements | Status |
 |---|---|---|---|
-| 001 | Foundation: the stack and tools are in place, and the admin can log in on a phone at the public URL and see a styled, empty Catalan ranking. Includes the visual directions. | REQ-001 to REQ-034 | planned |
+| 001 | Foundation: the stack and tools are in place, and the admin can log in on a phone at the public URL and see a styled, empty Catalan ranking. Includes the visual directions. | REQ-001 to REQ-033, REQ-206 | closed |
 | 002 | Users and marcones: the admin manages users and marcones, and everyone sees the ranking, user details and audit. | REQ-035 to REQ-070 | planned |
 | 003 | Classic events: the full event lifecycle, including payouts, refunds and rounding. | REQ-071 to REQ-100, REQ-186 to REQ-190 | planned |
 | 004 | Roulette: spin, payout, audit and admin settings. | REQ-101 to REQ-119 | planned |

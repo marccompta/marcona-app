@@ -1,6 +1,6 @@
 # 0002. One hosted Supabase project as the only backend
 
-- **Status:** proposed
+- **Status:** superseded by [0007](0007-one-hosted-project-with-unattended-migrations.md)
 - **Date:** 2026-11-06
 - **Slice:** 001
 

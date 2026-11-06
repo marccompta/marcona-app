@@ -3,7 +3,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, 'slice/**']
 
 jobs:
   checks:
@@ -13,8 +13,18 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
       - name: Check docs and traceability
         run: python scripts/check_docs.py
+      - name: Install dependencies
+        run: npm ci
+      - name: Run unit tests
+        run: npm test
+      - name: Build
+        run: npm run build
       # Remove the two steps below if you delete examples/task-tracker.
       - name: Check demo docs and traceability
         run: python scripts/check_docs.py examples/task-tracker

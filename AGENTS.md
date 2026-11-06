@@ -58,11 +58,15 @@ Slice: 001
 
 ## Commands
 
-The app's stack hasn't been chosen yet. Add its test, run and lint commands here in the first slice that needs them.
-
 | Purpose | Command |
 |---|---|
 | Check docs and traceability | `python scripts/check_docs.py [project-path]` |
+| Run the app locally | `npm run dev` |
+| Build, including the type check | `npm run build` |
+| Unit tests | `npm test` |
+| Browser tests, phone-sized | `npm run test:e2e` |
+| Browser tests against the deployed site | `E2E_BASE_URL=https://marccompta.github.io/marcona-app/ npm run test:e2e` |
+| Tests against the hosted Supabase project, from this machine only | `npm run test:hosted` |
 
 ## Where things go
 

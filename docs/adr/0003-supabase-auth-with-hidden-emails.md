@@ -1,6 +1,6 @@
 # 0003. Supabase Auth with hidden emails, and privileged actions in Edge Functions
 
-- **Status:** proposed
+- **Status:** accepted
 - **Date:** 2026-11-06
 - **Slice:** 001
 
