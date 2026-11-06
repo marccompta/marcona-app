@@ -237,7 +237,7 @@ As soon as possible, with no target date. The human works from home and is avail
 |---|---|---|
 | 1 | All specs | Approve them once |
 | 2 | 001, starting with the visual directions | Setup walkthrough, pick a direction, review |
-| 3 to 8 | 002, 003, 004, 005, 006, 007, in order | Approve migrations during the build, then review each slice |
+| 3 to 8 | 002, 003, 004, 005, 006, 007, in order | Review each slice |
 | 9 | 008 | Review, rehearse on real phones, wipe, create the real accounts |
 
 **The feature freeze** is 24 hours before the event. The date isn't needed until slice 008.
