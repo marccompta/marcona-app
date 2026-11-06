@@ -6,7 +6,7 @@
     },
     "playwright": {
       "command": "cmd",
-      "args": ["/c", "npx", "@playwright/mcp@0.0.84", "--device", "iPhone 15", "--browser", "msedge", "--headless", "--isolated"]
+      "args": ["/c", "npx", "@playwright/mcp@0.0.84", "--device", "iPhone 15", "--browser", "chrome", "--headless", "--isolated"]
     }
   }
 }

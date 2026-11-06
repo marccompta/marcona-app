@@ -38,7 +38,7 @@ Which mechanism to use for what, and what's installed in this repo. Project tool
 | `.github/workflows/ci.yml` | CI | Runs the docs check, the unit tests, the build and the demo's tests on each PR. |
 | `.github/workflows/deploy.yml` | CI | Tests, builds and deploys `main` and `slice/**` to GitHub Pages. The last push wins. |
 | Supabase MCP server | MCP, in `.mcp.json` | Migrations, queries, logs and docs. Scoped to this project with `project_ref`, with manual approval kept on. Sign in with `/mcp`, so there's no token in the repo. Checked against https://supabase.com/docs/guides/getting-started/mcp. |
-| Playwright MCP server | MCP, in `.mcp.json` | Interactive phone-sized checks and review screenshots. `@playwright/mcp` is pinned, and uses Edge because Chrome isn't installed here and WebKit won't launch. Checked against https://github.com/microsoft/playwright-mcp. |
+| Playwright MCP server | MCP, in `.mcp.json` | Interactive phone-sized checks and review screenshots. `@playwright/mcp` is pinned, and uses Chrome because WebKit won't launch on this machine. Checked against https://github.com/microsoft/playwright-mcp. |
 | Vitest, Testing Library, Playwright | npm packages | Unit tests, and browser tests at 360px. The commands are in `AGENTS.md`. |
 
 ## Not installed yet
