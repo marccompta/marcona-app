@@ -2,7 +2,7 @@
 
 Work through these in order. Each task leaves the tests passing.
 
-- [ ] **T1:** Add the active-user helpers, `is_test`, and the one-admin index. (REQ-053, REQ-056)
+- [x] **T1:** Add the active-user helpers, `is_test`, and the one-admin index. (REQ-053, REQ-056)
 - [ ] **T2:** Add the ledger, `apply_movement()`, the balance constraint and the append-only trigger. (REQ-057, REQ-059, REQ-060, REQ-061)
 - [ ] **T3:** Add `admin_adjust()` with client request IDs and validation. (REQ-039, REQ-040, REQ-041, REQ-042, REQ-043, REQ-062)
 - [ ] **T4:** Lock down direct writes, and test them with a player's session. (REQ-058)
