@@ -23,7 +23,7 @@ create policy "Logged-in users can read profiles"
 create function public.rls_report()
 returns table (schema_name text, table_name text)
 language plpgsql
-security definer
+security invoker
 set search_path = ''
 as $$
 begin
