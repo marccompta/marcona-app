@@ -1,19 +1,43 @@
 import { text } from './text'
 
-type ErrorLike = { code?: unknown; status?: unknown; name?: unknown }
+type ErrorLike = { code?: unknown; message?: unknown; status?: unknown; name?: unknown }
 
-const byCode: Record<string, string> = {
+// Supabase Auth's codes, and the ones our own functions return. A test checks
+// that every code in the migrations and the Edge Function is listed here.
+export const byCode: Record<string, string> = {
   invalid_credentials: text.errors.invalidCredentials,
   over_request_rate_limit: text.errors.rateLimited,
+  user_banned: text.errors.accountRemoved,
+  not_allowed: text.errors.notAllowed,
+  '42501': text.errors.notAllowed,
+  concept_required: text.errors.conceptRequired,
+  invalid_amount: text.errors.invalidAmount,
+  invalid_action: text.errors.unknown,
+  insufficient_balance: text.errors.insufficientBalance,
+  user_not_found: text.errors.userNotFound,
+  ledger_is_append_only: text.errors.unknown,
+  invalid_username: text.errors.invalidUsername,
+  username_taken: text.errors.usernameTaken,
+  weak_password: text.errors.weakPassword,
+  same_password: text.errors.samePassword,
+  cannot_remove_self: text.errors.cannotRemoveSelf,
+  unknown_action: text.errors.unknown,
+  failed: text.errors.unknown,
 }
+
+// P0001 is what `raise exception` gives, and the message holds our code.
+const raisedByPostgres = 'P0001'
 
 // Turns any error into Catalan. The original message is never shown.
 export function errorMessage(error: unknown): string {
   if (typeof error !== 'object' || error === null) return text.errors.unknown
-  const { code, status, name } = error as ErrorLike
+  const { code, message, status, name } = error as ErrorLike
 
+  if (code === raisedByPostgres && typeof message === 'string' && message in byCode) return byCode[message]
   if (typeof code === 'string' && code in byCode) return byCode[code]
   if (status === 429) return text.errors.rateLimited
-  if (error instanceof TypeError || name === 'AuthRetryableFetchError') return text.errors.network
+  if (error instanceof TypeError || name === 'AuthRetryableFetchError' || name === 'FunctionsFetchError') {
+    return text.errors.network
+  }
   return text.errors.unknown
 }

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { admin, fakeSupabase, logIn } from './fake-supabase'
+import { admin, fakeSupabase, logIn, player } from './fake-supabase'
 
 const screens = ['classificacio', 'esdeveniments', 'ruleta', 'auditoria', 'administracio']
 
@@ -9,7 +9,7 @@ const noSidewaysScroll = (page: Page) =>
 // Controls smaller than the tap size, ignoring anything that isn't on screen.
 const smallTargets = (page: Page) =>
   page.evaluate(() =>
-    [...document.querySelectorAll('a, button, input')]
+    [...document.querySelectorAll('a, button, input, select')]
       .map((element) => ({ element, box: element.getBoundingClientRect() }))
       .filter(({ box }) => box.width > 0 && (box.width < 44 || box.height < 44))
       .map(({ element, box }) => `${element.tagName} ${element.textContent} ${box.width}x${box.height}`),
@@ -52,10 +52,12 @@ test.describe('at 360px wide', () => {
   })
 
   test('REQ-012: the tab bar stays put while the screen scrolls', async ({ page }) => {
-    await fakeSupabase(page)
+    const others = Array.from({ length: 12 }, (_, index) => ({ ...player, username: `persona-${index}` }))
+    await fakeSupabase(page, [admin, ...others])
     await page.setViewportSize({ width: 360, height: 420 })
     await page.goto('')
     await logIn(page, admin)
+    await page.locator('.rank-row').first().waitFor()
 
     const bar = page.getByRole('navigation')
     const before = await bar.boundingBox()
