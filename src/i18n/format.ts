@@ -3,8 +3,7 @@ import { text } from './text'
 const locale = 'ca-ES'
 const timeZone = 'Europe/Madrid'
 
-// 'always' because ca-ES otherwise may leave four-digit numbers ungrouped.
-const numbers = new Intl.NumberFormat(locale, { useGrouping: 'always' })
+const numbers = new Intl.NumberFormat(locale, { useGrouping: true })
 const dates = new Intl.DateTimeFormat(locale, { dateStyle: 'long', timeStyle: 'short', timeZone })
 const plurals = new Intl.PluralRules(locale)
 

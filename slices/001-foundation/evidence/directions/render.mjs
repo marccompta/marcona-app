@@ -1,5 +1,7 @@
 // Renders the visual directions to phone-sized PNGs.
 // Run from the repo root: node slices/001-foundation/evidence/directions/render.mjs
+// The direction was chosen, so the @fontsource packages are gone. To re-run this,
+// install @fontsource/{playfair-display,manrope,bodoni-moda,jost,fraunces,dm-sans}.
 import { writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'

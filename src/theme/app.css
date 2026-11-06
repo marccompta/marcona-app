@@ -1,0 +1,350 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background-color: var(--felt-950);
+  color: var(--ivory);
+  font: 400 17px/1.45 var(--font-text);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior: none;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* The table: felt grain over a soft glow from the top. */
+.table {
+  height: 100vh;
+  height: 100dvh;
+  max-width: var(--column);
+  margin-inline: auto;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  background-color: var(--felt-950);
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(90% 42% at 50% 0, var(--felt-700) 0, var(--felt-900) 58%, var(--felt-950) 100%);
+}
+
+/* The double gold frame around everything above the tab bar. */
+.frame {
+  position: relative;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  margin-top: calc(var(--frame-gap) + 3px + env(safe-area-inset-top));
+  margin-right: calc(var(--frame-gap) + 3px + env(safe-area-inset-right));
+  margin-bottom: calc(var(--frame-gap) + 3px);
+  margin-left: calc(var(--frame-gap) + 3px + env(safe-area-inset-left));
+  border: 1px solid var(--gold-line);
+  outline: 1px solid var(--gold-hairline);
+  outline-offset: 3px;
+}
+
+.table--login {
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.table--login .frame {
+  grid-template-rows: minmax(0, 1fr);
+  margin-bottom: calc(var(--frame-gap) + 3px + env(safe-area-inset-bottom));
+}
+
+.scroller {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 16px 24px;
+}
+
+.masthead {
+  position: relative;
+  text-align: center;
+  padding: 16px var(--tap) 0;
+}
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font: italic 700 27px/1.2 var(--font-display);
+  letter-spacing: 0.01em;
+  color: var(--gold);
+  background: var(--gold-foil);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.logo svg {
+  width: 0.72em;
+  height: 0.72em;
+  fill: var(--gold);
+}
+
+.flourish {
+  display: block;
+  margin: 7px auto 0;
+  stroke: var(--gold);
+}
+
+.logout {
+  position: absolute;
+  top: 4px;
+  right: 0;
+  min-width: var(--tap);
+  min-height: var(--tap);
+  padding: 0 10px;
+  border: 0;
+  background: none;
+  color: var(--sage);
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: color 0.2s var(--ease);
+}
+
+.logout:hover {
+  color: var(--gold);
+}
+
+.screen {
+  animation: settle 0.42s var(--ease) both;
+}
+
+.screen-title {
+  margin: 10px 0 18px;
+  text-align: center;
+  font: 500 15px/1.4 var(--font-text);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+
+.notice {
+  margin: 0 0 12px;
+  text-align: center;
+  color: var(--danger);
+  font-size: 16px;
+}
+
+/* Empty and placeholder screens. */
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  max-width: 280px;
+  margin: 8vh auto 0;
+  text-align: center;
+}
+
+.empty svg {
+  width: 112px;
+  height: 112px;
+  margin-bottom: 8px;
+  fill: none;
+  stroke: var(--gold);
+}
+
+.empty h2 {
+  font: italic 700 25px/1.2 var(--font-display);
+  color: var(--gold);
+}
+
+.empty p {
+  color: var(--sage);
+}
+
+/* The tab bar. */
+.tabs {
+  display: flex;
+  background: var(--felt-950);
+  border-top: 1px solid var(--gold-line);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+.tab {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: max(var(--tap), 62px);
+  padding: 8px 0 7px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: var(--sage);
+  text-decoration: none;
+  transition: color 0.25s var(--ease);
+}
+
+.tab svg {
+  width: 23px;
+  height: 23px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.25s var(--ease);
+}
+
+.tab span {
+  font-size: 11px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.tab[aria-current='page'] {
+  color: var(--gold);
+}
+
+.tab[aria-current='page'] svg {
+  transform: translateY(-1px);
+}
+
+/* Login. */
+.login {
+  display: grid;
+  align-content: center;
+  min-height: 100%;
+  padding: 24px 16px;
+}
+
+.login .logo {
+  font-size: 42px;
+  justify-self: center;
+}
+
+.login .flourish {
+  margin: 10px auto 30px;
+}
+
+.login form {
+  display: grid;
+  gap: 18px;
+  width: 100%;
+  max-width: 300px;
+  margin-inline: auto;
+}
+
+.field {
+  display: grid;
+  gap: 2px;
+  font-size: 15px;
+  letter-spacing: 0.06em;
+  color: var(--sage);
+}
+
+.field input {
+  min-height: var(--tap);
+  width: 100%;
+  padding: 6px 2px;
+  border: 0;
+  border-bottom: 1px solid var(--gold-line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ivory);
+  font-size: 18px;
+  letter-spacing: 0.01em;
+  transition: border-color 0.25s var(--ease);
+}
+
+.field input:focus {
+  outline: none;
+  border-bottom-color: var(--gold);
+  box-shadow: 0 1px 0 var(--gold);
+}
+
+.field input:-webkit-autofill {
+  -webkit-text-fill-color: var(--ivory);
+  transition: background-color 9999s;
+}
+
+.primary {
+  min-height: 48px;
+  margin-top: 6px;
+  border: 0;
+  border-radius: 2px;
+  background: var(--gold-foil);
+  background-size: 180% 100%;
+  color: var(--on-gold);
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-position 0.5s var(--ease), opacity 0.2s var(--ease);
+}
+
+.primary:hover {
+  background-position: 100% 0;
+}
+
+.primary:disabled {
+  opacity: 0.65;
+  cursor: default;
+}
+
+.login .notice {
+  margin: 0;
+}
+
+.splash {
+  display: grid;
+  gap: 14px;
+  place-content: center;
+  justify-items: center;
+  height: 100%;
+  padding: 24px;
+  text-align: center;
+  color: var(--sage);
+}
+
+@keyframes settle {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@media (min-width: 520px) {
+  .table {
+    border-inline: 1px solid var(--gold-hairline);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
