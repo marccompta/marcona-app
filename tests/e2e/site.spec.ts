@@ -1,28 +1,54 @@
 import { expect, test } from '@playwright/test'
+import { admin, fakeSupabase, logIn } from './fake-supabase'
 
-// REQ-001
-test('the site loads under its base path with no failed requests', async ({ page, baseURL }) => {
+const base = new URL(process.env.E2E_BASE_URL ?? 'http://localhost:4173/marcona-app/')
+
+test('REQ-001: every asset loads under the base path', async ({ page }) => {
   const failed: string[] = []
-  page.on('response', (r) => {
-    if (r.status() >= 400) failed.push(`${r.status()} ${r.url()}`)
+  const outside: string[] = []
+  page.on('requestfailed', (request) => failed.push(request.url()))
+  page.on('response', (response) => {
+    if (response.status() >= 400) failed.push(response.url())
+    const url = new URL(response.url())
+    if (url.origin === base.origin && !url.pathname.startsWith(base.pathname)) outside.push(url.pathname)
   })
-  page.on('requestfailed', (r) => failed.push(`failed ${r.url()}`))
 
-  await page.goto('./')
-  await expect(page.locator('#root > *').first()).toBeVisible()
+  await page.goto('')
+  await page.evaluate(() => document.fonts.ready)
+  await expect(page.locator('[data-screen]')).toBeVisible()
 
-  const assets = await page.locator('script[src], link[rel="stylesheet"]').evaluateAll((els) =>
-    els.map((e) => (e as HTMLScriptElement).src || (e as HTMLLinkElement).href),
-  )
-  expect(assets.length).toBeGreaterThan(0)
-  for (const asset of assets) expect(asset.startsWith(baseURL!)).toBe(true)
   expect(failed).toEqual([])
+  expect(outside).toEqual([])
 })
 
-// REQ-002
-test('a screen survives a reload and opens from a direct link', async ({ page }) => {
-  await page.goto('./#/classificacio')
-  await expect(page.locator('[data-screen]')).toHaveAttribute('data-screen', 'classificacio')
-  await page.reload()
-  await expect(page.locator('[data-screen]')).toHaveAttribute('data-screen', 'classificacio')
+test('REQ-002: reloading a screen, or opening a link to it, shows that screen', async ({ page }) => {
+  await fakeSupabase(page)
+  await page.goto('')
+  await logIn(page, admin)
+
+  for (const route of ['esdeveniments', 'ruleta', 'auditoria', 'administracio', 'classificacio']) {
+    await page.goto(`#/${route}`)
+    await expect(page.locator(`[data-screen="${route}"]`)).toBeVisible()
+    await page.reload()
+    await expect(page.locator(`[data-screen="${route}"]`)).toBeVisible()
+  }
+})
+
+test('REQ-015: the document is in Catalan', async ({ page }) => {
+  await page.goto('')
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ca')
+  await expect(page).toHaveTitle('MarcOna')
+})
+
+test('REQ-022: every font comes from the site itself', async ({ page }) => {
+  const fonts: string[] = []
+  page.on('response', (response) => {
+    if (response.request().resourceType() === 'font') fonts.push(response.url())
+  })
+
+  await page.goto('')
+  await page.evaluate(() => document.fonts.ready)
+
+  expect(fonts.length).toBeGreaterThan(0)
+  for (const font of fonts) expect(new URL(font).origin).toBe(base.origin)
 })

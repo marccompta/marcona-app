@@ -147,7 +147,7 @@ input {
 }
 
 .notice {
-  margin: 0 0 12px;
+  margin: 0;
   text-align: center;
   color: var(--danger);
   font-size: 16px;
@@ -312,10 +312,6 @@ input {
   cursor: default;
 }
 
-.login .notice {
-  margin: 0;
-}
-
 .splash {
   display: grid;
   gap: 14px;
@@ -347,4 +343,14 @@ input {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+.logo-heading {
+  display: grid;
+  font: inherit;
+}
+
+.logout--inline {
+  position: static;
+  color: var(--gold);
 }
