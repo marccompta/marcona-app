@@ -12,7 +12,7 @@ Work through these in order. Each task leaves the tests passing.
 - [x] **T8:** Apply the chosen direction: tokens, self-hosted fonts, the app shell and the tab bar. (REQ-012, REQ-013, REQ-020, REQ-021, REQ-022, REQ-023, REQ-024, REQ-025, REQ-026, REQ-027)
 - [x] **T9:** Add login, failed login, session persistence and logout. (REQ-003, REQ-004, REQ-005, REQ-006, REQ-007)
 - [x] **T10:** Add the ranking's styled empty state. (REQ-011)
-- [ ] **T11:** Add a test that scans the repository for secrets. (REQ-031)
+- [x] **T11:** Add a test that scans the repository for secrets. (REQ-031)
 
 ## Review fixes
 
