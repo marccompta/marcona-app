@@ -2,7 +2,7 @@
 
 Work through these in order. Each task leaves the tests passing.
 
-- [ ] **T1:** Scaffold Vite, React and TypeScript with the base path and hash routes. Set up Vitest and Playwright, and add the commands to `AGENTS.md`. (REQ-001, REQ-002)
+- [x] **T1:** Scaffold Vite, React and TypeScript with the base path and hash routes. Set up Vitest and Playwright, and add the commands to `AGENTS.md`. (REQ-001, REQ-002)
 - [ ] **T2:** Build 2 or 3 phone-sized visual directions as static pages, render them to `evidence/`, and show them to the human to pick from. (REQ-028)
 - [ ] **T3:** Check install commands against official docs, install the tooling, add `.mcp.json`, and write `docs/tooling.md`. (REQ-029, REQ-034)
 - [ ] **T4:** Write `docs/setup.md`, then walk the human through it one step at a time, checking each. (REQ-030)
