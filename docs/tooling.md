@@ -35,6 +35,7 @@ Which mechanism to use for what, and what's installed in this repo. Project tool
 | `slice-auditor` | Subagent | Follows review instructions with no prior context, and runs cold-start checks. |
 | `scripts/check_docs.py` | Script | Checks traceability and slice completeness, locally and in CI. |
 | `scripts/protect_closed_slices.py` | `PreToolUse` hook | Blocks Claude's Edit and Write tools inside closed slices. It doesn't cover shell commands or non-Claude tools. |
+| `scripts/require_passing_tests.py` | `PreToolUse` hook | Blocks Claude's `git commit` while the unit tests fail. The tests run before the whole shell command, so edits made earlier in the same command aren't seen. It doesn't cover commits made outside Claude. |
 | `.github/workflows/ci.yml` | CI | Runs the docs check, the unit tests, the build and the demo's tests on each PR. |
 | `.github/workflows/deploy.yml` | CI | Tests, builds and deploys `main` and `slice/**` to GitHub Pages. The last push wins. |
 | Supabase MCP server | MCP, in `.mcp.json` | Migrations, queries, logs and docs. Scoped to this project with `project_ref`. Auto mode can stay on, and migrations don't need manual approval. `permissions.ask` in `.claude/settings.json` lists the other tools that can change something. Sign in with `/mcp`, so there's no token in the repo. Checked against https://supabase.com/docs/guides/getting-started/mcp. |
