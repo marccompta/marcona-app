@@ -35,11 +35,18 @@ Which mechanism to use for what, and what's installed in this repo. Project tool
 | `slice-auditor` | Subagent | Follows review instructions with no prior context, and runs cold-start checks. |
 | `scripts/check_docs.py` | Script | Checks traceability and slice completeness, locally and in CI. |
 | `scripts/protect_closed_slices.py` | `PreToolUse` hook | Blocks Claude's Edit and Write tools inside closed slices. It doesn't cover shell commands or non-Claude tools. |
-| `.github/workflows/ci.yml` | CI | Runs the docs check and the demo's tests on each PR. |
+| `.github/workflows/ci.yml` | CI | Runs the docs check, the unit tests, the build and the demo's tests on each PR. |
+| `.github/workflows/deploy.yml` | CI | Tests, builds and deploys `main` and `slice/**` to GitHub Pages. The last push wins. |
+| Supabase MCP server | MCP, in `.mcp.json` | Migrations, queries, logs and docs. Scoped to this project with `project_ref`, with manual approval kept on. Sign in with `/mcp`, so there's no token in the repo. Checked against https://supabase.com/docs/guides/getting-started/mcp. |
+| Playwright MCP server | MCP, in `.mcp.json` | Interactive phone-sized checks and review screenshots. `@playwright/mcp` is pinned, and uses Edge because Chrome isn't installed here and WebKit won't launch. Checked against https://github.com/microsoft/playwright-mcp. |
+| Vitest, Testing Library, Playwright | npm packages | Unit tests, and browser tests at 360px. The commands are in `AGENTS.md`. |
 
 ## Not installed yet
 
-`.mcp.json` and `.claude/rules/` don't exist because nothing needs them yet. Add them when a slice first does. Claude Code asks you to approve a project's MCP servers before they're used.
+- `.claude/rules/` doesn't exist because nothing needs it yet. Add it when a slice first does.
+- The `frontend-design` plugin and the Supabase agent skills are installed by the human, in step 5 of `docs/setup.md`. Move them to "Installed now" once that's done.
+
+Claude Code asks you to approve a project's MCP servers before they're used.
 
 ## Adding tooling
 
