@@ -42,7 +42,7 @@ Every requirement has a permanent ID. Raw input is kept in `docs/product/intake/
 | REQ-031 | The repository shall contain no Supabase credential other than the project URL and publishable key, and no real password. | planned | 001 | test |
 | REQ-032 | The project shall keep migrations in `supabase/migrations/` and apply them to the hosted project, without relying on Docker or the local Supabase stack. | planned | 001 | manual |
 | REQ-033 | When a slice is under review, the project shall deploy that slice's branch to the public site. | planned | 001 | manual |
-| REQ-034 | The project shall scope the Supabase MCP server to this one project, with manual approval kept on. | planned | 001 | manual |
+| REQ-034 | The project shall scope the Supabase MCP server to this one project, with manual approval kept on. | superseded by REQ-206 | 001 | manual |
 | REQ-035 | When the admin submits a valid new username and password, the system shall create the user with 0 marcones. | planned | 002 | test |
 | REQ-036 | If a new username isn't 3 to 20 characters of lowercase `[a-z0-9_-]`, then the system shall reject it. | planned | 002 | test |
 | REQ-037 | If a new username matches an existing user, including a removed one, then the system shall reject it. | planned | 002 | test |
@@ -214,12 +214,13 @@ Every requirement has a permanent ID. Raw input is kept in `docs/product/intake/
 | REQ-203 | When a duel tap is saved, the system shall make that button glow clearly for two seconds, and shall give no other feedback. | planned | 005 | test |
 | REQ-204 | If a duel tap arrives after both players have picked, then the system shall leave the choices as they were and show the reveal. | planned | 005 | test |
 | REQ-205 | If a player tries to change a locked-in choice in La minoria, then the system shall reject it. | planned | 007 | test |
+| REQ-206 | The project shall scope the Supabase MCP server to this one project. Auto mode may stay on, and migrations don't need the human's manual approval. The other Supabase tools that can change something keep their `ask` rules. | planned | 001 | test |
 
 ## Slice roadmap
 
 | Slice | Goal | Requirements | Status |
 |---|---|---|---|
-| 001 | Foundation: the stack and tools are in place, and the admin can log in on a phone at the public URL and see a styled, empty Catalan ranking. Includes the visual directions. | REQ-001 to REQ-034 | planned |
+| 001 | Foundation: the stack and tools are in place, and the admin can log in on a phone at the public URL and see a styled, empty Catalan ranking. Includes the visual directions. | REQ-001 to REQ-033, REQ-206 | planned |
 | 002 | Users and marcones: the admin manages users and marcones, and everyone sees the ranking, user details and audit. | REQ-035 to REQ-070 | planned |
 | 003 | Classic events: the full event lifecycle, including payouts, refunds and rounding. | REQ-071 to REQ-100, REQ-186 to REQ-190 | planned |
 | 004 | Roulette: spin, payout, audit and admin settings. | REQ-101 to REQ-119 | planned |

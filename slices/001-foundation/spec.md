@@ -2,7 +2,7 @@
 slice: "001"
 title: Foundation
 status: in-review
-requirements: [REQ-001, REQ-002, REQ-003, REQ-004, REQ-005, REQ-006, REQ-007, REQ-008, REQ-009, REQ-010, REQ-011, REQ-012, REQ-013, REQ-014, REQ-015, REQ-016, REQ-017, REQ-018, REQ-019, REQ-020, REQ-021, REQ-022, REQ-023, REQ-024, REQ-025, REQ-026, REQ-027, REQ-028, REQ-029, REQ-030, REQ-031, REQ-032, REQ-033, REQ-034]
+requirements: [REQ-001, REQ-002, REQ-003, REQ-004, REQ-005, REQ-006, REQ-007, REQ-008, REQ-009, REQ-010, REQ-011, REQ-012, REQ-013, REQ-014, REQ-015, REQ-016, REQ-017, REQ-018, REQ-019, REQ-020, REQ-021, REQ-022, REQ-023, REQ-024, REQ-025, REQ-026, REQ-027, REQ-028, REQ-029, REQ-030, REQ-031, REQ-032, REQ-033, REQ-206]
 ---
 
 # Slice 001: Foundation
@@ -68,7 +68,7 @@ The admin opens the public URL on a phone, logs in, and sees a styled, empty ran
 - **REQ-031:** The repository shall contain no Supabase credential other than the project URL and publishable key, and no real password.
 - **REQ-032:** The project shall keep migrations in `supabase/migrations/` and apply them to the hosted project, without relying on Docker or the local Supabase stack.
 - **REQ-033:** When a slice is under review, the project shall deploy that slice's branch to the public site.
-- **REQ-034:** The project shall scope the Supabase MCP server to this one project, with manual approval kept on.
+- **REQ-206:** The project shall scope the Supabase MCP server to this one project. Auto mode may stay on, and migrations don't need the human's manual approval. The other Supabase tools that can change something keep their `ask` rules.
 
 ## Acceptance criteria
 
@@ -170,12 +170,12 @@ Scenario: Choose a visual direction
   Then I see 2 or 3 phone-sized directions from the "Casino Tokens" family
   And the chosen one is what's built
 
-# REQ-029, REQ-030, REQ-034
+# REQ-029, REQ-030, REQ-206
 Scenario: Tools and setup are documented
   When I read docs/tooling.md and docs/setup.md
   Then each tool has a clear job and a checked install command
   And every step I had to do is written down exactly
-  And the Supabase MCP server is scoped to this project with manual approval on
+  And the Supabase MCP server is scoped to this project
 
 # REQ-031
 Scenario: No secrets in the repo
@@ -195,7 +195,7 @@ Scenario: The slice under review is deployed
 
 ## Impact on existing behaviour
 
-The repo becomes public, so everything committed so far is published. CI gains the app's unit tests and build. No requirements are superseded.
+The repo becomes public, so everything committed so far is published. CI gains the app's unit tests and build. REQ-034 is superseded by REQ-206, because the human decided during the build that auto mode can stay on and migrations don't need manual approval.
 
 ## Open questions
 

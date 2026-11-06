@@ -8,7 +8,6 @@
       "Bash(python -m unittest:*)"
     ],
     "ask": [
-      "mcp__supabase__apply_migration",
       "mcp__supabase__execute_sql",
       "mcp__supabase__deploy_edge_function",
       "mcp__supabase__create_edge_function_secret",

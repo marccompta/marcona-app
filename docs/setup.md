@@ -71,8 +71,7 @@ The Playwright server needs Chrome installed on the machine.
 1. Restart Claude Code, then continue this session with `claude --continue`.
 2. Approve the project's MCP servers when asked.
 3. Run `/mcp`, choose `supabase`, and sign in with your browser.
-4. Turn auto mode off before any Supabase work: press Shift+Tab until the mode shown isn't "auto". In auto mode, an automatic check can decide tool calls instead of asking you.
-5. When Claude asks to use a Supabase tool that changes something, approve each one. Don't choose "always allow". That's how manual approval stays on. If a change happens with no prompt, stop and tell Claude.
+4. Auto mode can stay on, and migrations don't need your approval. Tools other than migrations that change something have `ask` rules in `.claude/settings.json`, so approve those when asked.
 
 **Check:** Claude lists the project's tables through the Supabase MCP server.
 

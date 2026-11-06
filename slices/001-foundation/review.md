@@ -35,7 +35,7 @@ This should take 5 to 10 minutes on your phone.
 
 **Docs, if you want to spot-check them:**
 
-11. Open `docs/setup.md`: every step you did by hand should be there. Open `docs/tooling.md`: each tool should have a clear job, and a note on how its install command was checked. Open `.mcp.json`: the Supabase URL should end in `project_ref=ndkgmenntqhjojalqbdm`. Open `.claude/settings.json`: `ask` should list the nine Supabase tools that can change something.
+11. Open `docs/setup.md`: every step you did by hand should be there. Open `docs/tooling.md`: each tool should have a clear job, and a note on how its install command was checked. Open `.mcp.json`: the Supabase URL should end in `project_ref=ndkgmenntqhjojalqbdm`. Open `.claude/settings.json`: `ask` should list eight Supabase tools, with `apply_migration` left out.
 
 ## 4. Checklist
 
@@ -58,7 +58,7 @@ This should take 5 to 10 minutes on your phone.
 | 13 | REQ-023, REQ-024 | Step 6, plus automatic | Nothing scrolls sideways, and targets are at least 44px |
 | 14 | REQ-025, REQ-027 | Steps 6, 9 | Clear of the notch and home bar, and usable on a desktop |
 | 15 | REQ-028 | Step 10 | Three directions were shown, and the site matches B |
-| 16 | REQ-029, REQ-030, REQ-034 | Step 11, plus automatic | Tools and setup are written down, and Supabase MCP is scoped to this project. **Manual approval was not kept on for the two migrations**. It works now, with auto mode off, see section 6 |
+| 16 | REQ-029, REQ-030, REQ-206 | Step 11, plus automatic | Tools and setup are written down, Supabase MCP is scoped to this project, and migrations need no manual approval |
 | 17 | REQ-031 | Automatic | The secret scan finds nothing |
 | 18 | REQ-032 | Automatic | [supabase-checks.md](evidence/supabase-checks.md) shows the repo's two migrations are the two applied. Section 6 lists what's outside them |
 | 19 | REQ-033 | Step 1 | The public site shows this slice, and the latest **Deploy** run for `slice/001-foundation` at https://github.com/marccompta/marcona-app/actions is green |
@@ -69,7 +69,7 @@ You don't need to rerun these. To do so, use Git Bash at the repo root, after `n
 
 | Check | Command | Result |
 |---|---|---|
-| Unit tests, including the secret scan | `npm test` | 47 passed |
+| Unit tests, including the secret scan | `npm test` | 48 passed |
 | Hosted project tests | `npm run test:hosted` | 9 passed |
 | Browser tests at 360px, on a local build | `npm run test:e2e` | 50 passed |
 | Browser tests on the deployed site | `E2E_BASE_URL=https://marccompta.github.io/marcona-app/ npm run test:e2e` | 50 passed |
@@ -80,11 +80,11 @@ You don't need to rerun these. To do so, use Git Bash at the repo root, after `n
 
 The browser tests are 25 tests, each run in Chromium and in WebKit, Safari's engine. Of the 25, 18 use a fake Supabase, so they can test cases the real project can't produce on demand. Another 5 need no backend, and 2 use the real project. The hosted tests and those 2 browser tests need `.env.test.local`. Without it, a browser run shows 46 passed and 4 skipped.
 
-Instructions run as written: steps 1 to 5, 8 and 9 in scripted browsers, by Claude and `slice-auditor`. Steps 10 and 11 were read rather than run. Steps 6 and 7 need your eyes on a real phone. Audit by `slice-auditor`: two passes, both failing this document, with no failed tests. Their findings are fixed here, and no third pass has been run.
+Instructions run as written: steps 1 to 5, 8 and 9 in scripted browsers, by Claude and `slice-auditor`. Steps 10 and 11 were read rather than run. Steps 6 and 7 need your eyes on a real phone. Audit by `slice-auditor`: two passes, both failing this document, with no failed tests. Their findings are fixed here. No third `slice-auditor` pass has been run, but Claude re-read this document against the repo at your request: every link resolves, and the app hasn't changed since the screenshots were taken.
 
 ## 6. Known limitations
 
-- **REQ-034 was not met for two changes:** the `profiles` and `admin_profile` migrations reached the live database with no approval prompt. This session had been in auto mode, where an automatic check can decide tool calls. You confirmed you saw no prompts. The changes match the repo. Nine `ask` rules and a setup step have been added since. With auto mode off, a test query prompted you, so manual approval now works. Whether the rules also hold in auto mode is untested, so keep auto mode off for Supabase work.
+- **Two migrations ran with no prompt:** `profiles` and `admin_profile` reached the live database in auto mode, while REQ-034 still required your manual approval. The changes match the repo. You've since decided that auto mode can stay on and migrations don't need your approval, so REQ-206 replaces REQ-034, and ADR 0007 replaces ADR 0002. Eight other Supabase tools keep their `ask` rules. A prompt appeared with auto mode off, but whether the rules hold in auto mode is untested.
 - **No cards or tags on screen yet (REQ-020):** the spec lists rounded cards and pill tags. Direction B swaps cards for ledger rows, and its one pill, "tu", arrives with the player list in slice 002. Say so in your verdict if you want cards kept.
 - **Real iPhone not tested:** the tests run Safari's engine, but with phone emulation on Windows. The real notch, home bar and Safari itself are only checked by you, in steps 1 to 8.
 - **Real player not tested:** no one can create players until slice 002, so hiding Administració from a player is tested only with a fake one.
