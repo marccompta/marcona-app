@@ -32,8 +32,8 @@ All skills accept `--project <path>` to work on a project other than the repo ro
 
 Skills read these lines from the project's `AGENTS.md`. A missing line means the default shown here. Fast mode changes which steps stop for the human, as described under "Fast lane" in `docs/workflow.md`.
 
-- Mode: standard
-- Auto-push: no
+- Mode: fast
+- Auto-push: yes
 
 ## Hard rules
 
