@@ -9,8 +9,10 @@ function fakeClient() {
     status: (status: string) => void
     removed: boolean
   }[] = []
+  const options: unknown[] = []
   const client = {
-    channel() {
+    channel(_name: string, settings: unknown) {
+      options.push(settings)
       const channel = {
         bindings: [] as (typeof channels)[number]['bindings'],
         status: (_status: string) => {},
@@ -38,7 +40,7 @@ function fakeClient() {
       .flatMap((channel) => channel.bindings)
       .filter((binding) => binding.filter.table === table)
       .forEach((binding) => binding.callback({ table, new: {}, old: {} }))
-  return { client: client as unknown as LiveClient, channels, change }
+  return { client: client as unknown as LiveClient, channels, change, options }
 }
 
 function Screen(props: { sources: LiveSource[]; refresh: () => void; client: LiveClient; enabled?: boolean }) {
@@ -60,6 +62,12 @@ describe('live refresh', () => {
       { event: '*', schema: 'public', table: 'profiles' },
       { event: '*', schema: 'public', table: 'ledger' },
     ])
+  })
+
+  it('REQ-150: waits for the database side, so the read on subscribing misses nothing', () => {
+    const { client, options } = fakeClient()
+    render(<Screen sources={[{ table: 'profiles' }]} refresh={() => {}} client={client} />)
+    expect(options).toEqual([{ config: { postgres_changes_options: { wait: true } } }])
   })
 
   it('REQ-152: passes a filter on to Realtime', () => {

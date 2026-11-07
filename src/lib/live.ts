@@ -23,7 +23,10 @@ export function watchTables(
   { client = supabase as LiveClient, onReady = () => {} }: { client?: LiveClient; onReady?: () => void } = {},
 ) {
   channels += 1
-  const channel = client.channel(`live-${channels}`)
+  // By default Realtime says it has subscribed before the database side is
+  // streaming, and a change in between would be lost. Waiting means the read
+  // in onReady comes after anything this subscription can miss.
+  const channel = client.channel(`live-${channels}`, { config: { postgres_changes_options: { wait: true } } })
   for (const { table, filter } of sources) {
     channel.on(
       'postgres_changes',
