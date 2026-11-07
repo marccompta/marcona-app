@@ -1,19 +1,30 @@
 import { randomUUID } from 'node:crypto'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
 import { errorMessage } from '../../src/i18n/errors'
 import { text } from '../../src/i18n/text'
 import { adjustBalance, fetchMovements } from '../../src/lib/data'
-import { spin, type Spin } from '../../src/lib/roulette'
+import { fetchRoulette, saveRouletteSettings, spin, type RouletteSettings, type Spin } from '../../src/lib/roulette'
 import { adminClient, createTestUser, publicClient, signOutAll, type TestUser } from './env'
 
-afterAll(signOutAll)
+// The settings tests change the real table's settings, so every test that spins
+// lives in this file, where tests run one at a time, and they're put back at the end.
+const defaults: RouletteSettings = { enabled: true, white_one_in: 37, max_bet_percent: 5 }
 
 let admin: Awaited<ReturnType<typeof adminClient>>
 let player: TestUser
+let original: RouletteSettings
 
 beforeAll(async () => {
   admin = await adminClient()
   player = await createTestUser('ruleta')
+  const { enabled, white_one_in, max_bet_percent } = await fetchRoulette(admin)
+  original = { enabled, white_one_in, max_bet_percent }
+  await saveRouletteSettings(defaults, admin)
+})
+
+afterAll(async () => {
+  await saveRouletteSettings(original, admin)
+  await signOutAll()
 })
 
 async function balance() {
@@ -216,9 +227,126 @@ describe('the limit', () => {
   })
 })
 
+describe('the maximum bet shown', () => {
+  it.each([
+    [100, 5],
+    [39, 1],
+    [1, 1],
+    [0, 1],
+  ])('REQ-108, REQ-109: with %i marcones it is %i', async (marcones, maximum) => {
+    await setBalance(marcones)
+    expect(await fetchRoulette(player.client)).toMatchObject({ balance: marcones, max_bet: maximum })
+  })
+})
+
+describe('the settings', () => {
+  afterEach(() => saveRouletteSettings(defaults, admin))
+
+  it('REQ-104, REQ-108: start at 1 in 37 and 5%, with the table open', async () => {
+    expect(await fetchRoulette(player.client)).toMatchObject(defaults)
+  })
+
+  it('REQ-115: a new white chance applies to later spins', async () => {
+    await setBalance(100000)
+    await saveRouletteSettings({ ...defaults, white_one_in: 2 }, admin)
+    expect(await fetchRoulette(player.client)).toMatchObject({ white_one_in: 2 })
+
+    let whites = 0
+    for (let round = 0; round < 60; round += 1) {
+      const { result } = await spin({ requestId: randomUUID(), choice: 'red', bet: 1 }, player.client)
+      if (result === 'white') whites += 1
+    }
+
+    // About 30 at 1 in 2, and about 2 at 1 in 37.
+    expect(whites).toBeGreaterThan(12)
+  })
+
+  it('REQ-116: a new maximum applies to later spins, and players see it', async () => {
+    await setBalance(100)
+    await saveRouletteSettings({ ...defaults, max_bet_percent: 10 }, admin)
+
+    expect(await fetchRoulette(player.client)).toMatchObject({ max_bet_percent: 10, max_bet: 10 })
+    expect((await bet('red', 11)).error?.message).toBe('bet_too_high')
+    expect((await bet('red', 10)).error).toBeNull()
+  })
+
+  it('REQ-117, REQ-118: a closed table rejects spins, and reopening lets them back', async () => {
+    await setBalance(100)
+    await saveRouletteSettings({ ...defaults, enabled: false }, admin)
+
+    expect(await fetchRoulette(player.client)).toMatchObject({ enabled: false })
+    const { error } = await bet('red', 1)
+    expect(error?.message).toBe('roulette_closed')
+    expect(errorMessage(error)).toBe(text.errors.rouletteClosed)
+    expect(await balance()).toBe(100)
+
+    await saveRouletteSettings(defaults, admin)
+    expect((await bet('red', 1)).error).toBeNull()
+  })
+
+  it('REQ-118: a spin that already happened still answers once the table closes', async () => {
+    await setBalance(100)
+    const requestId = randomUUID()
+    const first = await spin({ requestId, choice: 'red', bet: 1 }, player.client)
+
+    await saveRouletteSettings({ ...defaults, enabled: false }, admin)
+    expect(await spin({ requestId, choice: 'red', bet: 1 }, player.client)).toEqual(first)
+  })
+
+  it.each([
+    ['white_one_in', 1, 'invalidWhiteChance'],
+    ['white_one_in', 1001, 'invalidWhiteChance'],
+    ['white_one_in', 2.5, 'invalidWhiteChance'],
+    ['white_one_in', null, 'invalidWhiteChance'],
+    ['max_bet_percent', 0, 'invalidMaxBetPercent'],
+    ['max_bet_percent', 101, 'invalidMaxBetPercent'],
+    ['max_bet_percent', 2.5, 'invalidMaxBetPercent'],
+    ['max_bet_percent', null, 'invalidMaxBetPercent'],
+  ] as const)('REQ-119: rejects %s of %s, in Catalan, and keeps the settings', async (setting, value, message) => {
+    const bad = { ...defaults, [setting]: value } as RouletteSettings
+    await expect(saveRouletteSettings(bad, admin)).rejects.toSatisfy((error) => errorMessage(error) === text.errors[message])
+    expect(await fetchRoulette(admin)).toMatchObject(defaults)
+  })
+
+  it.each([
+    ['white_one_in', 2],
+    ['white_one_in', 1000],
+    ['max_bet_percent', 1],
+    ['max_bet_percent', 100],
+  ] as const)('REQ-119: accepts the limit %s of %s', async (setting, value) => {
+    await saveRouletteSettings({ ...defaults, [setting]: value }, admin)
+    expect(await fetchRoulette(admin)).toMatchObject({ [setting]: value })
+  })
+
+  it('REQ-119: rejects a missing on or off', async () => {
+    const bad = { ...defaults, enabled: null } as unknown as RouletteSettings
+    await expect(saveRouletteSettings(bad, admin)).rejects.toMatchObject({ message: 'invalid_roulette_settings' })
+  })
+
+  it('REQ-115: a player cannot change them', async () => {
+    await expect(saveRouletteSettings({ ...defaults, white_one_in: 1000 }, player.client)).rejects.toMatchObject({
+      code: '42501',
+    })
+    expect(await fetchRoulette(player.client)).toMatchObject(defaults)
+  })
+
+  it('REQ-115: the browser cannot reach the table', async () => {
+    for (const client of [player.client, admin]) {
+      const { data, error } = await client.from('app_settings').select('*')
+      expect(data ?? []).toEqual([])
+      expect(error).not.toBeNull()
+      expect((await client.from('app_settings').update({ value: {} }).eq('key', 'roulette')).error).not.toBeNull()
+    }
+  })
+})
+
 describe('without a login', () => {
   it('REQ-102: nobody spins', async () => {
     const { error } = await publicClient().rpc('spin', { p_request_id: randomUUID(), p_choice: 'red', p_bet: 1 })
     expect(error).not.toBeNull()
+  })
+
+  it('REQ-109: nobody reads the table', async () => {
+    expect((await publicClient().rpc('roulette_state')).error).not.toBeNull()
   })
 })

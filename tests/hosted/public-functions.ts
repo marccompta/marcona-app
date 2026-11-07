@@ -31,5 +31,7 @@ export const publicFunctions = (userId: string): Record<string, Record<string, u
   revoke_sessions: { p_user_id: userId },
   rls_auto_enable: {},
   rls_report: {},
+  roulette_state: {},
+  set_roulette_settings: { p_enabled: true, p_white_one_in: 37, p_max_bet_percent: 5 },
   spin: { p_request_id: crypto.randomUUID(), p_choice: 'red', p_bet: 1 },
 })

@@ -166,6 +166,9 @@ export const text = {
     invalidBet: "L'aposta ha de ser un nombre enter d'1 o més.",
     invalidChoice: 'Tria vermell o negre.',
     betTooHigh: "L'aposta supera el màxim que pots apostar ara.",
+    rouletteClosed: 'La ruleta està tancada.',
+    invalidWhiteChance: 'La probabilitat de blanc ha de ser 1 entre un nombre enter de 2 a 1.000.',
+    invalidMaxBetPercent: "L'aposta màxima ha de ser un percentatge enter de l'1 al 100.",
     unknown: 'Alguna cosa ha fallat. Torna-ho a provar.',
   },
 } as const
