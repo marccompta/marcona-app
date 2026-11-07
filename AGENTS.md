@@ -75,6 +75,14 @@ Slice: 001
 
 Write long scripts as files, then run them. Long heredocs break in Git Bash here, especially with apostrophes.
 
+Commands the human runs in PowerShell, such as those in `review.md`, say `npm.cmd` and `npx.cmd`, because this machine's script policy blocks plain `npm` and `npx`. Claude's own shell bypasses the policy, so test those commands with `powershell.exe -NoProfile -ExecutionPolicy Restricted`.
+
+## Testing
+
+- **Retrying checks wait out anything that expires.** A glow, an animation or a celebration ends by itself, so a retrying `expect` can pass on broken code. This happened once in slice 004 and three times in slice 005. To prove something is absent or finished, read it once with `getAttribute` or `count()`. To prove it never happened, set up a `MutationObserver` before the action. Read a style mid-effect only after the fade, and time things in the browser.
+- **Prove a new test by breaking the code on purpose.** Check that the break compiled, because a break that fails at the build proves nothing.
+- **Never assume live settings in tests on the real project.** The admin changes them during reviews. Read the numbers from the duel's `settings` or from `roulette_state()`.
+
 ## Where things go
 
 - `docs/product/`: vision, backlog, raw intake notes.
