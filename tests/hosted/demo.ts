@@ -1,7 +1,8 @@
 // Plays the demo accounts during a review, so one phone is enough. It uses the
 // admin's login from .env.test.local, so it only runs on the human's machine.
 //
-//   npm run demo -- fund 100                Sets the admin and each demo player to exactly 100
+//   npm run demo -- fund 100                Cancels every open event, then sets the admin and
+//                                           each demo player to exactly 100, for a clean start
 //   npm run demo -- status                  Lists demo players, balances and pending invitations
 //   npm run demo -- accept [event] [player] Accepts pending invitations, optionally only these
 //   npm run demo -- decline [event] [player]
@@ -12,7 +13,7 @@
 import { randomBytes, randomUUID } from 'node:crypto'
 import { callAdminUsers } from '../../src/lib/adminUsers'
 import { adjustBalance, fetchPeople, type Person } from '../../src/lib/data'
-import { answerInvitation, createEvent, fetchEvents, groupEvents } from '../../src/lib/events'
+import { answerInvitation, cancelEvent, createEvent, fetchEvents, groupEvents } from '../../src/lib/events'
 import { adminClient, adminLogin, logInAs, signOutAll } from './env'
 
 type Client = Awaited<ReturnType<typeof adminClient>>
@@ -27,6 +28,14 @@ async function logInAsPlayer(admin: Client, player: Person) {
 
 async function fund(admin: Client, target: number) {
   if (!Number.isInteger(target) || target < 1) throw new Error('Say how many marcones, such as: fund 100')
+
+  // Otherwise an old event's refund, or a second one of the same name, spoils the numbers.
+  for (const event of await fetchEvents(admin)) {
+    if (event.status !== 'open') continue
+    await cancelEvent({ requestId: randomUUID(), eventId: event.id }, admin)
+    console.log(`cancelled ${event.name}`)
+  }
+
   const people = await fetchPeople(admin)
   const accounts = people.filter((person) => isDemoPlayer(person) || person.username === adminLogin().username)
 
