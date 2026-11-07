@@ -215,6 +215,8 @@ Every requirement has a permanent ID. Raw input is kept in `docs/product/intake/
 | REQ-204 | If a duel tap arrives after both players have picked, then the system shall leave the choices as they were and show the reveal. | planned | 005 | test |
 | REQ-205 | If a player tries to change a locked-in choice in La minoria, then the system shall reject it. | planned | 007 | test |
 | REQ-206 | The project shall scope the Supabase MCP server to this one project. Auto mode may stay on, and migrations don't need the human's manual approval. The other Supabase tools that can change something keep their `ask` rules. | active | 001 | test |
+| REQ-207 | If a call to a Postgres function fails because the connection was lost, then the system shall show the no-connection message, not the general one. Seen in slice 004: every function call shows the general one. | proposed | - | test |
+| REQ-208 | If two money actions for one user arrive together, then the system shall apply both with no deadlock error. Found reading the code in slice 004 and not reproduced: functions other than `spin()` claim a request before locking the user. No money is at risk, as one action would fail and roll back. | proposed | - | test |
 
 ## Slice roadmap
 
