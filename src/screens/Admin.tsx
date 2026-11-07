@@ -1,61 +1,12 @@
-import { useRef, useState, type FormEvent, type ReactNode } from 'react'
-import { errorMessage } from '../i18n/errors'
+import { useRef, useState, type FormEvent } from 'react'
 import { formatMarcones } from '../i18n/format'
 import { text } from '../i18n/text'
 import { callAdminUsers } from '../lib/adminUsers'
 import { adjustBalance, fetchPeople, useLoad, type Person } from '../lib/data'
 import { supabase } from '../lib/supabase'
 import { ChipStack } from '../shell/Balance'
+import { Field, Outcome, plainInput, useAction } from '../shell/Form'
 import { Pending } from './Movements'
-
-type Outcome = { kind: 'done' | 'failed'; message: string } | null
-
-// Runs one admin action at a time, and turns its result into a message.
-function useAction() {
-  const [busy, setBusy] = useState(false)
-  const [outcome, setOutcome] = useState<Outcome>(null)
-
-  async function run(action: () => Promise<string>) {
-    setBusy(true)
-    setOutcome(null)
-    try {
-      const message = await action()
-      setOutcome({ kind: 'done', message })
-      return true
-    } catch (error) {
-      setOutcome({ kind: 'failed', message: errorMessage(error) })
-      return false
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  return { busy, outcome, run }
-}
-
-function Outcome({ outcome }: { outcome: Outcome }) {
-  if (!outcome) return null
-  return outcome.kind === 'failed' ? (
-    <p className="notice" role="alert">
-      {outcome.message}
-    </p>
-  ) : (
-    <p className="confirmed" role="status">
-      {outcome.message}
-    </p>
-  )
-}
-
-function Field({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <label className="field">
-      {label}
-      {children}
-    </label>
-  )
-}
-
-const plainInput = { autoCapitalize: 'none', autoCorrect: 'off', autoComplete: 'off', spellCheck: false }
 
 function CreateUser({ onChange }: { onChange: () => void }) {
   const [username, setUsername] = useState('')
