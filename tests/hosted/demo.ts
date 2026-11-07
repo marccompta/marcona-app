@@ -8,23 +8,14 @@
 //   npm run demo -- decline [event] [player]
 //   npm run demo -- invite <event> <buy-in> The first demo player invites the admin to a new event
 //
-// Demo passwords aren't kept anywhere: each run sets a new random one to log in,
-// which also ends any session that player had open.
-import { randomBytes, randomUUID } from 'node:crypto'
-import { callAdminUsers } from '../../src/lib/adminUsers'
+import { randomUUID } from 'node:crypto'
 import { adjustBalance, fetchPeople, type Person } from '../../src/lib/data'
 import { answerInvitation, cancelEvent, createEvent, fetchEvents, groupEvents } from '../../src/lib/events'
-import { adminClient, adminLogin, logInAs, signOutAll } from './env'
+import { adminClient, adminLogin, logInAsDemo, signOutAll } from './env'
 
 type Client = Awaited<ReturnType<typeof adminClient>>
 
 const isDemoPlayer = (person: Person) => person.username.startsWith('demo-') && !person.removed_at
-
-async function logInAsPlayer(admin: Client, player: Person) {
-  const password = randomBytes(18).toString('base64url')
-  await callAdminUsers(admin, { action: 'reset', userId: player.user_id, password })
-  return logInAs(player.username, password)
-}
 
 async function fund(admin: Client, target: number) {
   if (!Number.isInteger(target) || target < 1) throw new Error('Say how many marcones, such as: fund 100')
@@ -62,7 +53,7 @@ async function invite(admin: Client, name: string | undefined, buyIn: number) {
   const [host] = people.filter(isDemoPlayer).sort((a, b) => a.username.localeCompare(b.username))
   const me = people.find((person) => person.username === adminLogin().username)!
 
-  const client = await logInAsPlayer(admin, host)
+  const client = await logInAsDemo(admin, host)
   await createEvent(
     { requestId: randomUUID(), name, buyIn, invitees: [me.user_id], payouts: [50, 30, 20], force: false },
     client,
@@ -89,7 +80,7 @@ async function answer(admin: Client, accept: boolean, eventName?: string, onlyPl
     const pending = groupEvents(events, player.username).invitations.filter((event) => !eventName || event.name === eventName)
     if (pending.length === 0) continue
 
-    const client = await logInAsPlayer(admin, player)
+    const client = await logInAsDemo(admin, player)
     for (const event of pending) {
       await answerInvitation({ requestId: randomUUID(), eventId: event.id, accept }, client)
       console.log(`${player.username} ${accept ? 'accepted' : 'declined'} ${event.name}`)

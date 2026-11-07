@@ -189,6 +189,9 @@ export const text = {
     rouletteClosed: 'La ruleta està tancada.',
     invalidWhiteChance: 'La probabilitat de blanc ha de ser 1 entre un nombre enter de 2 a 1.000.',
     invalidMaxBetPercent: "L'aposta màxima ha de ser un percentatge enter de l'1 al 100.",
+    gameOff: 'Aquest joc està desactivat.',
+    gameNotFound: 'No hem trobat aquest joc.',
+    duelNeedsTwoPlayers: 'Un duel és entre exactament dues persones diferents.',
     unknown: 'Alguna cosa ha fallat. Torna-ho a provar.',
   },
 } as const

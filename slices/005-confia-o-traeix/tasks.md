@@ -2,8 +2,8 @@
 
 Work through these in order. Each task leaves the tests passing.
 
-- [ ] **T1:** Add the `games` table, event phases and the settings copy. (REQ-121, REQ-122, REQ-149)
-- [ ] **T2:** Add `create_game_event()`: admin-only, playing or not, exactly two different players, and forced participation. (REQ-123, REQ-176, REQ-178, REQ-179, REQ-180, REQ-181, REQ-182, REQ-191)
+- [x] **T1:** Add the `games` table, event phases and the settings copy. (REQ-121, REQ-122, REQ-149)
+- [x] **T2:** Add `create_game_event()`: admin-only, playing or not, exactly two different players, and forced participation. (REQ-123, REQ-176, REQ-178, REQ-179, REQ-180, REQ-181, REQ-182, REQ-191)
 - [ ] **T3:** Update invitations and removal for duels, and reject completing a game by hand. (REQ-124, REQ-183, REQ-184)
 - [ ] **T4:** Add `private.choices` and `lock_in()`, where each tap replaces the last until both have picked. (REQ-125, REQ-139, REQ-202, REQ-204)
 - [ ] **T5:** Add `private.resolve_game()` with the duel payouts, and reveal in the same transaction. (REQ-127, REQ-140, REQ-141, REQ-142, REQ-143, REQ-145)
