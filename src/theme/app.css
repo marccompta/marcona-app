@@ -506,9 +506,11 @@ select {
   gap: 12px;
   padding-block: 11px;
   border-bottom: 1px solid var(--gold-hairline);
+  color: inherit;
+  text-decoration: none;
 }
 
-.movement:last-child {
+.movements li:last-child .movement {
   border-bottom: 0;
 }
 
@@ -535,7 +537,8 @@ select {
 }
 
 .movement-time,
-.movement-after {
+.movement-after,
+.movement-by {
   color: var(--sage);
   font-size: 14px;
 }
@@ -767,6 +770,11 @@ select {
   font-size: 15px;
   letter-spacing: 0.06em;
   color: var(--sage);
+}
+
+.hint {
+  color: var(--sage);
+  font-size: 15px;
 }
 
 .places {

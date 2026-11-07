@@ -13,6 +13,9 @@ export type Movement = {
   concept: string | null
   created_at: string
   who: { username: string }
+  event: { id: string; name: string } | null
+  /** Null when this viewer can't see them, as a test account can't see the admin. */
+  actor: { username: string } | null
 }
 
 export type Adjustment = {
@@ -45,7 +48,10 @@ export async function fetchMovements(userId?: string, client = supabase) {
   for (let from = 0; ; from += pageSize) {
     let query = client
       .from('ledger')
-      .select('id, user_id, delta, balance_after, kind, concept, created_at, who:profiles!ledger_user_id_fkey(username)')
+      .select(
+        `id, user_id, delta, balance_after, kind, concept, created_at, who:profiles!ledger_user_id_fkey(username),
+        actor:profiles!ledger_actor_id_fkey(username), event:events(id, name)`,
+      )
     if (userId) query = query.eq('user_id', userId)
 
     const { data, error } = await query.order('id', { ascending: false }).range(from, from + pageSize - 1)

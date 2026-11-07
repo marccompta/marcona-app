@@ -129,6 +129,83 @@ test.describe('the new event form', () => {
   })
 })
 
+test.describe('forced participation', () => {
+  const boss = { ...admin, balance: 100 }
+  const force = (page: Page) => page.getByRole('checkbox', { name: 'Participació obligatòria' })
+
+  test('REQ-186: the admin sees the option, and it starts off', async ({ page }) => {
+    await start(page, boss)
+    await openForm(page)
+    await expect(force(page)).not.toBeChecked()
+  })
+
+  test('REQ-186: a player does not see it', async ({ page }) => {
+    await start(page, rich)
+    await openForm(page)
+    await expect(page.getByRole('checkbox', { name: 'bea' })).toBeAttached()
+    await expect(force(page)).toHaveCount(0)
+    await expect(page.locator('body')).not.toContainText('obligatòria')
+  })
+
+  test('REQ-188: forcing charges everyone at once', async ({ page }) => {
+    const calls = await start(page, boss)
+    await openForm(page)
+    await fillForm(page, 'Pòquer', '10', ['anna', 'bea'])
+    await force(page).check({ force: true })
+    await submit(page)
+
+    await expect(page.locator('[data-event]')).toContainText('Pòquer')
+    expect(calls.eventCalls).toMatchObject([{ fn: 'create_event', p_force: true }])
+    expect(calls.ledger.map((movement) => movement.username).sort()).toEqual(['anna', 'bea', 'marc'])
+    expect(calls.events[0].people).toEqual({ marc: 'accepted', anna: 'accepted', bea: 'accepted' })
+  })
+
+  test('REQ-188: without it, an admin event is an ordinary one', async ({ page }) => {
+    const calls = await start(page, boss)
+    await openForm(page)
+    await fillForm(page, 'Pòquer', '10', ['anna'])
+    await submit(page)
+
+    await expect(page.locator('[data-event]')).toContainText('Pòquer')
+    expect(calls.eventCalls).toMatchObject([{ fn: 'create_event', p_force: false }])
+    expect(calls.events[0].people).toEqual({ marc: 'accepted', anna: 'invited' })
+  })
+
+  test('REQ-189: a forced player who cannot pay is named in Catalan, and nothing is created', async ({ page }) => {
+    const calls = await start(page, boss)
+    await openForm(page)
+    await fillForm(page, 'Pòquer', '60', ['anna', 'bea'])
+    await force(page).check({ force: true })
+    await submit(page)
+
+    await expect(page.getByRole('alert')).toHaveText('No tenen prou marcones: bea.')
+    expect(calls.events).toEqual([])
+    expect(calls.ledger).toEqual([])
+  })
+
+  test('REQ-190: the audit shows a forced buy-in on the player, made by the admin', async ({ page }) => {
+    const history: FakeMovement[] = [
+      {
+        username: 'anna',
+        delta: -10,
+        balance_after: 10,
+        concept: null,
+        kind: 'event_buy_in',
+        event: { id: 'e1', name: 'Pòquer' },
+        actor: { username: 'marc' },
+      },
+    ]
+    await start(page, rich, [], history)
+    await page.getByRole('link', { name: 'Auditoria' }).click()
+    const row = page.locator('[data-movement]')
+
+    await expect(row.locator('.movement-who')).toHaveText('anna')
+    await expect(row.locator('.movement-label')).toHaveText('Entrada obligatòria · Pòquer')
+    await expect(row.locator('.movement-by')).toHaveText('Feta per marc')
+    await expect(row.locator('.delta')).toHaveText('-10')
+  })
+})
+
 test.describe('the events list', () => {
   const events: FakeEvent[] = [
     { id: 'e1', name: 'Dards', buy_in: 5, creator: 'marc', status: 'completed', people: { anna: 'accepted' } },

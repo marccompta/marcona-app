@@ -1,6 +1,6 @@
 import { text } from './text'
 
-type ErrorLike = { code?: unknown; message?: unknown; status?: unknown; name?: unknown }
+type ErrorLike = { code?: unknown; message?: unknown; status?: unknown; name?: unknown; details?: unknown }
 
 // Supabase Auth's codes, and the ones our own functions return. A test checks
 // that every code in the migrations and the Edge Function is listed here.
@@ -14,6 +14,7 @@ export const byCode: Record<string, string> = {
   invalid_amount: text.errors.invalidAmount,
   invalid_action: text.errors.unknown,
   insufficient_balance: text.errors.insufficientBalance,
+  forced_insufficient_balance: text.errors.insufficientBalance,
   user_not_found: text.errors.userNotFound,
   event_name_required: text.errors.eventNameRequired,
   event_name_too_long: text.errors.eventNameTooLong,
@@ -43,8 +44,12 @@ const raisedByPostgres = 'P0001'
 // Turns any error into Catalan. The original message is never shown.
 export function errorMessage(error: unknown): string {
   if (typeof error !== 'object' || error === null) return text.errors.unknown
-  const { code, message, status, name } = error as ErrorLike
+  const { code, message, status, name, details } = error as ErrorLike
 
+  // REQ-189: the only refusal that carries data, the usernames who can't pay.
+  if (code === raisedByPostgres && message === 'forced_insufficient_balance' && typeof details === 'string') {
+    return text.errors.forcedInsufficientBalance(details)
+  }
   if (code === raisedByPostgres && typeof message === 'string' && message in byCode) return byCode[message]
   if (typeof code === 'string' && code in byCode) return byCode[code]
   if (status === 429) return text.errors.rateLimited

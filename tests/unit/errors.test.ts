@@ -4,7 +4,7 @@ import { byCode, errorMessage } from '../../src/i18n/errors'
 import { formatCount, formatMoment, formatSigned } from '../../src/i18n/format'
 import { text } from '../../src/i18n/text'
 import type { Movement } from '../../src/lib/data'
-import { movementLabel } from '../../src/screens/Movements'
+import { forcedBy, movementLabel } from '../../src/screens/Movements'
 
 const sql = readdirSync('supabase/migrations')
   .map((file) => readFileSync(`supabase/migrations/${file}`, 'utf8'))
@@ -30,6 +30,11 @@ describe('error codes', () => {
 
   it('REQ-043: reads our code from a Postgres exception', () => {
     expect(errorMessage({ code: 'P0001', message: 'insufficient_balance' })).toBe(text.errors.insufficientBalance)
+  })
+
+  it('REQ-189: names the players who cannot pay', () => {
+    const error = { code: 'P0001', message: 'forced_insufficient_balance', details: 'bea, carla' }
+    expect(errorMessage(error)).toBe('No tenen prou marcones: bea, carla.')
   })
 
   it('REQ-019: never shows an unknown Postgres message', () => {
@@ -64,7 +69,9 @@ describe('amounts', () => {
 })
 
 describe('movement labels', () => {
-  const movement = (fields: Partial<Movement>) => ({ kind: 'admin_adjustment', concept: null, ...fields }) as Movement
+  const movement = (fields: Partial<Movement>) =>
+    ({ kind: 'admin_adjustment', concept: null, event: null, actor: null, who: { username: 'anna' }, ...fields }) as Movement
+  const event = { id: 'e1', name: 'Pòquer' }
 
   it('REQ-069: shows the Concept when there is one', () => {
     expect(movementLabel(movement({ concept: 'Benvinguda' }))).toBe('Benvinguda')
@@ -72,5 +79,22 @@ describe('movement labels', () => {
 
   it('REQ-069: otherwise turns the kind into Catalan', () => {
     expect(movementLabel(movement({}))).toBe(text.movements.kinds.admin_adjustment)
+  })
+
+  it('REQ-099: names the event of a buy-in, a refund and a payout', () => {
+    expect(movementLabel(movement({ kind: 'event_buy_in', event, actor: { username: 'anna' } }))).toBe('Entrada · Pòquer')
+    expect(movementLabel(movement({ kind: 'event_refund', event }))).toBe("Devolució de l'entrada · Pòquer")
+    expect(movementLabel(movement({ kind: 'event_payout', event }))).toBe('Premi · Pòquer')
+  })
+
+  it('REQ-190: a buy-in someone else made is a forced one', () => {
+    const forced = movement({ kind: 'event_buy_in', event, actor: { username: 'marc' } })
+    expect(movementLabel(forced)).toBe('Entrada obligatòria · Pòquer')
+    expect(forcedBy(forced)).toBe('marc')
+  })
+
+  it('REQ-190: an ordinary buy-in, or a refund the admin made, is not', () => {
+    expect(forcedBy(movement({ kind: 'event_buy_in', event, actor: { username: 'anna' } }))).toBeNull()
+    expect(forcedBy(movement({ kind: 'event_refund', event, actor: { username: 'marc' } }))).toBeNull()
   })
 })

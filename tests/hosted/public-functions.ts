@@ -25,6 +25,7 @@ export const publicFunctions = (userId: string): Record<string, Record<string, u
     p_payout_first: 50,
     p_payout_second: 30,
     p_payout_third: 20,
+    p_force: false,
   },
   remove_profile: { p_user_id: userId },
   revoke_sessions: { p_user_id: userId },

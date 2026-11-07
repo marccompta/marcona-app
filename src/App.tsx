@@ -42,7 +42,7 @@ function Screens() {
         <Route path="/classificacio" element={<Ranking me={profile.username} />} />
         <Route path="/classificacio/:username" element={<UserDetail />} />
         <Route path="/esdeveniments" element={<Events me={profile.username} />} />
-        <Route path="/esdeveniments/nou" element={<NewEvent me={profile.username} />} />
+        <Route path="/esdeveniments/nou" element={<NewEvent profile={profile} />} />
         <Route path="/ruleta" element={<Placeholder screen="ruleta" title={text.tabs.roulette} />} />
         <Route path="/auditoria" element={<Audit />} />
         {profile.role === 'admin' && <Route path="/administracio" element={<Admin />} />}

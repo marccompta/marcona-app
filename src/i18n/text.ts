@@ -61,11 +61,15 @@ export const text = {
       payouts: 'Premis (%)',
       invitees: 'Convida',
       create: "Crea l'esdeveniment",
+      force: 'Participació obligatòria',
+      forceHelp: "Tothom qui convidis entra i paga ara mateix, sense haver d'acceptar.",
     },
   },
   movements: {
     empty: 'Encara no hi ha cap moviment.',
     balanceAfter: 'Saldo:',
+    forced: 'Entrada obligatòria',
+    forcedBy: (username: string) => `Feta per ${username}`,
     kinds: {
       admin_adjustment: 'Ajust de marcones',
       event_buy_in: 'Entrada',
@@ -116,6 +120,7 @@ export const text = {
     conceptRequired: 'Escriu un concepte.',
     invalidAmount: "La quantitat ha de ser un nombre enter d'1 o més.",
     insufficientBalance: 'El saldo no té prou marcones.',
+    forcedInsufficientBalance: (usernames: string) => `No tenen prou marcones: ${usernames}.`,
     userNotFound: 'No hem trobat aquest compte.',
     invalidUsername: "El nom d'usuari ha de tenir de 3 a 20 caràcters: lletres minúscules, números, guions o guions baixos.",
     usernameTaken: "Aquest nom d'usuari ja existeix o ja s'ha fet servir.",

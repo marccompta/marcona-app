@@ -58,6 +58,9 @@ describe('what the screens read', () => {
       concept: 'Tercera',
       created_at: expect.any(String),
       who: { username: anna.username },
+      event: null,
+      // The admin who made it is a real user, so test accounts can't see them.
+      actor: null,
     })
   })
 

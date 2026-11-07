@@ -1,5 +1,6 @@
 import { useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
+import type { Profile } from '../auth/AuthProvider'
 import { text } from '../i18n/text'
 import { fetchPeople, useLoad, type Person } from '../lib/data'
 import { createEvent } from '../lib/events'
@@ -9,12 +10,13 @@ import { Pending } from './Movements'
 // REQ-073: the default split.
 const defaultPayouts = ['50', '30', '20']
 
-function Form({ people }: { people: Person[] }) {
+function Form({ people, isAdmin }: { people: Person[]; isAdmin: boolean }) {
   const navigate = useNavigate()
   const [name, setName] = useState('')
   const [buyIn, setBuyIn] = useState('')
   const [payouts, setPayouts] = useState(defaultPayouts)
   const [invitees, setInvitees] = useState<string[]>([])
+  const [force, setForce] = useState(false)
   const { busy, outcome, run } = useAction()
   // REQ-062: a retry of the same attempt keeps its ID, so it can't apply twice.
   const requestId = useRef<string | null>(null)
@@ -41,6 +43,7 @@ function Form({ people }: { people: Person[] }) {
         buyIn: Number(buyIn),
         invitees,
         payouts: [Number(payouts[0]), Number(payouts[1]), Number(payouts[2])],
+        force,
       })
       return ''
     })
@@ -80,6 +83,16 @@ function Form({ people }: { people: Person[] }) {
           </label>
         ))}
       </fieldset>
+      {isAdmin && (
+        <div className="group">
+          <label className="invitee">
+            <input type="checkbox" checked={force} onChange={() => changed(setForce, !force)} />
+            <span className="tick" />
+            {text.events.form.force}
+          </label>
+          <p className="hint">{text.events.form.forceHelp}</p>
+        </div>
+      )}
       <Outcome outcome={outcome?.kind === 'failed' ? outcome : null} />
       <button type="submit" className="primary" disabled={busy}>
         {text.events.form.create}
@@ -94,7 +107,8 @@ const others = (people: Person[], me: string) =>
     .sort((a, b) => a.username.localeCompare(b.username, 'ca'))
 
 // REQ-071, REQ-078: anyone can create an event, and invite other active users.
-export function NewEvent({ me }: { me: string }) {
+// REQ-186: only the admin is offered forced participation.
+export function NewEvent({ profile }: { profile: Profile }) {
   const { state } = useLoad(fetchPeople)
 
   return (
@@ -104,7 +118,7 @@ export function NewEvent({ me }: { me: string }) {
       </Link>
       <h1 className="screen-title">{text.events.new}</h1>
       {state.status !== 'ready' && <Pending state={state} />}
-      {state.status === 'ready' && <Form people={others(state.data, me)} />}
+      {state.status === 'ready' && <Form people={others(state.data, profile.username)} isAdmin={profile.role === 'admin'} />}
     </section>
   )
 }

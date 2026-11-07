@@ -724,6 +724,25 @@ describe('removing a user with events', () => {
   })
 })
 
+describe('forced participation', () => {
+  it('REQ-187: a player who asks for it directly is rejected, and nothing happens', async () => {
+    await emptyAccount(anna)
+    await give(anna, 100)
+    await emptyAccount(bea)
+    await give(bea, 20)
+    const { error } = await tryCreate(anna, [bea], { p_force: true })
+
+    expect(error?.code).toBe('42501')
+    expect(await balanceOf(anna)).toBe(100)
+    expect(await balanceOf(bea)).toBe(20)
+  })
+
+  it('REQ-188: leaving it out, or asking for no force, is an ordinary event', async () => {
+    const eventId = await openEvent(anna, [bea], { p_force: false })
+    expect((await participants(eventId))[bea.userId]).toBe('invited')
+  })
+})
+
 describe('who can read and write events', () => {
   it('REQ-058: nobody can write to the event tables from the browser', async () => {
     const eventId = await openEvent(anna, [bea])

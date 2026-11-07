@@ -29,6 +29,7 @@ export type NewEvent = {
   buyIn: number
   invitees: string[]
   payouts: [number, number, number]
+  force: boolean
 }
 
 const columns = `id, name, buy_in, status, creator_id, payout_first, payout_second, payout_third, results, created_at, finished_at,
@@ -61,7 +62,7 @@ export function groupEvents(events: MarconaEvent[], me: string) {
   }
 }
 
-export async function createEvent({ requestId, name, buyIn, invitees, payouts }: NewEvent, client = supabase) {
+export async function createEvent({ requestId, name, buyIn, invitees, payouts, force }: NewEvent, client = supabase) {
   const { data, error } = await client.rpc('create_event', {
     p_request_id: requestId,
     p_name: name,
@@ -70,6 +71,7 @@ export async function createEvent({ requestId, name, buyIn, invitees, payouts }:
     p_payout_first: payouts[0],
     p_payout_second: payouts[1],
     p_payout_third: payouts[2],
+    p_force: force,
   })
   if (error) throw error
   return (data as { event_id: string }).event_id
