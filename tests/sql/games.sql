@@ -16,6 +16,11 @@ declare
   request uuid := gen_random_uuid();
   defaults jsonb;
   outcome jsonb;
+  scenario text;
+  parts text[];
+  anna_start bigint;
+  bea_start bigint;
+  second_duel uuid;
 begin
   -- Says what a statement was refused with, or that it went through.
   create function pg_temp.refusal(statement text) returns text language plpgsql as $f$
@@ -223,6 +228,10 @@ begin
   perform pg_temp.act_as(anna);
   results := results || pg_temp.verdict('REQ-125 nobody locks in before both have paid', pg_temp.refusal(format(
     $s$select public.lock_in(gen_random_uuid(), %L, 'confia')$s$, duel
+  )) = 'not_allowed');
+  perform public.answer_invitation(gen_random_uuid(), duel, true);
+  results := results || pg_temp.verdict('REQ-125 a paid player still waits for the other', pg_temp.refusal(format(
+    $s$select public.lock_in(gen_random_uuid(), %L, 'confia')$s$, duel
   )) = 'game_not_choosing');
 
   perform pg_temp.act_as(admin_id);
@@ -252,6 +261,80 @@ begin
   perform public.lock_in(request, duel, 'confia');
   results := results || pg_temp.verdict('REQ-062 a repeat of an old tap changes nothing',
     (select choice from private.choices where event_id = duel and user_id = anna) = 'traeix');
+
+  -- REQ-140 to REQ-143: the spec's table, with a buy-in of 11.
+  foreach scenario in array array[
+    'confia,confia,16,16', 'traeix,confia,27,0', 'confia,traeix,0,27', 'traeix,traeix,5,5'
+  ] loop
+    parts := string_to_array(scenario, ',');
+    perform pg_temp.act_as(admin_id);
+    duel := pg_temp.new_duel(11, anna, bea, true);
+    anna_start := pg_temp.balance(anna);
+    bea_start := pg_temp.balance(bea);
+    perform pg_temp.act_as(anna);
+    perform public.lock_in(gen_random_uuid(), duel, parts[1]);
+    perform pg_temp.act_as(bea);
+    outcome := public.lock_in(gen_random_uuid(), duel, parts[2]);
+    results := results || pg_temp.verdict('REQ-140 to REQ-143 ' || scenario,
+      (outcome ->> 'revealed')::boolean
+      and pg_temp.balance(anna) = anna_start + parts[3]::bigint
+      and pg_temp.balance(bea) = bea_start + parts[4]::bigint);
+
+    -- REQ-127, REQ-132: the reveal holds every choice and payout, the 0 included.
+    results := results || pg_temp.verdict('REQ-127 revealed and completed ' || scenario,
+      (select status = 'completed' and phase = 'revealed' from public.events where id = duel)
+      and (select count(*) from jsonb_array_elements((select reveal -> 'players' from public.events where id = duel))) = 2
+      and exists (
+        select 1
+        from jsonb_array_elements((select reveal -> 'players' from public.events where id = duel)) as player
+        where player ->> 'user_id' = bea::text and player ->> 'choice' = parts[2] and (player ->> 'payout')::bigint = parts[4]::bigint
+      ));
+
+    -- REQ-145: ordinary movements, and a payout of 0 writes none.
+    results := results || pg_temp.verdict('REQ-145 payouts are movements ' || scenario,
+      (select count(*) from public.ledger where event_id = duel and kind = 'event_payout')
+        = (case when parts[3]::bigint > 0 then 1 else 0 end) + (case when parts[4]::bigint > 0 then 1 else 0 end)
+      and not exists (select 1 from public.ledger where event_id = duel and kind = 'event_payout' and actor_id <> admin_id));
+  end loop;
+
+  -- REQ-204: a late tap changes nothing, and asks for the reveal.
+  perform pg_temp.act_as(anna);
+  anna_start := pg_temp.balance(anna);
+  outcome := public.lock_in(gen_random_uuid(), duel, 'confia');
+  results := results || pg_temp.verdict('REQ-204 a late tap changes nothing',
+    not (outcome ->> 'saved')::boolean and (outcome ->> 'revealed')::boolean
+    and pg_temp.balance(anna) = anna_start
+    and (select choice from private.choices where event_id = duel and user_id = anna) = 'traeix');
+
+  -- REQ-139: the admin plays, and betrays.
+  perform pg_temp.act_as(admin_id);
+  duel := (public.create_game_event(gen_random_uuid(), 'confia_o_traeix', 'Prova', 10, true, array[anna], false) ->> 'event_id')::uuid;
+  perform pg_temp.act_as(anna);
+  perform public.answer_invitation(gen_random_uuid(), duel, true);
+  perform pg_temp.act_as(admin_id);
+  admin_start := pg_temp.balance(admin_id);
+  perform public.lock_in(gen_random_uuid(), duel, 'traeix');
+  perform pg_temp.act_as(anna);
+  perform public.lock_in(gen_random_uuid(), duel, 'confia');
+  results := results || pg_temp.verdict('REQ-139 the admin can play', pg_temp.balance(admin_id) = admin_start + 25);
+
+  -- REQ-122, REQ-149: a running duel keeps the old numbers, and a new one gets the new.
+  perform pg_temp.act_as(admin_id);
+  duel := pg_temp.new_duel(10, anna, bea, true);
+  update public.games set settings = settings || '{"both_trust": 120}' where id = 'confia_o_traeix';
+  second_duel := pg_temp.new_duel(10, anna, bea, true);
+  anna_start := pg_temp.balance(anna);
+  perform pg_temp.act_as(anna);
+  perform public.lock_in(gen_random_uuid(), duel, 'confia');
+  perform public.lock_in(gen_random_uuid(), second_duel, 'confia');
+  perform pg_temp.act_as(bea);
+  perform public.lock_in(gen_random_uuid(), duel, 'confia');
+  perform public.lock_in(gen_random_uuid(), second_duel, 'confia');
+  results := results || pg_temp.verdict('REQ-149 settings changes leave running games alone',
+    (select sum(delta) from public.ledger where event_id = duel and user_id = anna and kind = 'event_payout') = 15
+    and (select sum(delta) from public.ledger where event_id = second_duel and user_id = anna and kind = 'event_payout') = 12
+    and pg_temp.balance(anna) = anna_start + 27);
+  update public.games set settings = defaults where id = 'confia_o_traeix';
 
   -- NEXT
 
