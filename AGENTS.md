@@ -68,6 +68,7 @@ Slice: 001
 | Browser tests against the deployed site | `E2E_BASE_URL=https://marccompta.github.io/marcona-app/ npm run test:e2e` |
 | Tests against the hosted Supabase project, from this machine only | `npm run test:hosted` |
 | Rules only the database owner can test, after any migration touching them | Run `tests/sql/constraints.sql` through the Supabase MCP server's `execute_sql` |
+| Payout maths and forced participation, after any migration touching them | Run `tests/sql/events.sql` through the Supabase MCP server's `execute_sql` |
 
 Write long scripts as files, then run them. Long heredocs break in Git Bash here, especially with apostrophes.
 

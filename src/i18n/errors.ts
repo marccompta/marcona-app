@@ -24,6 +24,8 @@ export const byCode: Record<string, string> = {
   event_not_open: text.errors.eventNotOpen,
   event_not_found: text.errors.eventNotFound,
   invitation_not_pending: text.errors.invitationNotPending,
+  not_enough_participants: text.errors.notEnoughParticipants,
+  invalid_winners: text.errors.invalidWinners,
   ledger_is_append_only: text.errors.unknown,
   invalid_username: text.errors.invalidUsername,
   username_taken: text.errors.usernameTaken,

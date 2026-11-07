@@ -107,6 +107,8 @@ export const text = {
     eventNotOpen: 'Aquest esdeveniment ja està tancat.',
     eventNotFound: 'No hem trobat aquest esdeveniment.',
     invitationNotPending: 'Aquesta invitació ja no està pendent.',
+    notEnoughParticipants: "Calen almenys 2 persones a l'esdeveniment.",
+    invalidWinners: 'Tria una persona diferent per a cada lloc amb premi.',
     unknown: 'Alguna cosa ha fallat. Torna-ho a provar.',
   },
 } as const

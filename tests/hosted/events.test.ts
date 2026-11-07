@@ -436,6 +436,218 @@ describe('cancelling an event', () => {
   })
 })
 
+const complete = (
+  user: TestUser,
+  eventId: string,
+  winners: (TestAccount | null)[],
+  requestId = randomUUID(),
+) =>
+  user.client.rpc('complete_event', {
+    p_request_id: requestId,
+    p_event_id: eventId,
+    p_first: winners[0]?.userId ?? null,
+    p_second: winners[1]?.userId ?? null,
+    p_third: winners[2]?.userId ?? null,
+  })
+
+const payouts = async (eventId: string) =>
+  (await eventMovements(eventId)).filter((movement) => movement.kind === 'event_payout')
+
+describe('completing an event', () => {
+  async function eventOf(people: TestUser[], fields: Record<string, unknown> = {}) {
+    const [creator, ...invited] = people
+    const eventId = await openEvent(creator, invited, fields)
+    for (const user of invited) await accepted(user, eventId, Number(fields.p_buy_in ?? 10))
+    return eventId
+  }
+
+  it('REQ-090, REQ-091, REQ-099: with 2 players, the winner takes the whole pot', async () => {
+    const eventId = await eventOf([anna, bea])
+    const before = await Promise.all([anna, bea].map(balanceOf))
+    const { error } = await complete(anna, eventId, [bea])
+
+    expect(error).toBeNull()
+    expect(await readEvent(eventId)).toMatchObject({
+      status: 'completed',
+      finished_by: anna.userId,
+      results: [{ place: 1, user_id: bea.userId, percentage: 100, amount: 20 }],
+    })
+    expect(await Promise.all([anna, bea].map(balanceOf))).toEqual([before[0], before[1] + 20])
+    expect(await payouts(eventId)).toEqual([
+      { user_id: bea.userId, delta: 20, kind: 'event_payout', event_id: eventId, actor_id: anna.userId },
+    ])
+  })
+
+  it('REQ-091: with 2 players, the percentages do not matter and the creator can win', async () => {
+    const eventId = await eventOf([anna, bea], { p_payout_first: 0, p_payout_second: 60, p_payout_third: 40 })
+    const before = await balanceOf(anna)
+    expect((await complete(anna, eventId, [anna])).error).toBeNull()
+    expect(await balanceOf(anna)).toBe(before + 20)
+  })
+
+  it('REQ-091: with 2 players, the winner must be one of them', async () => {
+    const eventId = await eventOf([anna, bea])
+    for (const winners of [[], [cesc]]) {
+      expect((await complete(anna, eventId, winners)).error?.message).toBe('invalid_winners')
+    }
+    expect((await readEvent(eventId)).status).toBe('open')
+  })
+
+  it('REQ-092: each paid place needs a different participant', async () => {
+    const eventId = await eventOf([anna, bea, cesc])
+    const wrong = [
+      [anna, anna, bea],
+      [anna, bea, bea],
+      [anna, bea, anna],
+      [anna, bea, null],
+      [null, anna, bea],
+      [anna, bea, dani],
+    ]
+    for (const winners of wrong) {
+      expect((await complete(anna, eventId, winners)).error?.message).toBe('invalid_winners')
+    }
+    expect((await readEvent(eventId)).status).toBe('open')
+    expect(await payouts(eventId)).toEqual([])
+  })
+
+  it('REQ-092: a place of 0% needs nobody', async () => {
+    const eventId = await eventOf([anna, bea, cesc], { p_payout_first: 100, p_payout_second: 0, p_payout_third: 0 })
+    expect((await complete(anna, eventId, [bea, bea, bea])).error).toBeNull()
+    expect((await readEvent(eventId)).results).toEqual([{ place: 1, user_id: bea.userId, percentage: 100, amount: 30 }])
+  })
+
+  // A buy-in of 7 from 3 players makes a pot of 21.
+  const roundings = [
+    { percentages: [50, 30, 20], amounts: [11, 6, 4] },
+    { percentages: [0, 60, 40], amounts: [0, 13, 8] },
+    { percentages: [100, 0, 0], amounts: [21, 0, 0] },
+  ]
+
+  for (const { percentages, amounts } of roundings) {
+    it(`REQ-093: a pot of 21 at ${percentages.join(', ')} pays ${amounts.join(', ')}`, async () => {
+      const [first, second, third] = percentages
+      const eventId = await eventOf([anna, bea, cesc], {
+        p_buy_in: 7,
+        p_payout_first: first,
+        p_payout_second: second,
+        p_payout_third: third,
+      })
+      const before = await Promise.all([anna, bea, cesc].map(balanceOf))
+      expect((await complete(anna, eventId, [anna, bea, cesc])).error).toBeNull()
+
+      expect(await Promise.all([anna, bea, cesc].map(balanceOf))).toEqual(before.map((balance, index) => balance + amounts[index]))
+      expect((await payouts(eventId)).reduce((sum, payout) => sum + payout.delta, 0)).toBe(21)
+    })
+  }
+
+  it('REQ-093, REQ-099: a place that rounds down to 0 gets no movement, and the result still shows it', async () => {
+    const eventId = await eventOf([anna, bea, cesc], {
+      p_buy_in: 1,
+      p_payout_first: 98,
+      p_payout_second: 1,
+      p_payout_third: 1,
+    })
+    expect((await complete(anna, eventId, [anna, bea, cesc])).error).toBeNull()
+
+    expect((await payouts(eventId)).map((payout) => [payout.user_id, payout.delta])).toEqual([[anna.userId, 3]])
+    expect((await readEvent(eventId)).results).toEqual([
+      { place: 1, user_id: anna.userId, percentage: 98, amount: 3 },
+      { place: 2, user_id: bea.userId, percentage: 1, amount: 0 },
+      { place: 3, user_id: cesc.userId, percentage: 1, amount: 0 },
+    ])
+  })
+
+  it('REQ-089: it needs at least 2 people in', async () => {
+    const eventId = await openEvent(anna, [bea])
+    expect((await complete(anna, eventId, [anna])).error?.message).toBe('not_enough_participants')
+    expect((await readEvent(eventId)).status).toBe('open')
+  })
+
+  it('REQ-089: only the creator can complete, not a participant, an outsider or the admin', async () => {
+    const eventId = await eventOf([anna, bea])
+    const before = await balanceOf(bea)
+
+    for (const client of [bea.client, dani.client, admin]) {
+      const { error } = await client.rpc('complete_event', {
+        p_request_id: randomUUID(),
+        p_event_id: eventId,
+        p_first: bea.userId,
+        p_second: null,
+        p_third: null,
+      })
+      expect(error?.code).toBe('42501')
+    }
+    expect((await readEvent(eventId)).status).toBe('open')
+    expect(await balanceOf(bea)).toBe(before)
+  })
+
+  it('REQ-094, REQ-082: completing lapses pending invitations, and they can no longer be answered', async () => {
+    const eventId = await openEvent(anna, [bea, dani])
+    await accepted(bea, eventId)
+    expect((await complete(anna, eventId, [bea])).error).toBeNull()
+
+    expect((await participants(eventId))[dani.userId]).toBe('lapsed')
+    await give(dani, 10)
+    expect((await answer(dani, eventId, true)).error?.message).toBe('event_not_open')
+  })
+
+  it('REQ-083: a completed event cannot change', async () => {
+    const eventId = await eventOf([anna, bea])
+    expect((await complete(anna, eventId, [bea])).error).toBeNull()
+    const before = await Promise.all([anna, bea].map(balanceOf))
+
+    expect((await complete(anna, eventId, [anna])).error?.message).toBe('event_not_open')
+    expect((await cancel(anna.client, eventId)).error?.message).toBe('event_not_open')
+    expect((await cancel(admin, eventId)).error?.message).toBe('event_not_open')
+    expect(await Promise.all([anna, bea].map(balanceOf))).toEqual(before)
+  })
+
+  it('REQ-062: a double tap on complete pays once', async () => {
+    const eventId = await eventOf([anna, bea])
+    const before = await balanceOf(bea)
+    const requestId = randomUUID()
+    const [first, second] = await Promise.all([complete(anna, eventId, [bea], requestId), complete(anna, eventId, [bea], requestId)])
+
+    expect(first.error).toBeNull()
+    expect(second.data).toEqual(first.data)
+    expect(await balanceOf(bea)).toBe(before + 20)
+  })
+
+  it('REQ-083: a completion and a cancellation at the same moment do only one', async () => {
+    const eventId = await eventOf([anna, bea])
+    const before = await Promise.all([anna, bea].map(balanceOf))
+    const results = await Promise.all([complete(anna, eventId, [bea]), cancel(anna.client, eventId)])
+
+    expect(results.filter((result) => !result.error)).toHaveLength(1)
+    expect(results.find((result) => result.error)?.error?.message).toBe('event_not_open')
+    const moved = (await Promise.all([anna, bea].map(balanceOf))).reduce((sum, balance) => sum + balance, 0)
+    expect(moved).toBe(before[0] + before[1] + 20)
+  })
+
+  it('REQ-090: an acceptance at the moment of completing is either in the pot or not charged', async () => {
+    for (let round = 0; round < 5; round += 1) {
+      const eventId = await openEvent(anna, [bea, cesc])
+      await accepted(bea, eventId)
+      await give(cesc, 10)
+      const [answered, completed] = await Promise.all([answer(cesc, eventId, true), complete(anna, eventId, [anna, bea, cesc])])
+
+      expect(completed.error).toBeNull()
+      if (answered.error) expect(answered.error.message).toBe('event_not_open')
+      const pot = (await payouts(eventId)).reduce((sum, payout) => sum + payout.delta, 0)
+      expect(pot).toBe(answered.error ? 20 : 30)
+    }
+  })
+
+  it('REQ-084: two events with the same people finishing at once never deadlock', async () => {
+    for (let round = 0; round < 5; round += 1) {
+      const mine = await eventOf([anna, bea, cesc])
+      const yours = await eventOf([cesc, bea, anna])
+      const results = await Promise.all([cancel(anna.client, mine), cancel(cesc.client, yours)])
+      expect(results.map((result) => result.error)).toEqual([null, null])
+    }
+  })
+})
+
 describe('who can read and write events', () => {
   it('REQ-058: nobody can write to the event tables from the browser', async () => {
     const eventId = await openEvent(anna, [bea])
