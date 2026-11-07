@@ -108,9 +108,9 @@ test.describe('creating a duel', () => {
     await openForm(page)
     await chooseDuel(page)
 
-    await expect(page.locator('[data-invite-hint]')).toHaveText('Convida 1 persona.')
+    await expect(page.locator('[data-invite-hint]')).toHaveText('Només 1 persona: l\'altra ets tu.')
     await plays(page).uncheck({ force: true })
-    await expect(page.locator('[data-invite-hint]')).toHaveText('Convida 2 persones.')
+    await expect(page.locator('[data-invite-hint]')).toHaveText('Exactament 2 persones.')
   })
 
   test('REQ-182: the wrong number of players shows a Catalan error, and creates nothing', async ({ page }) => {
@@ -653,6 +653,26 @@ test.describe('the reveal', () => {
     await expect(page.locator('[data-reveal-player]')).toHaveCount(0)
 
     await expect(revealDone(page)).toBeVisible({ timeout: 3000 })
+  })
+
+  // Tria en privat is at the bottom of a long screen, so a player is scrolled down.
+  test('REQ-133: a player scrolled down to the panel button still sees the cards turn', async ({ page }) => {
+    const calls = await startDuel(page, anna)
+    await panelOpener(page).click()
+    await closePanel(page)
+    await expect(page.locator('[data-game-rules] h2')).not.toBeInViewport()
+
+    calls.lockInAs('d1', 'anna', 'confia')
+    calls.lockInAs('d1', 'bea', 'traeix')
+
+    await expect(page.locator('[data-card]').first()).toBeInViewport({ ratio: 1, timeout: 8000 })
+    await expect(page.locator('[data-card]').last()).toBeInViewport({ ratio: 1 })
+    const covered = await page.locator('.duel-headline').evaluate((headline) => {
+      const { top, left, width } = headline.getBoundingClientRect()
+      const seen = document.elementFromPoint(left + width / 2, top + 4)
+      return !seen || !headline.contains(seen)
+    })
+    expect(covered).toBe(false)
   })
 
   test('REQ-133: my own card turns first', async ({ page }) => {

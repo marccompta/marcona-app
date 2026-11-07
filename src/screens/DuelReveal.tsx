@@ -53,6 +53,15 @@ export function DuelReveal({ event, me }: { event: MarconaEvent; me: string }) {
   const [live] = useState(() => !alreadySeen(event.id))
   const [stage, setStage] = useState<Stage>(() => (live && !prefersStillness() ? 'waiting' : 'done'))
   const remembered = useRef(false)
+  const section = useRef<HTMLElement>(null)
+
+  // Tria en privat is at the bottom of a long screen, so the player has scrolled
+  // away from where the cards appear, and would miss them.
+  useEffect(() => {
+    if (live) section.current?.scrollIntoView({ block: 'start', behavior: prefersStillness() ? 'auto' : 'smooth' })
+    // It runs once, when the reveal appears.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     if (stage === 'done') return
@@ -79,7 +88,7 @@ export function DuelReveal({ event, me }: { event: MarconaEvent; me: string }) {
   const gain = (players.find((player) => name(player.user_id) === me)?.payout ?? 0) - event.buy_in
 
   return (
-    <section className="duel-reveal" data-reveal data-stage={stage} aria-live="polite">
+    <section ref={section} className="duel-reveal" data-reveal data-stage={stage} aria-live="polite">
       <div className="duel-headline">
         {done ? (
           <>
