@@ -11,12 +11,16 @@ declare
   bea uuid := gen_random_uuid();
   cesc uuid := gen_random_uuid();
   dani uuid := gen_random_uuid();
+  tess uuid := gen_random_uuid();
   admin_start bigint;
   duel uuid;
   request uuid := gen_random_uuid();
   defaults jsonb;
   outcome jsonb;
   scenario text;
+  state_before jsonb;
+  public_before text;
+  movements_before bigint;
   parts text[];
   anna_start bigint;
   bea_start bigint;
@@ -54,6 +58,8 @@ begin
     (bea, 'games-bea@marcona.invalid'),
     (cesc, 'games-cesc@marcona.invalid'),
     (dani, 'games-dani@marcona.invalid');
+  insert into auth.users (id, email) values (tess, 'games-tess@marcona.invalid');
+  insert into public.profiles (user_id, username, is_test) values (tess, 'games-tess', true);
   insert into public.profiles (user_id, username) values
     (anna, 'games-anna'),
     (bea, 'games-bea'),
@@ -335,6 +341,80 @@ begin
     and (select sum(delta) from public.ledger where event_id = second_duel and user_id = anna and kind = 'event_payout') = 12
     and pg_temp.balance(anna) = anna_start + 27);
   update public.games set settings = defaults where id = 'confia_o_traeix';
+
+  -- REQ-128, REQ-194: game_state() says the same to everyone, and a lock-in changes
+  -- nothing it returns or any public row. Hosted tests repeat this through the API.
+  perform pg_temp.act_as(admin_id);
+  duel := pg_temp.new_duel(10, anna, bea, true);
+  state_before := public.game_state(duel);
+  public_before := (
+    select md5(row(event.*)::text || (select string_agg(row(participant.*)::text, ',' order by participant.user_id)
+      from public.event_participants as participant where participant.event_id = event.id))
+    from public.events as event where event.id = duel
+  );
+  movements_before := (select count(*) from public.ledger);
+
+  perform pg_temp.act_as(anna);
+  results := results || pg_temp.verdict('REQ-194 everyone reads the same', public.game_state(duel) = state_before);
+  perform public.lock_in(gen_random_uuid(), duel, 'confia');
+  results := results || pg_temp.verdict('REQ-194 the player who locked in reads the same', public.game_state(duel) = state_before);
+  perform pg_temp.act_as(bea);
+  results := results || pg_temp.verdict('REQ-194 the other player reads the same', public.game_state(duel) = state_before);
+  perform pg_temp.act_as(admin_id);
+  results := results || pg_temp.verdict('REQ-194 the admin reads the same', public.game_state(duel) = state_before);
+  results := results || pg_temp.verdict('REQ-194 no public row changes', public_before = (
+    select md5(row(event.*)::text || (select string_agg(row(participant.*)::text, ',' order by participant.user_id)
+      from public.event_participants as participant where participant.event_id = event.id))
+    from public.events as event where event.id = duel
+  ) and movements_before = (select count(*) from public.ledger));
+  results := results || pg_temp.verdict('REQ-128 the state holds no choice',
+    state_before -> 'reveal' = 'null'::jsonb and state_before::text not like '%"choice"%');
+
+  -- REQ-128: out of every API role's reach, and in no Realtime publication.
+  results := results || pg_temp.verdict('REQ-128 no API role can read choices',
+    not has_table_privilege('anon', 'private.choices', 'select')
+    and not has_table_privilege('authenticated', 'private.choices', 'select')
+    and not has_table_privilege('service_role', 'private.choices', 'select'));
+  results := results || pg_temp.verdict('REQ-128 choices are not published to Realtime',
+    not exists (select 1 from pg_publication_tables where schemaname = 'private'));
+  results := results || pg_temp.verdict('REQ-128 Row Level Security is on for choices',
+    (select relrowsecurity from pg_class where oid = 'private.choices'::regclass));
+
+  -- Test accounts see only their own, here as on the events table.
+  perform pg_temp.act_as(tess);
+  results := results || pg_temp.verdict('A test account cannot read a real game', pg_temp.refusal(format(
+    $s$select public.game_state(%L)$s$, duel
+  )) = 'event_not_found');
+
+  -- REQ-132: the same function gives the full result after the reveal.
+  perform pg_temp.act_as(bea);
+  perform public.lock_in(gen_random_uuid(), duel, 'traeix');
+  outcome := public.game_state(duel);
+  results := results || pg_temp.verdict('REQ-132 after the reveal it shows everything',
+    outcome ->> 'phase' = 'revealed' and jsonb_array_length(outcome -> 'reveal' -> 'players') = 2);
+
+  -- REQ-135: a stuck duel, with one player locked in. Both get it all back.
+  perform pg_temp.act_as(admin_id);
+  duel := pg_temp.new_duel(10, anna, bea, true);
+  anna_start := pg_temp.balance(anna);
+  bea_start := pg_temp.balance(bea);
+  perform pg_temp.act_as(anna);
+  perform public.lock_in(gen_random_uuid(), duel, 'traeix');
+  results := results || pg_temp.verdict('REQ-135 a player cannot cancel', pg_temp.refusal(format(
+    $s$select public.cancel_event(gen_random_uuid(), %L)$s$, duel
+  )) = 'not_allowed');
+  perform pg_temp.act_as(admin_id);
+  perform public.cancel_event(gen_random_uuid(), duel);
+  results := results || pg_temp.verdict('REQ-135 cancelling refunds both players',
+    pg_temp.balance(anna) = anna_start + 10 and pg_temp.balance(bea) = bea_start + 10
+    and (select status from public.events where id = duel) = 'cancelled'
+    and (select reveal from public.events where id = duel) is null);
+  perform pg_temp.act_as(bea);
+  results := results || pg_temp.verdict('REQ-135 nobody locks in after a cancel', pg_temp.refusal(format(
+    $s$select public.lock_in(gen_random_uuid(), %L, 'confia')$s$, duel
+  )) = 'event_not_open');
+  results := results || pg_temp.verdict('REQ-128 a cancelled game reveals nothing',
+    public.game_state(duel) -> 'reveal' = 'null'::jsonb);
 
   -- NEXT
 
