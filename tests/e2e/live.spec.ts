@@ -180,6 +180,8 @@ test.describe('events', () => {
 
   test('REQ-152: an event screen ignores changes to other events', async ({ page }) => {
     const calls = await open(page, anna, [dinner, { ...dinner, id: 'e2', name: 'Esmorzar' }], 'Sopar')
+    // A change to this event with no message, which only a needless read would show.
+    calls.events[0].people.bea = 'declined'
     const before = calls.messages.length
     calls.actAs('bea', 'answer_invitation', { p_request_id: 'r1', p_event_id: 'e2', p_accept: true })
     expect(calls.messages.length).toBeGreaterThan(before)
