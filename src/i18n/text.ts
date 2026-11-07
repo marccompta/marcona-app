@@ -105,6 +105,8 @@ export const text = {
     noInvitees: 'Convida almenys una persona.',
     invalidInvitee: 'Només pots convidar altres persones actives.',
     eventNotOpen: 'Aquest esdeveniment ja està tancat.',
+    eventNotFound: 'No hem trobat aquest esdeveniment.',
+    invitationNotPending: 'Aquesta invitació ja no està pendent.',
     unknown: 'Alguna cosa ha fallat. Torna-ho a provar.',
   },
 } as const

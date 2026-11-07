@@ -206,6 +206,120 @@ describe('creating an event', () => {
   })
 })
 
+const answer = (user: TestUser, eventId: string, accept: boolean, requestId = randomUUID()) =>
+  user.client.rpc('answer_invitation', { p_request_id: requestId, p_event_id: eventId, p_accept: accept })
+
+async function accepted(user: TestUser, eventId: string, buyIn = 10) {
+  await give(user, buyIn)
+  const { error } = await answer(user, eventId, true)
+  expect(error).toBeNull()
+}
+
+describe('answering an invitation', () => {
+  it('REQ-079, REQ-099: accepting charges the buy-in at once and makes them a participant', async () => {
+    const eventId = await openEvent(anna, [bea])
+    await emptyAccount(bea)
+    await give(bea, 20)
+    const { error } = await answer(bea, eventId, true)
+
+    expect(error).toBeNull()
+    expect((await participants(eventId))[bea.userId]).toBe('accepted')
+    expect(await balanceOf(bea)).toBe(10)
+    expect((await eventMovements(eventId)).at(-1)).toEqual({
+      user_id: bea.userId,
+      delta: -10,
+      kind: 'event_buy_in',
+      event_id: eventId,
+      actor_id: bea.userId,
+    })
+  })
+
+  it('REQ-080: without enough marcones they stay invited, and can accept later', async () => {
+    const eventId = await openEvent(anna, [bea])
+    await emptyAccount(bea)
+    await give(bea, 5)
+    const requestId = randomUUID()
+    const { error } = await answer(bea, eventId, true, requestId)
+
+    expect(error?.message).toBe('insufficient_balance')
+    expect((await participants(eventId))[bea.userId]).toBe('invited')
+    expect(await balanceOf(bea)).toBe(5)
+
+    await give(bea, 5)
+    expect((await answer(bea, eventId, true, requestId)).error).toBeNull()
+    expect(await balanceOf(bea)).toBe(0)
+  })
+
+  it('REQ-081: declining charges nothing and records the decline', async () => {
+    const eventId = await openEvent(anna, [bea])
+    await emptyAccount(bea)
+    await give(bea, 20)
+    const { error } = await answer(bea, eventId, false)
+
+    expect(error).toBeNull()
+    expect((await participants(eventId))[bea.userId]).toBe('declined')
+    expect(await balanceOf(bea)).toBe(20)
+  })
+
+  it('REQ-082: an invitation can only be answered once', async () => {
+    const eventId = await openEvent(anna, [bea, cesc])
+    await accepted(bea, eventId)
+    await give(cesc, 10)
+    expect((await answer(cesc, eventId, false)).error).toBeNull()
+
+    for (const [user, accept] of [[bea, true], [bea, false], [cesc, true], [cesc, false]] as const) {
+      const { error } = await answer(user, eventId, accept)
+      expect(error?.message).toBe('invitation_not_pending')
+    }
+  })
+
+  it('REQ-082: someone who was never invited has nothing to answer', async () => {
+    const eventId = await openEvent(anna, [bea])
+    expect((await answer(dani, eventId, true)).error?.message).toBe('invitation_not_pending')
+    expect((await answer(anna, eventId, false)).error?.message).toBe('invitation_not_pending')
+  })
+
+  it('REQ-082: an event that does not exist has nothing to answer', async () => {
+    expect((await answer(bea, randomUUID(), true)).error?.message).toBe('event_not_found')
+  })
+
+  it('REQ-062: a double tap on accept charges once', async () => {
+    const eventId = await openEvent(anna, [bea])
+    await emptyAccount(bea)
+    await give(bea, 30)
+    const requestId = randomUUID()
+    const [first, second] = await Promise.all([answer(bea, eventId, true, requestId), answer(bea, eventId, true, requestId)])
+    const third = await answer(bea, eventId, true, requestId)
+
+    expect(first.error).toBeNull()
+    expect(second.data).toEqual(first.data)
+    expect(third.data).toEqual(first.data)
+    expect(await balanceOf(bea)).toBe(20)
+  })
+
+  it('REQ-079: several people can accept at the same moment', async () => {
+    const eventId = await openEvent(anna, [bea, cesc, dani])
+    await Promise.all([bea, cesc, dani].map((user) => give(user, 10)))
+    const results = await Promise.all([bea, cesc, dani].map((user) => answer(user, eventId, true)))
+
+    expect(results.map((result) => result.error)).toEqual([null, null, null])
+    const everyone = await participants(eventId)
+    expect(Object.values(everyone)).toEqual(['accepted', 'accepted', 'accepted', 'accepted'])
+  })
+
+  it('REQ-080: accepting two events at once with money for one charges only one', async () => {
+    const first = await openEvent(anna, [bea])
+    const second = await openEvent(cesc, [bea])
+    await emptyAccount(bea)
+    await give(bea, 15)
+    const results = await Promise.all([answer(bea, first, true), answer(bea, second, true)])
+
+    expect(results.filter((result) => !result.error)).toHaveLength(1)
+    expect(results.find((result) => result.error)?.error?.message).toBe('insufficient_balance')
+    expect(await balanceOf(bea)).toBe(5)
+  })
+})
+
 describe('who can read and write events', () => {
   it('REQ-058: nobody can write to the event tables from the browser', async () => {
     const eventId = await openEvent(anna, [bea])
