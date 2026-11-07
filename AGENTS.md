@@ -69,6 +69,8 @@ Slice: 001
 | Tests against the hosted Supabase project, from this machine only | `npm run test:hosted` |
 | Rules only the database owner can test, after any migration touching them | Run `tests/sql/constraints.sql` through the Supabase MCP server's `execute_sql` |
 
+Write long scripts as files, then run them. Long heredocs break in Git Bash here, especially with apostrophes.
+
 ## Where things go
 
 - `docs/product/`: vision, backlog, raw intake notes.
