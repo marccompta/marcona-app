@@ -219,6 +219,9 @@ Every requirement has a permanent ID. Raw input is kept in `docs/product/intake/
 | REQ-208 | If two money actions for one user arrive together, then the system shall apply both with no deadlock error. Found reading the code in slice 004 and not reproduced: functions other than `spin()` claim a request before locking the user. No money is at risk, as one action would fail and roll back. | proposed | - | test |
 | REQ-209 | The project shall scope the Supabase MCP server to this one project. Auto mode may stay on, and migrations, `execute_sql` and Edge Function deploys don't need the human's manual approval. Secrets and Supabase branches keep their `ask` rules, and Claude shall stop and ask before anything very risky. | active | - | test |
 | REQ-210 | When a duel tap is saved, the system shall make the outer border of that button glow clearly for 0.7 seconds, and shall give no other feedback. | active | 005 | test |
+| REQ-211 | When a balance changes, the system shall refresh the balance on Ruleta and the admin's list of users without a reload. Seen in slice 006, whose live updates cover only the ranking, a person's page, the audit and events, as its spec asked. | proposed | - | test |
+| REQ-212 | The project shall build with Vite's native config loader. Seen in slice 006: `vite.config.ts` imports `./src/config` with no file extension, which Vite warns will stop working once that loader becomes its default. | proposed | - | test |
+| REQ-213 | When a user opens another screen, the system shall show it from the top. Seen in slice 006's review: after a duel's reveal, Administració opened 111px down, because every screen shares one scroll area that keeps its position. | proposed | - | test |
 
 ## Slice roadmap
 
