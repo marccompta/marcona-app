@@ -306,7 +306,7 @@ test.describe('the private panel', () => {
     await expect(choiceButton(page, 'Traeix')).toBeVisible()
   })
 
-  test('REQ-202, REQ-203: one tap saves at once, and that button glows for two seconds', async ({ page }) => {
+  test('REQ-202, REQ-210: one tap saves at once, and that button glows for two seconds', async ({ page }) => {
     const calls = await startDuel(page, anna)
     await panelOpener(page).click()
     const before = await panel(page).evaluate((element) => element.outerHTML)
@@ -332,11 +332,11 @@ test.describe('the private panel', () => {
     const lit = await glowMs
     expect(lit).toBeGreaterThan(1800)
     expect(lit).toBeLessThan(2500)
-    // REQ-203: no other feedback, so the panel is back exactly as it was.
+    // REQ-210: no other feedback, so the panel is back exactly as it was.
     expect(await panel(page).evaluate((element) => element.outerHTML)).toBe(before)
   })
 
-  test('REQ-203: the glow means saved, so it waits for the server', async ({ page }) => {
+  test('REQ-210: the glow means saved, so it waits for the server', async ({ page }) => {
     await startDuel(page, anna)
     let release = () => {}
     const held = new Promise<void>((resolve) => (release = resolve))

@@ -151,6 +151,9 @@ Type one of these in a Claude Code session started at the repo root:
 
 ### Round 1
 
-- Verdict: pending
-- Date:
-- Notes:
+- Verdict: changes
+- Date: 2026-11-07
+- Notes: make the glow last 0.7 seconds, not 2; I prefer only the external border of the card glows, not the whole card. I also prefer how the cards look in the results screen mor than in the selection screen, with its rounded colors, backgroun and so on; please, make the ones in the selection screen look more similar to the ones in the result page.
+  1. Make the glow last 0.7 seconds, not 2.
+  2. Only the external border of the card glows, not the whole card.
+  3. Make the cards in the selection screen look more similar to the ones in the result page, with their rounded colours, background and so on.

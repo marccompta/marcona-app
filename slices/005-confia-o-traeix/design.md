@@ -10,7 +10,7 @@
 
 `game_state()` is how the app reads a game. Before a duel's reveal, it returns the same thing whoever asks and whoever has locked in. Afterwards, it returns the full results.
 
-A duel's event screen has one resting state for everyone: the rules, the payoffs and a button that opens the private choice panel. The panel always shows the same two buttons, and stays open until the player closes it. Each tap replaces the player's choice, until both players have picked. Once the server confirms a tap, that button glows for two seconds and goes back to normal. The moment the second player makes their first pick, the game is revealed, so the last tap before that is the one that counts.
+A duel's event screen has one resting state for everyone: the rules, the payoffs and a button that opens the private choice panel. The panel always shows the same two cards, side by side, in the look of the result cards, and stays open until the player closes it. Each tap replaces the player's choice, until both players have picked. Once the server confirms a tap, that card's outer border glows for 0.7 seconds and goes back to normal. The moment the second player makes their first pick, the game is revealed, so the last tap before that is the one that counts.
 
 ## Affected components
 
@@ -55,7 +55,7 @@ None.
 | The engine fits duels but not La minoria | Lock-in order is stored now, and resolution branches by game |
 | A lock-in shows up through polling or Realtime | `lock_in()` touches no public table, and a test compares `game_state()` before and after |
 | Someone watches a player tap | The app can't hide that moment. It hides the state afterwards, and the review says so |
-| The second player's first tap is final, and they can't know they're second | This follows from revealing once both have picked. The buttons are behind the panel and spaced well apart |
+| The second player's first tap is final, and they can't know they're second | This follows from revealing once both have picked. The buttons are behind the panel. The human chose in review to have them side by side, like the result cards, knowing they're closer together than first designed |
 | A change lands at the same moment as the other player's first pick | `lock_in()` locks the event row, so one goes first. If the reveal wins, the late tap is ignored |
 | Two players lock in at once and the game pays twice | `lock_in()` locks the event row, and a concurrency test covers it |
 | This slice is the largest review | The settings screen comes last, so the review can focus on one duel |

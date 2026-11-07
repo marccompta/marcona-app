@@ -15,7 +15,7 @@ import { Payoffs } from './Payoffs'
 const glowMs = 2000
 const pollMs = 3000
 
-// REQ-202, REQ-203, REQ-204: sends taps in order, and lights a button only once the
+// REQ-202, REQ-210, REQ-204: sends taps in order, and lights a button only once the
 // server has saved it. The tap that completes the pair holds the reveal until its
 // glow is over, and a tap that came too late goes straight to the reveal.
 function useDuelTaps(eventId: string, showReveal: () => void) {

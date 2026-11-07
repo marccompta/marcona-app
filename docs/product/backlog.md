@@ -211,13 +211,14 @@ Every requirement has a permanent ID. Raw input is kept in `docs/product/intake/
 | REQ-200 | When a duel choice is locked in, the system shall make that button glow clearly, once and briefly, and shall give no other feedback. | superseded by REQ-203 | 005 | test |
 | REQ-201 | If a player taps a choice button in a duel after locking in, then the system shall keep their first choice and show no reaction at all. | superseded by REQ-204 | 005 | test |
 | REQ-202 | When a player taps a choice button in a duel, the system shall save that choice at once, with no confirmation step, replacing any earlier choice of theirs. | planned | 005 | test |
-| REQ-203 | When a duel tap is saved, the system shall make that button glow clearly for two seconds, and shall give no other feedback. | planned | 005 | test |
+| REQ-203 | When a duel tap is saved, the system shall make that button glow clearly for two seconds, and shall give no other feedback. | superseded by REQ-210 | 005 | test |
 | REQ-204 | If a duel tap arrives after both players have picked, then the system shall leave the choices as they were and show the reveal. | planned | 005 | test |
 | REQ-205 | If a player tries to change a locked-in choice in La minoria, then the system shall reject it. | planned | 007 | test |
 | REQ-206 | The project shall scope the Supabase MCP server to this one project. Auto mode may stay on, and migrations don't need the human's manual approval. The other Supabase tools that can change something keep their `ask` rules. | superseded by REQ-209 | 001 | test |
 | REQ-207 | If a call to a Postgres function fails because the connection was lost, then the system shall show the no-connection message, not the general one. Seen in slice 004: every function call shows the general one. | proposed | - | test |
 | REQ-208 | If two money actions for one user arrive together, then the system shall apply both with no deadlock error. Found reading the code in slice 004 and not reproduced: functions other than `spin()` claim a request before locking the user. No money is at risk, as one action would fail and roll back. | proposed | - | test |
 | REQ-209 | The project shall scope the Supabase MCP server to this one project. Auto mode may stay on, and migrations, `execute_sql` and Edge Function deploys don't need the human's manual approval. Secrets and Supabase branches keep their `ask` rules, and Claude shall stop and ask before anything very risky. | active | - | test |
+| REQ-210 | When a duel tap is saved, the system shall make the outer border of that button glow clearly for 0.7 seconds, and shall give no other feedback. | planned | 005 | test |
 
 ## Slice roadmap
 
@@ -227,7 +228,7 @@ Every requirement has a permanent ID. Raw input is kept in `docs/product/intake/
 | 002 | Users and marcones: the admin manages users and marcones, and everyone sees the ranking, user details and audit. | REQ-035 to REQ-070 | closed |
 | 003 | Classic events: the full event lifecycle, including payouts, refunds and rounding. | REQ-071 to REQ-100, REQ-186 to REQ-190 | closed |
 | 004 | Roulette: spin, payout, audit and admin settings. | REQ-101 to REQ-119 | closed |
-| 005 | Confia o traeix: the secret-choice engine, the first game, and admin game settings. | REQ-120 to REQ-149, REQ-175 to REQ-184, REQ-191, REQ-194 to REQ-196, REQ-198 to REQ-204 | planned |
+| 005 | Confia o traeix: the secret-choice engine, the first game, and admin game settings. | REQ-120 to REQ-149, REQ-175 to REQ-184, REQ-191, REQ-194 to REQ-196, REQ-198 to REQ-204, REQ-210 | planned |
 | 006 | Extras: live updates, QR code and home screen install, in that order. Each can be dropped on its own. | REQ-150 to REQ-154 | planned |
 | 007 | La minoria: the second game, on the same engine. | REQ-155 to REQ-163, REQ-185, REQ-192, REQ-193, REQ-197, REQ-205 | planned |
 | 008 | Event readiness: export, data wipe, rehearsal and day-of guide. This slice can't be cut. | REQ-164 to REQ-174 | planned |
