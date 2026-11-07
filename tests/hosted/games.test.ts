@@ -106,6 +106,22 @@ describe('creating a game', () => {
   })
 })
 
+describe('game settings', () => {
+  it('REQ-146, REQ-147: a player calling the function directly is refused', async () => {
+    for (const client of [outsider.client, nuria.client]) {
+      const { error } = await client.rpc('set_game_settings', {
+        p_game: 'confia_o_traeix',
+        p_enabled: false,
+        p_description: 'Prova',
+        p_settings: { both_trust: 150, betrayer: 250, betrayed: 0, both_betray: 50 },
+      })
+      expect(error?.code).toBe('42501')
+    }
+    const { data } = await admin.from('games').select('enabled').eq('id', 'confia_o_traeix').single()
+    expect(data?.enabled).toBe(true)
+  })
+})
+
 describe('secrecy', () => {
   it('REQ-128, REQ-194: a lock-in changes nothing anyone can read, and the reveal shows it all', async () => {
     const eventId = await forcedDuel()

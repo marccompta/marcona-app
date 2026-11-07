@@ -1038,6 +1038,28 @@ select {
   }
 }
 
+/* Game settings. */
+.field textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--gold-line);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--ivory);
+  font: 400 17px/1.4 var(--font-text);
+  resize: vertical;
+}
+
+.field textarea:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+
+.percentages {
+  display: grid;
+  gap: 12px;
+}
+
 /* The new event form. */
 .group {
   display: grid;

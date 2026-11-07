@@ -12,7 +12,7 @@ Work through these in order. Each task leaves the tests passing.
 - [x] **T8:** Add the event type choice for the admin only, and the option to play. (REQ-175, REQ-177, REQ-178)
 - [x] **T9:** Build the game event detail: rules, payoffs, one resting screen for everyone, the private choice panel, taps sent in order, the two-second glow and no hints. (REQ-129, REQ-131, REQ-195, REQ-198, REQ-202, REQ-203)
 - [x] **T10:** Add the waiting refresh, results and dramatic reveal. (REQ-132, REQ-133, REQ-134)
-- [ ] **T11:** Build the admin game settings, with validation and the worked example, and extend the smoke test. (REQ-144, REQ-146, REQ-147, REQ-148)
+- [x] **T11:** Build the admin game settings, with validation and the worked example, and extend the smoke test. (REQ-144, REQ-146, REQ-147, REQ-148)
 
 ## Review fixes
 

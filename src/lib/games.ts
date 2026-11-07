@@ -84,6 +84,19 @@ export async function createGameEvent(
   return (data as { event_id: string }).event_id
 }
 
+export async function saveGameSettings(
+  { game, enabled, description, settings }: { game: string; enabled: boolean; description: string; settings: DuelSettings },
+  client = supabase,
+) {
+  const { error } = await client.rpc('set_game_settings', {
+    p_game: game,
+    p_enabled: enabled,
+    p_description: description,
+    p_settings: settings,
+  })
+  if (error) throw error
+}
+
 // The client gives a failed fetch no code, and a TypeError is what errorMessage()
 // words as a lost connection.
 export async function lockIn(

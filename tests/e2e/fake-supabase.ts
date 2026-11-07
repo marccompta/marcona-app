@@ -538,6 +538,28 @@ export async function fakeSupabase(
     return { event_id: event.id, saved: true, revealed: saveChoice(event, caller.username, body.p_choice) }
   })
 
+  await page.route('**/rest/v1/rpc/set_game_settings', async (route) => {
+    if (await preflight(route)) return
+    const body = route.request().postDataJSON()
+    const caller = people.find((u) => u.username === usernameFromToken(route))
+    if (caller?.role !== 'admin') return json(route, 403, { code: '42501', message: 'not_allowed' })
+
+    const refused = (code: string) => json(route, 400, { code: 'P0001', message: code, details: null, hint: null })
+    const description = String(body.p_description ?? '').trim()
+    if (!description) return refused('game_description_required')
+    if (description.length > 1000) return refused('game_description_too_long')
+    const { both_trust, betrayer, betrayed, both_betray } = body.p_settings
+    const numbers = [both_trust, betrayer, betrayed, both_betray]
+    if (!numbers.every((value) => Number.isInteger(value) && value >= 0 && value <= 1000)) {
+      return refused('invalid_game_percentage')
+    }
+    if (!(betrayer > both_trust && both_trust > both_betray && both_betray >= betrayed)) return refused('invalid_duel_order')
+
+    const game = calls.games.find((candidate) => candidate.id === body.p_game)!
+    Object.assign(game, { enabled: body.p_enabled, description, settings: { both_trust, betrayer, betrayed, both_betray } })
+    return json(route, 200, game)
+  })
+
   await page.route('**/rest/v1/rpc/game_state', async (route) => {
     if (await preflight(route)) return
     calls.statePolls += 1

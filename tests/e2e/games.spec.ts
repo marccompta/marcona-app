@@ -742,3 +742,102 @@ test.describe('the events list', () => {
     await expect(page.locator('[data-event]').filter({ hasText: 'El duel' })).not.toContainText('Pot')
   })
 })
+
+test.describe('game settings', () => {
+  const openSettings = async (page: Page) => {
+    const calls = await start(page, richAdmin)
+    await page.getByRole('link', { name: 'Administració' }).click()
+    await page.locator('[data-game-settings]').waitFor()
+    return calls
+  }
+
+  const save = (page: Page) => page.getByRole('button', { name: 'Desa el joc' }).click()
+  const percent = (page: Page, label: string) => page.getByLabel(label, { exact: true })
+
+  test('REQ-147: shows the current description and numbers', async ({ page }) => {
+    await openSettings(page)
+
+    await expect(page.getByRole('checkbox', { name: 'Joc actiu' })).toBeChecked()
+    await expect(page.getByLabel('Descripció')).toHaveValue('Dues persones, una decisió secreta.')
+    await expect(percent(page, 'Totes dues confien (%)')).toHaveValue('150')
+    await expect(percent(page, 'Qui traeix (%)')).toHaveValue('250')
+    await expect(percent(page, 'Qui confia i rep la traïció (%)')).toHaveValue('0')
+    await expect(percent(page, 'Totes dues traeixen (%)')).toHaveValue('50')
+  })
+
+  test('REQ-148: the worked example updates as the numbers change', async ({ page }) => {
+    await openSettings(page)
+    const example = page.locator('[data-game-settings] [data-payoff]')
+    await expect(page.locator('[data-worked-example]')).toContainText('Exemple amb una entrada de 10 marcones')
+    await expect(example.first()).toContainText('Cada persona rep 15 marcones (150%)')
+
+    await percent(page, 'Totes dues confien (%)').fill('125')
+    await expect(example.first()).toContainText('Cada persona rep 12 marcones (125%)')
+
+    await percent(page, 'Qui traeix (%)').fill('333')
+    await expect(example.nth(1)).toContainText('Qui traeix rep 33 marcones (333%)')
+  })
+
+  test('REQ-148: a number that makes no sense pauses the example, with no crash', async ({ page }) => {
+    await openSettings(page)
+    await percent(page, 'Totes dues confien (%)').fill('abc')
+
+    await expect(page.locator('[data-game-settings] [data-payoff]')).toHaveCount(0)
+    await expect(page.locator('[data-worked-example]')).toContainText('Escriu nombres enters')
+    await percent(page, 'Totes dues confien (%)').fill('130')
+    await expect(page.locator('[data-game-settings] [data-payoff]').first()).toContainText('13 marcones')
+  })
+
+  test('REQ-144: an order that breaks the rule shows a Catalan error, and nothing changes', async ({ page }) => {
+    const calls = await openSettings(page)
+    await percent(page, 'Totes dues traeixen (%)').fill('200')
+    await save(page)
+
+    await expect(page.getByRole('alert')).toHaveText(
+      'Els percentatges han de complir: qui traeix > totes dues confien > totes dues traeixen ≥ qui rep la traïció.',
+    )
+    expect(calls.games[0].settings.both_betray).toBe(50)
+  })
+
+  test('REQ-144: a number out of range shows a Catalan error', async ({ page }) => {
+    await openSettings(page)
+    await percent(page, 'Qui traeix (%)').fill('1001')
+    await save(page)
+
+    await expect(page.getByRole('alert')).toHaveText('Cada percentatge ha de ser un nombre enter del 0 al 1.000.')
+  })
+
+  test('REQ-147: saves the Catalan description and the numbers for new events', async ({ page }) => {
+    const calls = await openSettings(page)
+    await page.getByLabel('Descripció').fill('Regles noves.')
+    await percent(page, 'Totes dues confien (%)').fill('120')
+    await save(page)
+
+    await expect(page.getByRole('status')).toHaveText("S'han desat els canvis del joc per als nous esdeveniments.")
+    expect(calls.games[0]).toMatchObject({ description: 'Regles noves.', settings: { both_trust: 120 } })
+
+    await page.getByRole('link', { name: 'Esdeveniments' }).click()
+    await openForm(page)
+    await fillDuel(page, ['anna'])
+    await submit(page)
+    await page.locator('[data-screen="esdeveniment"]').waitFor()
+    await expect(page.locator('[data-game-rules]')).toContainText('Regles noves.')
+    await expect(page.locator('[data-payoff]').first()).toContainText('12 marcones (120%)')
+  })
+
+  test('REQ-146: turning a game off takes it out of the new event form', async ({ page }) => {
+    await openSettings(page)
+    await page.getByRole('checkbox', { name: 'Joc actiu' }).uncheck({ force: true })
+    await save(page)
+    await expect(page.getByRole('status')).toBeVisible()
+
+    await page.getByRole('link', { name: 'Esdeveniments' }).click()
+    await openForm(page)
+    await expect(page.getByLabel('Tipus').locator('option')).toHaveText(['Clàssic'])
+  })
+
+  test('REQ-023: the settings fit the phone', async ({ page }) => {
+    await openSettings(page)
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360)
+  })
+})

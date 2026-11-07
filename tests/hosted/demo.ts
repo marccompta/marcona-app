@@ -7,10 +7,13 @@
 //   npm run demo -- accept [event] [player] Accepts pending invitations, optionally only these
 //   npm run demo -- decline [event] [player]
 //   npm run demo -- invite <event> <buy-in> The first demo player invites the admin to a new event
+//   npm run demo -- pick <event> <confia|traeix> [player]
+//                                           Demo players in that open duel lock in, optionally only this one
 //
 import { randomUUID } from 'node:crypto'
 import { adjustBalance, fetchPeople, type Person } from '../../src/lib/data'
 import { answerInvitation, cancelEvent, createEvent, fetchEvents, groupEvents } from '../../src/lib/events'
+import { lockIn, type DuelChoice } from '../../src/lib/games'
 import { adminClient, adminLogin, logInAsDemo, signOutAll } from './env'
 
 type Client = Awaited<ReturnType<typeof adminClient>>
@@ -91,6 +94,28 @@ async function answer(admin: Client, accept: boolean, eventName?: string, onlyPl
   if (answered === 0) console.log('No pending invitations matched.')
 }
 
+async function pick(admin: Client, eventName: string | undefined, choice: string | undefined, onlyPlayer?: string) {
+  if (!eventName || (choice !== 'confia' && choice !== 'traeix')) {
+    throw new Error('Say the duel and the choice, such as: pick Duel traeix')
+  }
+  const event = (await fetchEvents(admin)).find((candidate) => candidate.name === eventName && candidate.status === 'open')
+  if (!event) throw new Error(`No open event is called ${eventName}`)
+
+  const players = (await fetchPeople(admin)).filter(isDemoPlayer)
+  const inDuel = players.filter(
+    (player) =>
+      (!onlyPlayer || player.username === onlyPlayer) &&
+      event.participants.some((person) => person.user_id === player.user_id && person.status === 'accepted'),
+  )
+  if (inDuel.length === 0) console.log('No demo player matched.')
+
+  for (const player of inDuel) {
+    const client = await logInAsDemo(admin, player)
+    const answer = await lockIn({ requestId: randomUUID(), eventId: event.id, choice: choice as DuelChoice }, client)
+    console.log(`${player.username} picked ${choice}${answer.revealed ? ', and the duel is revealed' : ''}`)
+  }
+}
+
 async function main() {
   const [command, first, second] = process.argv.slice(2)
   const admin = await adminClient()
@@ -100,7 +125,8 @@ async function main() {
   if (command === 'accept') return answer(admin, true, first, second)
   if (command === 'decline') return answer(admin, false, first, second)
   if (command === 'invite') return invite(admin, first, Number(second))
-  throw new Error('Use one of: fund, status, accept, decline, invite')
+  if (command === 'pick') return pick(admin, first, second, process.argv[5])
+  throw new Error('Use one of: fund, status, accept, decline, invite, pick')
 }
 
 main()

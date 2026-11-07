@@ -180,6 +180,7 @@ begin
     (select phase from public.events where id = duel) = 'choosing');
 
   -- REQ-183: a decline ends the duel, and whoever paid gets it back.
+  perform pg_temp.act_as(admin_id);
   duel := pg_temp.new_duel(10, anna, bea, false);
   perform pg_temp.act_as(anna);
   perform public.answer_invitation(gen_random_uuid(), duel, true);
@@ -416,7 +417,74 @@ begin
   results := results || pg_temp.verdict('REQ-128 a cancelled game reveals nothing',
     public.game_state(duel) -> 'reveal' = 'null'::jsonb);
 
-  -- NEXT
+  -- REQ-144: only the admin, and only numbers in the right order.
+  perform pg_temp.act_as(anna);
+  results := results || pg_temp.verdict('REQ-146 a player cannot change a game', pg_temp.refusal(
+    $s$select public.set_game_settings('confia_o_traeix', false, 'Prova', '{"both_trust": 150, "betrayer": 250, "betrayed": 0, "both_betray": 50}')$s$
+  ) = 'not_allowed');
+  perform pg_temp.act_as(admin_id);
+
+  foreach scenario in array array[
+    '{"both_trust": 40, "betrayer": 250, "betrayed": 0, "both_betray": 50}',
+    '{"both_trust": 250, "betrayer": 250, "betrayed": 0, "both_betray": 50}',
+    '{"both_trust": 300, "betrayer": 250, "betrayed": 0, "both_betray": 50}',
+    '{"both_trust": 150, "betrayer": 250, "betrayed": 60, "both_betray": 50}',
+    '{"both_trust": 150, "betrayer": 250, "betrayed": 150, "both_betray": 150}'
+  ] loop
+    results := results || pg_temp.verdict('REQ-144 refused ' || scenario, pg_temp.refusal(format(
+      $s$select public.set_game_settings('confia_o_traeix', true, 'Prova', %L)$s$, scenario
+    )) = 'invalid_duel_order');
+  end loop;
+
+  foreach scenario in array array[
+    '{"both_trust": 150.5, "betrayer": 250, "betrayed": 0, "both_betray": 50}',
+    '{"both_trust": 150, "betrayer": 1001, "betrayed": 0, "both_betray": 50}',
+    '{"both_trust": 150, "betrayer": 250, "betrayed": -1, "both_betray": 50}',
+    '{"both_trust": "150", "betrayer": 250, "betrayed": 0, "both_betray": 50}',
+    '{"betrayer": 250, "betrayed": 0, "both_betray": 50}'
+  ] loop
+    results := results || pg_temp.verdict('REQ-144 not a percentage ' || scenario, pg_temp.refusal(format(
+      $s$select public.set_game_settings('confia_o_traeix', true, 'Prova', %L)$s$, scenario
+    )) = 'invalid_game_percentage');
+  end loop;
+
+  results := results || pg_temp.verdict('REQ-144 the settings have not changed',
+    (select settings from public.games where id = 'confia_o_traeix') = defaults);
+
+  results := results || pg_temp.verdict('REQ-147 a description is required', pg_temp.refusal(format(
+    $s$select public.set_game_settings('confia_o_traeix', true, '   ', %L)$s$, defaults
+  )) = 'game_description_required');
+  results := results || pg_temp.verdict('REQ-147 a description has a limit', pg_temp.refusal(format(
+    $s$select public.set_game_settings('confia_o_traeix', true, %L, %L)$s$, repeat('a', 1001), defaults
+  )) = 'game_description_too_long');
+
+  -- REQ-144: the edge of the rule, where both betray and betrayed may be equal.
+  perform public.set_game_settings(
+    'confia_o_traeix', true, '  Regles noves.  ',
+    '{"both_trust": 120, "betrayer": 300, "betrayed": 20, "both_betray": 20, "extra": 1}'
+  );
+  results := results || pg_temp.verdict('REQ-147 the admin edits a game',
+    (select description from public.games where id = 'confia_o_traeix') = 'Regles noves.'
+    and (select settings from public.games where id = 'confia_o_traeix')
+      = '{"both_trust": 120, "betrayer": 300, "betrayed": 20, "both_betray": 20}'::jsonb);
+
+  -- REQ-147: a new game takes the new text and numbers, and an old one keeps its own.
+  second_duel := pg_temp.new_duel(10, anna, bea, true);
+  results := results || pg_temp.verdict('REQ-147 new events use the edit',
+    (select settings ->> 'description' from public.events where id = second_duel) = 'Regles noves.'
+    and (select (settings ->> 'both_trust')::integer from public.events where id = second_duel) = 120
+    and (select settings ->> 'description' from public.events where id = duel) <> 'Regles noves.');
+
+  -- REQ-146: off stops new events, and leaves a running one alone.
+  perform public.set_game_settings('confia_o_traeix', false, 'Regles noves.', defaults);
+  results := results || pg_temp.verdict('REQ-146 off stops new events', pg_temp.refusal(format(
+    $s$select public.create_game_event(gen_random_uuid(), 'confia_o_traeix', 'Prova', 10, false, array[%L::uuid, %L::uuid], true)$s$, anna, bea
+  )) = 'game_off');
+  perform pg_temp.act_as(anna);
+  perform public.lock_in(gen_random_uuid(), second_duel, 'confia');
+  perform pg_temp.act_as(bea);
+  results := results || pg_temp.verdict('REQ-149 a running game plays on',
+    (public.lock_in(gen_random_uuid(), second_duel, 'confia') ->> 'revealed')::boolean);
 
   raise exception 'RESULTS %', results;
 end;
