@@ -7,24 +7,18 @@
 //   npm run demo -- accept [event] [player] Accepts pending invitations, optionally only these
 //   npm run demo -- decline [event] [player]
 //   npm run demo -- invite <event> <buy-in> The first demo player invites the admin to a new event
+//   npm run demo -- pick <event> <confia|traeix> [player]
+//                                           Demo players in that open duel lock in, optionally only this one
 //
-// Demo passwords aren't kept anywhere: each run sets a new random one to log in,
-// which also ends any session that player had open.
-import { randomBytes, randomUUID } from 'node:crypto'
-import { callAdminUsers } from '../../src/lib/adminUsers'
+import { randomUUID } from 'node:crypto'
 import { adjustBalance, fetchPeople, type Person } from '../../src/lib/data'
 import { answerInvitation, cancelEvent, createEvent, fetchEvents, groupEvents } from '../../src/lib/events'
-import { adminClient, adminLogin, logInAs, signOutAll } from './env'
+import { lockIn, type DuelChoice } from '../../src/lib/games'
+import { adminClient, adminLogin, logInAsDemo, signOutAll } from './env'
 
 type Client = Awaited<ReturnType<typeof adminClient>>
 
 const isDemoPlayer = (person: Person) => person.username.startsWith('demo-') && !person.removed_at
-
-async function logInAsPlayer(admin: Client, player: Person) {
-  const password = randomBytes(18).toString('base64url')
-  await callAdminUsers(admin, { action: 'reset', userId: player.user_id, password })
-  return logInAs(player.username, password)
-}
 
 async function fund(admin: Client, target: number) {
   if (!Number.isInteger(target) || target < 1) throw new Error('Say how many marcones, such as: fund 100')
@@ -62,7 +56,7 @@ async function invite(admin: Client, name: string | undefined, buyIn: number) {
   const [host] = people.filter(isDemoPlayer).sort((a, b) => a.username.localeCompare(b.username))
   const me = people.find((person) => person.username === adminLogin().username)!
 
-  const client = await logInAsPlayer(admin, host)
+  const client = await logInAsDemo(admin, host)
   await createEvent(
     { requestId: randomUUID(), name, buyIn, invitees: [me.user_id], payouts: [50, 30, 20], force: false },
     client,
@@ -89,7 +83,7 @@ async function answer(admin: Client, accept: boolean, eventName?: string, onlyPl
     const pending = groupEvents(events, player.username).invitations.filter((event) => !eventName || event.name === eventName)
     if (pending.length === 0) continue
 
-    const client = await logInAsPlayer(admin, player)
+    const client = await logInAsDemo(admin, player)
     for (const event of pending) {
       await answerInvitation({ requestId: randomUUID(), eventId: event.id, accept }, client)
       console.log(`${player.username} ${accept ? 'accepted' : 'declined'} ${event.name}`)
@@ -98,6 +92,28 @@ async function answer(admin: Client, accept: boolean, eventName?: string, onlyPl
   }
 
   if (answered === 0) console.log('No pending invitations matched.')
+}
+
+async function pick(admin: Client, eventName: string | undefined, choice: string | undefined, onlyPlayer?: string) {
+  if (!eventName || (choice !== 'confia' && choice !== 'traeix')) {
+    throw new Error('Say the duel and the choice, such as: pick Duel traeix')
+  }
+  const event = (await fetchEvents(admin)).find((candidate) => candidate.name === eventName && candidate.status === 'open')
+  if (!event) throw new Error(`No open event is called ${eventName}`)
+
+  const players = (await fetchPeople(admin)).filter(isDemoPlayer)
+  const inDuel = players.filter(
+    (player) =>
+      (!onlyPlayer || player.username === onlyPlayer) &&
+      event.participants.some((person) => person.user_id === player.user_id && person.status === 'accepted'),
+  )
+  if (inDuel.length === 0) console.log('No demo player matched.')
+
+  for (const player of inDuel) {
+    const client = await logInAsDemo(admin, player)
+    const answer = await lockIn({ requestId: randomUUID(), eventId: event.id, choice: choice as DuelChoice }, client)
+    console.log(`${player.username} picked ${choice}${answer.revealed ? ', and the duel is revealed' : ''}`)
+  }
 }
 
 async function main() {
@@ -109,7 +125,8 @@ async function main() {
   if (command === 'accept') return answer(admin, true, first, second)
   if (command === 'decline') return answer(admin, false, first, second)
   if (command === 'invite') return invite(admin, first, Number(second))
-  throw new Error('Use one of: fund, status, accept, decline, invite')
+  if (command === 'pick') return pick(admin, first, second, process.argv[5])
+  throw new Error('Use one of: fund, status, accept, decline, invite, pick')
 }
 
 main()

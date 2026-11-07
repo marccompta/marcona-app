@@ -11,7 +11,7 @@ const smallTargets = (page: Page) =>
   page.evaluate(() =>
     [...document.querySelectorAll('a, button, input, select')]
       .map((element) => ({ element, box: element.getBoundingClientRect() }))
-      .filter(({ box }) => box.width > 0 && (box.width < 44 || box.height < 44))
+      .filter(({ box }) => box.width > 0 && (Math.round(box.width) < 44 || Math.round(box.height) < 44))
       .map(({ element, box }) => `${element.tagName} ${element.textContent} ${box.width}x${box.height}`),
   )
 

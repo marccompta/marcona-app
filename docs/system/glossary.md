@@ -34,6 +34,8 @@ Domain terms, used the same way in specs, code and conversation. Specs, code and
 | Secret choice | | A player's hidden pick in a game. |
 | Lock in | | To submit a secret choice. In La minoria it can't then be changed. In a duel, each tap replaces it until both players have picked. |
 | Choice panel | | The private panel in a duel where a player chooses with one tap. It looks the same whether or not they've chosen. |
+| Phase | | Where a game is: inviting, choosing or revealed. An event's status says whether it's open, and its phase says how far a game has got. |
+| Organiser | Organitza | The admin, when they run a game without playing in it. |
 | Reveal | | The moment a game shows every choice and payout. |
 | The house | La banca | Covers or keeps any difference in roulette and duels. It has no account or balance. |
 | Confia o traeix | Confia o traeix | The two-player duel. Choices: Confia (trust) and Traeix (betray). |

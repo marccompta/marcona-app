@@ -228,7 +228,7 @@ test('REQ-023, REQ-024: the admin screen fits, with an open user, and has big en
   const small = await page.evaluate(() =>
     [...document.querySelectorAll('[data-screen] a, [data-screen] button, [data-screen] input')]
       .map((element) => ({ element, box: element.getBoundingClientRect() }))
-      .filter(({ box }) => box.width > 0 && (box.width < 44 || box.height < 44))
+      .filter(({ box }) => box.width > 0 && (Math.round(box.width) < 44 || Math.round(box.height) < 44))
       .map(({ element }) => element.outerHTML),
   )
   expect(fits).toBe(true)

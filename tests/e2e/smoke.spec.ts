@@ -1,8 +1,10 @@
 import { randomUUID } from 'node:crypto'
 import { existsSync } from 'node:fs'
 import { expect, test, type Page } from '@playwright/test'
-import { adjustBalance } from '../../src/lib/data'
-import { adminClient, adminLogin, createTestAccount, signOutAll, type TestAccount } from '../hosted/env'
+import { adjustBalance, fetchPeople } from '../../src/lib/data'
+import { answerInvitation, fetchEvents } from '../../src/lib/events'
+import { duelOutcomes, lockIn } from '../../src/lib/games'
+import { adminClient, adminLogin, createTestAccount, logInAsDemo, signOutAll, type TestAccount } from '../hosted/env'
 
 // REQ-100: the main flows on a phone-sized screen, on the real project, with no
 // fake. Each later slice extends this. It needs .env.test.local, so it only runs
@@ -102,4 +104,46 @@ test('REQ-100: logs in, creates an event, accepts it, completes it and checks th
   await expect(row(host).locator('.count')).toHaveAttribute('data-value', '90')
 
   await guestPhone.close()
+})
+
+// A game needs the admin, who can't invite test accounts, so this plays a demo
+// player. Each engine has its own, because logging in ends that player's session.
+test('REQ-100, REQ-134: the admin plays a real duel on a phone, and sees the reveal with no reload', async ({ page }, info) => {
+  const admin = await adminClient()
+  const { username, password } = adminLogin()
+  const people = await fetchPeople(admin)
+  const demo = people.filter((person) => person.username.startsWith('demo-') && !person.removed_at)
+  const opponent = demo[info.project.name === 'webkit' ? 1 : 0]
+  const me = people.find((person) => person.username === username)!
+  const name = `Fum ${randomUUID().slice(0, 8)}`
+  for (const userId of [me.user_id, opponent.user_id]) {
+    await adjustBalance({ requestId: randomUUID(), userId, action: 'add', amount: 10, concept: 'Prova de fum' }, admin)
+  }
+
+  await logIn(page, { userId: me.user_id, username, password })
+  await page.getByRole('link', { name: 'Esdeveniments' }).click()
+  await page.getByRole('link', { name: 'Nou esdeveniment' }).click()
+  await page.getByLabel('Tipus').selectOption({ label: 'Confia o traeix' })
+  await page.getByLabel('Nom').fill(name)
+  await page.getByLabel('Entrada').fill('10')
+  await page.getByRole('checkbox', { name: opponent.username, exact: true }).check({ force: true })
+  await page.getByRole('button', { name: "Crea l'esdeveniment" }).click()
+  await expect(page.locator('[data-game-rules]')).toBeVisible()
+
+  const client = await logInAsDemo(admin, opponent)
+  const event = (await fetchEvents(admin)).find((candidate) => candidate.name === name)!
+  await answerInvitation({ requestId: randomUUID(), eventId: event.id, accept: true }, client)
+
+  // The polling shows the panel once the opponent has paid.
+  await page.getByRole('button', { name: 'Tria en privat' }).click({ timeout: 15000 })
+  await lockIn({ requestId: randomUUID(), eventId: event.id, choice: 'confia' }, client)
+  await page.getByRole('button', { name: 'Traeix' }).click()
+
+  await expect(page.locator('[data-reveal][data-stage="done"]')).toBeVisible({ timeout: 15000 })
+  // The admin can change the numbers, so these come from the duel's own copy.
+  const { betrayer, betrayed } = duelOutcomes(10, event.settings!)
+  await expect(page.locator('[data-reveal-player]')).toHaveText([
+    new RegExp(`${username}.*Traeix.*${betrayer} marcon`),
+    new RegExp(`${opponent.username}.*Confia.*${betrayed} marcon`),
+  ])
 })

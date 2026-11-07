@@ -123,6 +123,51 @@ begin
     results := results || '{"REQ-099 movement with unknown event": "rejected"}';
   end;
 
+  -- REQ-122: a game stored directly with no settings, or a classic event with a game.
+  begin
+    insert into public.events (type, name, buy_in, creator_id, game, phase)
+    values ('game', 'Prova', 1, anna, 'confia_o_traeix', 'choosing');
+    results := results || '{"REQ-122 game without settings": "ACCEPTED"}';
+  exception when check_violation then
+    results := results || '{"REQ-122 game without settings": "rejected"}';
+  end;
+
+  begin
+    insert into public.events (name, buy_in, creator_id, payout_first, payout_second, payout_third, game)
+    values ('Prova', 1, anna, 50, 30, 20, 'confia_o_traeix');
+    results := results || '{"REQ-122 classic event with a game": "ACCEPTED"}';
+  exception when check_violation then
+    results := results || '{"REQ-122 classic event with a game": "rejected"}';
+  end;
+
+  begin
+    insert into public.events (name, buy_in, creator_id)
+    values ('Prova', 1, anna);
+    results := results || '{"REQ-074 classic event without payouts": "ACCEPTED"}';
+  exception when check_violation then
+    results := results || '{"REQ-074 classic event without payouts": "rejected"}';
+  end;
+
+  -- REQ-127: a phase that doesn't exist, and a reveal changed once it's finished.
+  begin
+    insert into public.events (type, name, buy_in, creator_id, game, settings, phase)
+    values ('game', 'Prova', 1, anna, 'confia_o_traeix', '{}', 'paused');
+    results := results || '{"REQ-127 unknown phase": "ACCEPTED"}';
+  exception when check_violation then
+    results := results || '{"REQ-127 unknown phase": "rejected"}';
+  end;
+
+  insert into public.events (type, name, buy_in, creator_id, game, settings, phase, status, reveal)
+  values ('game', 'Prova', 1, anna, 'confia_o_traeix', '{}', 'revealed', 'completed', '{"players": []}')
+  returning id into event_id;
+
+  begin
+    update public.events set reveal = '{"players": [1]}' where id = event_id;
+    results := results || '{"REQ-127 rewrite a reveal as owner": "ACCEPTED"}';
+  exception when raise_exception then
+    results := results || '{"REQ-127 rewrite a reveal as owner": "rejected"}';
+  end;
+
   raise exception 'RESULTS %', results;
 end;
 $$;

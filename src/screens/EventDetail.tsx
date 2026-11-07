@@ -1,12 +1,10 @@
-import { useRef, useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router'
 import type { Profile } from '../auth/AuthProvider'
 import { formatMarcones } from '../i18n/format'
 import { text } from '../i18n/text'
 import { useLoad } from '../lib/data'
 import {
-  answerInvitation,
-  cancelEvent,
   completeEvent,
   fetchEvent,
   inEvent,
@@ -15,55 +13,11 @@ import {
   type MarconaEvent,
   type Participant,
 } from '../lib/events'
-import { Crown } from '../shell/icons'
 import { Field, Outcome, useAction } from '../shell/Form'
+import { Answer, Cancel, People, useRequestId, type ActionProps } from './EventActions'
 import { StatusPill } from './Events'
+import { GameEvent } from './GameEvent'
 import { Pending } from './Movements'
-
-type ActionProps = { event: MarconaEvent; onChange: () => void }
-
-// REQ-062: a retry of the same attempt keeps its ID, so it can't apply twice.
-function useRequestId() {
-  const id = useRef<string | null>(null)
-  return {
-    current: () => (id.current ??= crypto.randomUUID()),
-    clear: () => {
-      id.current = null
-    },
-  }
-}
-
-function Answer({ event, onChange }: ActionProps) {
-  const { busy, outcome, run } = useAction()
-  const request = useRequestId()
-
-  async function answer(accept: boolean) {
-    const requestId = request.current()
-    const done = await run(async () => {
-      await answerInvitation({ requestId, eventId: event.id, accept })
-      return ''
-    })
-    if (done) {
-      request.clear()
-      onChange()
-    }
-  }
-
-  return (
-    <div className="panel">
-      <h2>{text.events.invitation}</h2>
-      <Outcome outcome={outcome?.kind === 'failed' ? outcome : null} />
-      <div className="actions">
-        <button type="button" className="primary" disabled={busy} onClick={() => void answer(true)}>
-          {text.events.accept}
-        </button>
-        <button type="button" className="secondary" disabled={busy} onClick={() => void answer(false)}>
-          {text.events.decline}
-        </button>
-      </div>
-    </div>
-  )
-}
 
 // REQ-091, REQ-092: one winner with 2 people, or someone for each paid place.
 function Complete({ event, onChange }: ActionProps) {
@@ -138,49 +92,6 @@ function Picker(props: { label: string; players: Participant[]; value: string; o
   )
 }
 
-// REQ-084, REQ-085: the first tap only asks, as with a removal.
-function Cancel({ event, onChange }: ActionProps) {
-  const [asking, setAsking] = useState(false)
-  const { busy, outcome, run } = useAction()
-  const request = useRequestId()
-
-  async function confirm() {
-    const requestId = request.current()
-    const done = await run(async () => {
-      await cancelEvent({ requestId, eventId: event.id })
-      return ''
-    })
-    setAsking(false)
-    if (done) {
-      request.clear()
-      onChange()
-    }
-  }
-
-  return (
-    <div className="panel">
-      <Outcome outcome={outcome?.kind === 'failed' ? outcome : null} />
-      {asking ? (
-        <>
-          <p className="ask">{text.events.cancelQuestion}</p>
-          <div className="actions">
-            <button type="button" className="secondary secondary--danger" disabled={busy} onClick={() => void confirm()}>
-              {text.events.cancelConfirm}
-            </button>
-            <button type="button" className="secondary" disabled={busy} onClick={() => setAsking(false)}>
-              {text.events.cancelBack}
-            </button>
-          </div>
-        </>
-      ) : (
-        <button type="button" className="secondary secondary--danger" onClick={() => setAsking(true)}>
-          {text.events.cancel}
-        </button>
-      )}
-    </div>
-  )
-}
-
 function Results({ event }: { event: MarconaEvent }) {
   const name = (userId: string) => event.participants.find((person) => person.user_id === userId)?.who.username
 
@@ -196,33 +107,6 @@ function Results({ event }: { event: MarconaEvent }) {
           </li>
         ))}
       </ol>
-    </>
-  )
-}
-
-function People({ event }: { event: MarconaEvent }) {
-  const creatorFirst = [...event.participants].sort(
-    (a, b) =>
-      Number(b.user_id === event.creator_id) - Number(a.user_id === event.creator_id) ||
-      a.who.username.localeCompare(b.who.username, 'ca'),
-  )
-
-  return (
-    <>
-      <h2 className="section-title">{text.events.participants}</h2>
-      <ul className="event-people">
-        {creatorFirst.map((person) => (
-          <li key={person.user_id} className="event-person" data-participant>
-            <span className="rank-name">
-              <span className="rank-username">{person.who.username}</span>
-              {person.user_id === event.creator_id && <Crown label={text.events.creator} />}
-            </span>
-            <span className={person.status === 'accepted' ? 'event-status event-status--in' : 'event-status'}>
-              {text.events.people[person.status]}
-            </span>
-          </li>
-        ))}
-      </ul>
     </>
   )
 }
@@ -279,7 +163,11 @@ export function EventDetail({ profile }: { profile: Profile }) {
       {state.status === 'ready' && state.data && (
         <>
           <h1 className="detail-name">{state.data.name}</h1>
-          <Body event={state.data} profile={profile} onChange={reload} />
+          {state.data.type === 'game' ? (
+            <GameEvent event={state.data} profile={profile} onChange={reload} />
+          ) : (
+            <Body event={state.data} profile={profile} onChange={reload} />
+          )}
         </>
       )}
     </section>

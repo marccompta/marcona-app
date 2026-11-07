@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
 import { createClient } from '@supabase/supabase-js'
 import { config } from '../../src/config'
@@ -67,6 +68,14 @@ export async function logInAs(username: string, password: string) {
   const { error } = await client.auth.signInWithPassword({ email: `${username}@${config.emailDomain}`, password })
   if (error) throw error
   return client
+}
+
+// Demo passwords aren't kept anywhere: this sets a new random one to log in, which
+// also ends any session that player had open.
+export async function logInAsDemo(admin: Awaited<ReturnType<typeof adminClient>>, player: { user_id: string; username: string }) {
+  const password = randomBytes(18).toString('base64url')
+  await callAdminUsers(admin, { action: 'reset', userId: player.user_id, password })
+  return logInAs(player.username, password)
 }
 
 // An account nobody logs in to. Logging in is what the rate limit counts, and

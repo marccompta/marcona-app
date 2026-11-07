@@ -1,4 +1,5 @@
 import { text } from '../i18n/text'
+import type { EventGameSettings, Phase, Reveal } from './games'
 import { supabase } from './supabase'
 
 export type EventStatus = 'open' | 'completed' | 'cancelled'
@@ -10,16 +11,23 @@ export type Place = { place: number; user_id: string; percentage: number; amount
 
 export type MarconaEvent = {
   id: string
+  type: 'classic' | 'game'
   name: string
   buy_in: number
   status: EventStatus
   creator_id: string
-  payout_first: number
-  payout_second: number
-  payout_third: number
+  /** Null on a game, whose payouts come from its settings. */
+  payout_first: number | null
+  payout_second: number | null
+  payout_third: number | null
   results: Place[] | null
   created_at: string
   finished_at: string | null
+  game: string | null
+  settings: EventGameSettings | null
+  phase: Phase | null
+  reveal: Reveal | null
+  creator_plays: boolean
   creator: { username: string }
   participants: Participant[]
 }
@@ -33,7 +41,8 @@ export type NewEvent = {
   force: boolean
 }
 
-const columns = `id, name, buy_in, status, creator_id, payout_first, payout_second, payout_third, results, created_at, finished_at,
+const columns = `id, type, name, buy_in, status, creator_id, payout_first, payout_second, payout_third, results, created_at, finished_at,
+  game, settings, phase, reveal, creator_plays,
   creator:profiles!events_creator_id_fkey(username),
   participants:event_participants(user_id, status, who:profiles(username))`
 
@@ -58,7 +67,7 @@ export const potOf = (event: MarconaEvent) => event.buy_in * inEvent(event).leng
 // The places with a percentage above 0, which are the only ones that need a winner.
 export const paidPlaces = (event: MarconaEvent) =>
   [event.payout_first, event.payout_second, event.payout_third]
-    .map((percentage, index) => ({ index, percentage, name: text.events.places[index] }))
+    .map((percentage, index) => ({ index, percentage: percentage ?? 0, name: text.events.places[index] }))
     .filter((place) => place.percentage > 0)
 
 const isInvited = (event: MarconaEvent, me: string) =>

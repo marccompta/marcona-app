@@ -7,6 +7,7 @@ import { fetchRoulette, saveRouletteSettings, type RouletteSettings } from '../l
 import { supabase } from '../lib/supabase'
 import { ChipStack } from '../shell/Balance'
 import { Field, Outcome, plainInput, useAction } from '../shell/Form'
+import { GameSettingsPanel } from './GameSettings'
 import { Pending } from './Movements'
 
 function CreateUser({ onChange }: { onChange: () => void }) {
@@ -248,6 +249,7 @@ export function Admin() {
       <h1 className="screen-title">{text.admin.title}</h1>
       <CreateUser onChange={reload} />
       <RouletteSettingsPanel />
+      <GameSettingsPanel />
       <h2 className="section-title">{text.admin.users}</h2>
       {state.status !== 'ready' && <Pending state={state} />}
       {state.status === 'ready' && (

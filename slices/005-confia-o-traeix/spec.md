@@ -1,8 +1,8 @@
 ---
 slice: "005"
 title: Confia o traeix
-status: approved
-requirements: [REQ-121, REQ-122, REQ-123, REQ-124, REQ-125, REQ-127, REQ-128, REQ-129, REQ-131, REQ-132, REQ-133, REQ-134, REQ-135, REQ-139, REQ-140, REQ-141, REQ-142, REQ-143, REQ-144, REQ-145, REQ-146, REQ-147, REQ-148, REQ-149, REQ-175, REQ-176, REQ-177, REQ-178, REQ-179, REQ-180, REQ-181, REQ-182, REQ-183, REQ-184, REQ-191, REQ-194, REQ-195, REQ-198, REQ-202, REQ-203, REQ-204]
+status: closed
+requirements: [REQ-121, REQ-122, REQ-123, REQ-124, REQ-125, REQ-127, REQ-128, REQ-129, REQ-131, REQ-132, REQ-133, REQ-134, REQ-135, REQ-139, REQ-140, REQ-141, REQ-142, REQ-143, REQ-144, REQ-145, REQ-146, REQ-147, REQ-148, REQ-149, REQ-175, REQ-176, REQ-177, REQ-178, REQ-179, REQ-180, REQ-181, REQ-182, REQ-183, REQ-184, REQ-191, REQ-194, REQ-195, REQ-198, REQ-202, REQ-204, REQ-210]
 ---
 
 # Slice 005: Confia o traeix
@@ -74,8 +74,8 @@ The admin sets up a duel, playing or not. The two players each lock in Confia or
 - **REQ-195:** While a duel is unrevealed, the system shall show a player the same resting screen whether or not they've locked in, so a glance at their phone reveals nothing.
 - **REQ-198:** When a player opens the private choice panel in a duel, the system shall show both choice buttons, looking the same whether or not they've locked in.
 - **REQ-202:** When a player taps a choice button in a duel, the system shall save that choice at once, with no confirmation step, replacing any earlier choice of theirs.
-- **REQ-203:** When a duel tap is saved, the system shall make that button glow clearly for two seconds, and shall give no other feedback.
 - **REQ-204:** If a duel tap arrives after both players have picked, then the system shall leave the choices as they were and show the reveal.
+- **REQ-210:** When a duel tap is saved, the system shall make the outer border of that button glow clearly for 0.7 seconds, and shall give no other feedback.
 
 ## Acceptance criteria
 
@@ -151,20 +151,20 @@ Scenario: An invited player is removed
   When "bea" is removed
   Then the event is cancelled and "anna" is refunded
 
-# REQ-125, REQ-139, REQ-202, REQ-203
+# REQ-125, REQ-139, REQ-202, REQ-210
 Scenario: Pick with one tap
   Given both players are in a duel
   When I open the private panel and tap Confia or Traeix
   Then my choice is saved at once, with no confirmation step
-  And that button glows clearly for two seconds, then goes back to normal
+  And the outer border of that button glows clearly for 0.7 seconds, then goes back to normal
   And nothing else on the screen changes
 
-# REQ-202, REQ-203
+# REQ-202, REQ-210
 Scenario: The last tap counts
   Given I've picked Confia and the other player hasn't picked
   When I tap Traeix
   Then my choice is now Traeix
-  And the Traeix button glows for two seconds
+  And the border of the Traeix button glows for 0.7 seconds
   When I tap Confia, then Traeix, quickly on a slow connection
   Then my choice is still Traeix
 
@@ -279,6 +279,7 @@ Scenario: The panel gives nothing away
 - REQ-130 is superseded by REQ-197, which keeps it for La minoria only. Duels hide lock-ins instead (REQ-194).
 - REQ-196 is superseded by REQ-198, and REQ-199, REQ-200 and REQ-201 by REQ-202, REQ-203 and REQ-204, before anything was built, so no behaviour changes for users.
 - REQ-126 is superseded by REQ-205, which keeps final choices for La minoria only.
+- REQ-203 is superseded by REQ-210, at the human's request in the review of this slice, before it closed: the glow lasts 0.7 seconds instead of two, and lights only the outer border.
 
 ## Open questions
 

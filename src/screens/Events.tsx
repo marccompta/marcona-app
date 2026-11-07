@@ -3,6 +3,7 @@ import { formatNumber } from '../i18n/format'
 import { text } from '../i18n/text'
 import { useLoad } from '../lib/data'
 import { fetchEvents, groupEvents, potOf, type EventStatus, type MarconaEvent } from '../lib/events'
+import { gameName } from '../lib/games'
 import { Pending } from './Movements'
 
 export function StatusPill({ status }: { status: EventStatus }) {
@@ -16,7 +17,8 @@ function EventRow({ event }: { event: MarconaEvent }) {
         <span className="event-name">{event.name}</span>
         <StatusPill status={event.status} />
         <span className="event-meta">
-          {text.events.buyIn} {formatNumber(event.buy_in)} · {text.events.pot} {formatNumber(potOf(event))}
+          {text.events.buyIn} {formatNumber(event.buy_in)} ·{' '}
+          {event.game ? gameName(event.game) : `${text.events.pot} ${formatNumber(potOf(event))}`}
         </span>
       </Link>
     </li>

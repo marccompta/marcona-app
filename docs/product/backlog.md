@@ -129,35 +129,35 @@ Every requirement has a permanent ID. Raw input is kept in `docs/product/intake/
 | REQ-118 | While roulette is off, the system shall reject spins. | active | 004 | test |
 | REQ-119 | If the admin enters invalid roulette settings, then the system shall reject them. | active | 004 | test |
 | REQ-120 | When a user creates an event, the system shall let them choose classic or any game that's turned on. | superseded by REQ-175 | 005 | test |
-| REQ-121 | If a user creates an event for a game that's turned off, then the system shall reject it. | planned | 005 | test |
-| REQ-122 | When a game event is created, the system shall store a copy of that game's current settings with the event. | planned | 005 | test |
-| REQ-123 | The system shall take a game's buy-in from the creator and its rules from the settings stored with the event. | planned | 005 | test |
-| REQ-124 | If anyone tries to pick a game's winners by hand, then the system shall reject it. | planned | 005 | test |
-| REQ-125 | While a game is waiting for choices, the system shall let each accepted participant lock in one secret choice. | planned | 005 | test |
+| REQ-121 | If a user creates an event for a game that's turned off, then the system shall reject it. | active | 005 | test |
+| REQ-122 | When a game event is created, the system shall store a copy of that game's current settings with the event. | active | 005 | test |
+| REQ-123 | The system shall take a game's buy-in from the creator and its rules from the settings stored with the event. | active | 005 | test |
+| REQ-124 | If anyone tries to pick a game's winners by hand, then the system shall reject it. | active | 005 | test |
+| REQ-125 | While a game is waiting for choices, the system shall let each accepted participant lock in one secret choice. | active | 005 | test |
 | REQ-126 | If a player tries to change a locked-in choice, then the system shall reject it. | superseded by REQ-205 | 005 | test |
-| REQ-127 | When the last player locks in, the system shall reveal all choices and pay out in the same transaction. | planned | 005 | test |
-| REQ-128 | While a game is unrevealed, the system shall let nobody read a secret choice, including through the API or Realtime. | planned | 005 | test |
-| REQ-129 | When a user opens a game event, the system shall explain the game's rules and payoffs in full. | planned | 005 | test |
+| REQ-127 | When the last player locks in, the system shall reveal all choices and pay out in the same transaction. | active | 005 | test |
+| REQ-128 | While a game is unrevealed, the system shall let nobody read a secret choice, including through the API or Realtime. | active | 005 | test |
+| REQ-129 | When a user opens a game event, the system shall explain the game's rules and payoffs in full. | active | 005 | test |
 | REQ-130 | While a game is unrevealed, the system shall show who has locked in. | superseded by REQ-197 | 005 | test |
-| REQ-131 | While a game is unrevealed, the system shall never hint at anyone's choice. | planned | 005 | test |
-| REQ-132 | After a game is revealed, the system shall show every choice and payout. | planned | 005 | test |
-| REQ-133 | When a game is revealed, the system shall play a dramatic reveal that respects reduced motion. | planned | 005 | manual |
-| REQ-134 | While a player is waiting for a reveal, the system shall show it without a manual reload, whether or not live updates are built. | planned | 005 | test |
-| REQ-135 | When the creator or admin cancels an unrevealed game, the system shall refund every accepted participant. | planned | 005 | test |
+| REQ-131 | While a game is unrevealed, the system shall never hint at anyone's choice. | active | 005 | test |
+| REQ-132 | After a game is revealed, the system shall show every choice and payout. | active | 005 | test |
+| REQ-133 | When a game is revealed, the system shall play a dramatic reveal that respects reduced motion. | active | 005 | manual |
+| REQ-134 | While a player is waiting for a reveal, the system shall show it without a manual reload, whether or not live updates are built. | active | 005 | test |
+| REQ-135 | When the creator or admin cancels an unrevealed game, the system shall refund every accepted participant. | active | 005 | test |
 | REQ-136 | The system shall run Confia o traeix as a duel between the creator and exactly one invited opponent. | superseded by REQ-182 | 005 | test |
 | REQ-137 | When the opponent declines a duel, the system shall cancel the event and refund the creator. | superseded by REQ-183 | 005 | test |
 | REQ-138 | When the invited opponent of a duel is removed, the system shall cancel the event and refund the creator. | superseded by REQ-184 | 005 | test |
-| REQ-139 | When a duel has both players, the system shall let each secretly choose Confia or Traeix. | planned | 005 | test |
-| REQ-140 | When both players choose Confia, the system shall pay each the both-trust percentage of the buy-in, 150% by default. | planned | 005 | test |
-| REQ-141 | When exactly one player chooses Traeix, the system shall pay that player the betrayer percentage, 250% by default, and the other the betrayed percentage, 0% by default. | planned | 005 | test |
-| REQ-142 | When both players choose Traeix, the system shall pay each the both-betray percentage, 50% by default. | planned | 005 | test |
-| REQ-143 | The system shall round each duel payout down to a whole number. | planned | 005 | test |
-| REQ-144 | If duel settings don't satisfy betrayer > both trust > both betray ≥ betrayed, then the system shall reject them. | planned | 005 | test |
-| REQ-145 | The system shall show duel payouts as normal ledger movements, with the house covering or keeping any difference. | planned | 005 | test |
-| REQ-146 | When the admin turns a game on or off, the system shall apply it to new events. | planned | 005 | test |
-| REQ-147 | When the admin edits a game's Catalan description or numbers, the system shall save them for new events. | planned | 005 | test |
-| REQ-148 | While the admin edits a game's numbers, the system shall show a worked example that updates as they change. | planned | 005 | test |
-| REQ-149 | When admin settings change, the system shall leave existing events unchanged. | planned | 005 | test |
+| REQ-139 | When a duel has both players, the system shall let each secretly choose Confia or Traeix. | active | 005 | test |
+| REQ-140 | When both players choose Confia, the system shall pay each the both-trust percentage of the buy-in, 150% by default. | active | 005 | test |
+| REQ-141 | When exactly one player chooses Traeix, the system shall pay that player the betrayer percentage, 250% by default, and the other the betrayed percentage, 0% by default. | active | 005 | test |
+| REQ-142 | When both players choose Traeix, the system shall pay each the both-betray percentage, 50% by default. | active | 005 | test |
+| REQ-143 | The system shall round each duel payout down to a whole number. | active | 005 | test |
+| REQ-144 | If duel settings don't satisfy betrayer > both trust > both betray ≥ betrayed, then the system shall reject them. | active | 005 | test |
+| REQ-145 | The system shall show duel payouts as normal ledger movements, with the house covering or keeping any difference. | active | 005 | test |
+| REQ-146 | When the admin turns a game on or off, the system shall apply it to new events. | active | 005 | test |
+| REQ-147 | When the admin edits a game's Catalan description or numbers, the system shall save them for new events. | active | 005 | test |
+| REQ-148 | While the admin edits a game's numbers, the system shall show a worked example that updates as they change. | active | 005 | test |
+| REQ-149 | When admin settings change, the system shall leave existing events unchanged. | active | 005 | test |
 | REQ-150 | When a balance changes, the system shall refresh the ranking on every logged-in phone without a reload. | planned | 006 | test |
 | REQ-151 | When a movement is recorded, the system shall refresh the audit on every logged-in phone without a reload. | planned | 006 | test |
 | REQ-152 | When an event changes, the system shall refresh events on every logged-in phone without a reload. | planned | 006 | test |
@@ -183,41 +183,42 @@ Every requirement has a permanent ID. Raw input is kept in `docs/product/intake/
 | REQ-172 | Before the event, the project shall make `main` what's live on the public site. | planned | 008 | manual |
 | REQ-173 | From the feature freeze, the project shall accept only fixes. | planned | 008 | manual |
 | REQ-174 | From the feature freeze, the project shall switch the Supabase MCP server to `read_only=true`. | planned | 008 | manual |
-| REQ-175 | When the admin creates an event, the system shall let them choose classic or any game that's turned on. | planned | 005 | test |
-| REQ-176 | If anyone other than the admin tries to create a game event, then the system shall reject it. | planned | 005 | test |
-| REQ-177 | The system shall offer only classic events to users other than the admin. | planned | 005 | test |
-| REQ-178 | When the admin creates a game event, the system shall let them choose whether to play in it. | planned | 005 | test |
-| REQ-179 | When the admin creates a game event as a player, the system shall make them an accepted participant and charge them the buy-in. | planned | 005 | test |
-| REQ-180 | If the admin creates a game event as a player and their balance is below the buy-in, then the system shall reject the event. | planned | 005 | test |
-| REQ-181 | When the admin creates a game event without playing, the system shall charge them nothing and leave them out of the players. | planned | 005 | test |
-| REQ-182 | The system shall run Confia o traeix as a duel between exactly two players: the admin and one invited opponent, or two invited players. | planned | 005 | test |
-| REQ-183 | When an invited player declines a duel, the system shall cancel the event and refund anyone who has paid. | planned | 005 | test |
-| REQ-184 | When an invited player of a duel is removed, the system shall cancel the event and refund anyone who has paid. | planned | 005 | test |
+| REQ-175 | When the admin creates an event, the system shall let them choose classic or any game that's turned on. | active | 005 | test |
+| REQ-176 | If anyone other than the admin tries to create a game event, then the system shall reject it. | active | 005 | test |
+| REQ-177 | The system shall offer only classic events to users other than the admin. | active | 005 | test |
+| REQ-178 | When the admin creates a game event, the system shall let them choose whether to play in it. | active | 005 | test |
+| REQ-179 | When the admin creates a game event as a player, the system shall make them an accepted participant and charge them the buy-in. | active | 005 | test |
+| REQ-180 | If the admin creates a game event as a player and their balance is below the buy-in, then the system shall reject the event. | active | 005 | test |
+| REQ-181 | When the admin creates a game event without playing, the system shall charge them nothing and leave them out of the players. | active | 005 | test |
+| REQ-182 | The system shall run Confia o traeix as a duel between exactly two players: the admin and one invited opponent, or two invited players. | active | 005 | test |
+| REQ-183 | When an invited player declines a duel, the system shall cancel the event and refund anyone who has paid. | active | 005 | test |
+| REQ-184 | When an invited player of a duel is removed, the system shall cancel the event and refund anyone who has paid. | active | 005 | test |
 | REQ-185 | The system shall count the admin towards La minoria's 3 players only if they're playing. | planned | 007 | test |
 | REQ-186 | The system shall offer the option to force participation to the admin on every new event, and to nobody else. | active | 003 | test |
 | REQ-187 | If anyone other than the admin asks to force participation, then the system shall reject it. | active | 003 | test |
 | REQ-188 | When the admin creates a classic event with forced participation, the system shall make every invitee an accepted participant and charge them the buy-in at once, without waiting for them to accept. | active | 003 | test |
 | REQ-189 | If any forced player's balance is below the buy-in, then the system shall reject the event, name those players, and charge nobody. | active | 003 | test |
 | REQ-190 | The system shall show each forced buy-in in the audit as made by the admin. | active | 003 | test |
-| REQ-191 | When the admin creates a duel with forced participation, the system shall charge every player and go straight to choosing. | planned | 005 | test |
+| REQ-191 | When the admin creates a duel with forced participation, the system shall charge every player and go straight to choosing. | active | 005 | test |
 | REQ-192 | When the admin creates a La minoria event with forced participation, the system shall charge every player and start it at once. | planned | 007 | test |
 | REQ-193 | When La minoria has started, the system shall let each player secretly pick one of two options, labelled Blanc and Negre by default. | planned | 007 | test |
-| REQ-194 | While a duel is unrevealed, the system shall tell nobody whether another player has locked in, through any screen, the API or Realtime. | planned | 005 | test |
-| REQ-195 | While a duel is unrevealed, the system shall show a player the same resting screen whether or not they've locked in, so a glance at their phone reveals nothing. | planned | 005 | test |
+| REQ-194 | While a duel is unrevealed, the system shall tell nobody whether another player has locked in, through any screen, the API or Realtime. | active | 005 | test |
+| REQ-195 | While a duel is unrevealed, the system shall show a player the same resting screen whether or not they've locked in, so a glance at their phone reveals nothing. | active | 005 | test |
 | REQ-196 | When a player opens the private choice panel in a duel, the system shall show the choice buttons, or their own choice if they've locked in. | superseded by REQ-198 | 005 | test |
 | REQ-197 | While a La minoria game is unrevealed, the system shall show who has locked in. | planned | 007 | test |
-| REQ-198 | When a player opens the private choice panel in a duel, the system shall show both choice buttons, looking the same whether or not they've locked in. | planned | 005 | test |
+| REQ-198 | When a player opens the private choice panel in a duel, the system shall show both choice buttons, looking the same whether or not they've locked in. | active | 005 | test |
 | REQ-199 | When a player who hasn't locked in taps a choice button in a duel, the system shall lock that choice in at once, with no confirmation step. | superseded by REQ-202 | 005 | test |
 | REQ-200 | When a duel choice is locked in, the system shall make that button glow clearly, once and briefly, and shall give no other feedback. | superseded by REQ-203 | 005 | test |
 | REQ-201 | If a player taps a choice button in a duel after locking in, then the system shall keep their first choice and show no reaction at all. | superseded by REQ-204 | 005 | test |
-| REQ-202 | When a player taps a choice button in a duel, the system shall save that choice at once, with no confirmation step, replacing any earlier choice of theirs. | planned | 005 | test |
-| REQ-203 | When a duel tap is saved, the system shall make that button glow clearly for two seconds, and shall give no other feedback. | planned | 005 | test |
-| REQ-204 | If a duel tap arrives after both players have picked, then the system shall leave the choices as they were and show the reveal. | planned | 005 | test |
+| REQ-202 | When a player taps a choice button in a duel, the system shall save that choice at once, with no confirmation step, replacing any earlier choice of theirs. | active | 005 | test |
+| REQ-203 | When a duel tap is saved, the system shall make that button glow clearly for two seconds, and shall give no other feedback. | superseded by REQ-210 | 005 | test |
+| REQ-204 | If a duel tap arrives after both players have picked, then the system shall leave the choices as they were and show the reveal. | active | 005 | test |
 | REQ-205 | If a player tries to change a locked-in choice in La minoria, then the system shall reject it. | planned | 007 | test |
 | REQ-206 | The project shall scope the Supabase MCP server to this one project. Auto mode may stay on, and migrations don't need the human's manual approval. The other Supabase tools that can change something keep their `ask` rules. | superseded by REQ-209 | 001 | test |
 | REQ-207 | If a call to a Postgres function fails because the connection was lost, then the system shall show the no-connection message, not the general one. Seen in slice 004: every function call shows the general one. | proposed | - | test |
 | REQ-208 | If two money actions for one user arrive together, then the system shall apply both with no deadlock error. Found reading the code in slice 004 and not reproduced: functions other than `spin()` claim a request before locking the user. No money is at risk, as one action would fail and roll back. | proposed | - | test |
 | REQ-209 | The project shall scope the Supabase MCP server to this one project. Auto mode may stay on, and migrations, `execute_sql` and Edge Function deploys don't need the human's manual approval. Secrets and Supabase branches keep their `ask` rules, and Claude shall stop and ask before anything very risky. | active | - | test |
+| REQ-210 | When a duel tap is saved, the system shall make the outer border of that button glow clearly for 0.7 seconds, and shall give no other feedback. | active | 005 | test |
 
 ## Slice roadmap
 
@@ -227,7 +228,7 @@ Every requirement has a permanent ID. Raw input is kept in `docs/product/intake/
 | 002 | Users and marcones: the admin manages users and marcones, and everyone sees the ranking, user details and audit. | REQ-035 to REQ-070 | closed |
 | 003 | Classic events: the full event lifecycle, including payouts, refunds and rounding. | REQ-071 to REQ-100, REQ-186 to REQ-190 | closed |
 | 004 | Roulette: spin, payout, audit and admin settings. | REQ-101 to REQ-119 | closed |
-| 005 | Confia o traeix: the secret-choice engine, the first game, and admin game settings. | REQ-120 to REQ-149, REQ-175 to REQ-184, REQ-191, REQ-194 to REQ-196, REQ-198 to REQ-204 | planned |
+| 005 | Confia o traeix: the secret-choice engine, the first game, and admin game settings. | REQ-120 to REQ-149, REQ-175 to REQ-184, REQ-191, REQ-194 to REQ-196, REQ-198 to REQ-204, REQ-210 | closed |
 | 006 | Extras: live updates, QR code and home screen install, in that order. Each can be dropped on its own. | REQ-150 to REQ-154 | planned |
 | 007 | La minoria: the second game, on the same engine. | REQ-155 to REQ-163, REQ-185, REQ-192, REQ-193, REQ-197, REQ-205 | planned |
 | 008 | Event readiness: export, data wipe, rehearsal and day-of guide. This slice can't be cut. | REQ-164 to REQ-174 | planned |
