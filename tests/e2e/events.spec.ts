@@ -56,7 +56,7 @@ test.describe('the new event form', () => {
     await fillForm(page, 'Pòquer', '10', ['bea'])
     await submit(page)
 
-    await expect(page.locator('[data-event]')).toContainText('Pòquer')
+    await expect(page.locator('[data-screen="esdeveniment"]')).toContainText('Pòquer')
     expect(calls.eventCalls).toMatchObject([
       {
         fn: 'create_event',
@@ -105,7 +105,7 @@ test.describe('the new event form', () => {
     await expect(page.getByRole('alert')).toBeVisible()
     await page.getByLabel('Entrada').fill('10')
     await submit(page)
-    await expect(page.locator('[data-event]')).toContainText('Pòquer')
+    await expect(page.locator('[data-screen="esdeveniment"]')).toContainText('Pòquer')
 
     const ids = calls.eventCalls.map((call) => call.p_request_id)
     expect(ids).toHaveLength(3)
@@ -154,7 +154,7 @@ test.describe('forced participation', () => {
     await force(page).check({ force: true })
     await submit(page)
 
-    await expect(page.locator('[data-event]')).toContainText('Pòquer')
+    await expect(page.locator('[data-screen="esdeveniment"]')).toContainText('Pòquer')
     expect(calls.eventCalls).toMatchObject([{ fn: 'create_event', p_force: true }])
     expect(calls.ledger.map((movement) => movement.username).sort()).toEqual(['anna', 'bea', 'marc'])
     expect(calls.events[0].people).toEqual({ marc: 'accepted', anna: 'accepted', bea: 'accepted' })
@@ -166,7 +166,7 @@ test.describe('forced participation', () => {
     await fillForm(page, 'Pòquer', '10', ['anna'])
     await submit(page)
 
-    await expect(page.locator('[data-event]')).toContainText('Pòquer')
+    await expect(page.locator('[data-screen="esdeveniment"]')).toContainText('Pòquer')
     expect(calls.eventCalls).toMatchObject([{ fn: 'create_event', p_force: false }])
     expect(calls.events[0].people).toEqual({ marc: 'accepted', anna: 'invited' })
   })
@@ -271,5 +271,266 @@ test.describe('the events list', () => {
     )
     expect(fits).toBe(true)
     expect(small).toEqual([])
+  })
+})
+
+test.describe('an event', () => {
+  const screen = '[data-screen="esdeveniment"]'
+  const people = (page: Page) => page.locator('[data-participant]')
+  const person = (page: Page, username: string) => people(page).filter({ hasText: username })
+
+  const openEvent = async (page: Page, user: FakeUser, event: FakeEvent) => {
+    const calls = await start(page, user, [event])
+    await page.locator('[data-event]').click()
+    await page.locator(screen).waitFor()
+    return calls
+  }
+
+  const poker: FakeEvent = {
+    id: 'e1',
+    name: 'Pòquer',
+    buy_in: 10,
+    creator: 'marc',
+    people: { anna: 'accepted', bea: 'invited' },
+  }
+
+  test('REQ-098: shows its buy-in, pot, payout rule, participants and status', async ({ page }) => {
+    await openEvent(page, rich, poker)
+
+    await expect(page.locator('.detail-name')).toHaveText('Pòquer')
+    await expect(page.locator('[data-fact="entrada"]')).toHaveText('10 marcones')
+    await expect(page.locator('[data-fact="pot"]')).toHaveText('20 marcones')
+    await expect(page.locator('[data-fact="premis"]')).toHaveText('1r 50% · 2n 30% · 3r 20%')
+    await expect(page.locator(`${screen} .pill`)).toHaveText('Obert')
+    await expect(people(page)).toHaveCount(3)
+    await expect(person(page, 'anna')).toContainText('Hi participa')
+    await expect(person(page, 'bea')).toContainText('Pendent')
+  })
+
+  test('REQ-098: the creator has a crown, and nobody else', async ({ page }) => {
+    await openEvent(page, rich, poker)
+
+    await expect(person(page, 'marc').getByRole('img', { name: "Qui l'ha creat" })).toBeVisible()
+    await expect(page.getByRole('img', { name: "Qui l'ha creat" })).toHaveCount(1)
+  })
+
+  test('REQ-098: the payout rule leaves out places of 0%', async ({ page }) => {
+    await openEvent(page, rich, { ...poker, payouts: [0, 60, 40] })
+    await expect(page.locator('[data-fact="premis"]')).toHaveText('2n 60% · 3r 40%')
+  })
+
+  test('REQ-019: an event that does not exist says so in Catalan', async ({ page }) => {
+    await start(page, rich)
+    await page.goto('#/esdeveniments/no-existeix')
+    await expect(page.locator(screen)).toContainText('No hem trobat aquest esdeveniment.')
+  })
+
+  test.describe('as an invited player', () => {
+    const invited: FakeEvent = { ...poker, people: { anna: 'invited', bea: 'accepted' } }
+
+    test('REQ-079: accepting charges the buy-in and makes me a participant', async ({ page }) => {
+      const calls = await openEvent(page, rich, invited)
+      await page.getByRole('button', { name: 'Accepta' }).click()
+
+      await expect(person(page, 'anna')).toContainText('Hi participa')
+      await expect(page.locator('[data-fact="pot"]')).toHaveText('30 marcones')
+      await expect(page.getByRole('button', { name: 'Accepta' })).toHaveCount(0)
+      expect(calls.ledger).toMatchObject([{ username: 'anna', delta: -10, balance_after: 90, kind: 'event_buy_in' }])
+    })
+
+    test('REQ-080: without enough marcones I get a Catalan error and stay invited', async ({ page }) => {
+      const calls = await openEvent(page, { ...rich, balance: 5 }, invited)
+      await page.getByRole('button', { name: 'Accepta' }).click()
+
+      await expect(page.getByRole('alert')).toHaveText('El saldo no té prou marcones.')
+      await expect(person(page, 'anna')).toContainText('Pendent')
+      await expect(page.getByRole('button', { name: 'Accepta' })).toBeVisible()
+      expect(calls.ledger).toEqual([])
+    })
+
+    test('REQ-081: declining charges nothing and shows me as declined', async ({ page }) => {
+      const calls = await openEvent(page, rich, invited)
+      await page.getByRole('button', { name: 'Rebutja' }).click()
+
+      await expect(person(page, 'anna')).toContainText('Ha rebutjat')
+      await expect(page.getByRole('button', { name: 'Rebutja' })).toHaveCount(0)
+      expect(calls.ledger).toEqual([])
+    })
+
+    test('REQ-082, REQ-094: an invitation that has lapsed offers nothing to answer', async ({ page }) => {
+      await openEvent(page, rich, { ...invited, status: 'cancelled', people: { anna: 'lapsed' } })
+
+      await expect(person(page, 'anna')).toContainText('Invitació caducada')
+      await expect(page.locator(`${screen} button`)).toHaveCount(0)
+    })
+
+    test('REQ-082: an answer the server refuses shows a Catalan error', async ({ page }) => {
+      const calls = await openEvent(page, rich, invited)
+      calls.events[0].people.anna = 'lapsed'
+      await page.getByRole('button', { name: 'Accepta' }).click()
+      await expect(page.getByRole('alert')).toHaveText('Aquesta invitació ja no està pendent.')
+    })
+  })
+
+  test.describe('cancelling', () => {
+    const mine: FakeEvent = { id: 'e1', name: 'Dards', buy_in: 10, creator: 'anna', people: { bea: 'accepted', marc: 'invited' } }
+
+    test('REQ-084, REQ-094: the creator confirms, everyone is refunded, and invitations lapse', async ({ page }) => {
+      const calls = await openEvent(page, rich, mine)
+      await page.getByRole('button', { name: "Cancel·la l'esdeveniment" }).click()
+      await expect(page.locator(`${screen} .pill`)).toHaveText('Obert')
+      expect(calls.eventCalls).toEqual([])
+
+      await page.getByRole('button', { name: 'Sí, cancel·la' }).click()
+
+      await expect(page.locator(`${screen} .pill`)).toHaveText('Cancel·lat')
+      await expect(person(page, 'marc')).toContainText('Invitació caducada')
+      await expect(page.locator(`${screen} button`)).toHaveCount(0)
+      expect(calls.ledger.filter((movement) => movement.kind === 'event_refund').map((movement) => movement.username).sort()).toEqual(['anna', 'bea'])
+    })
+
+    test('REQ-084: saying no leaves it open', async ({ page }) => {
+      const calls = await openEvent(page, rich, mine)
+      await page.getByRole('button', { name: "Cancel·la l'esdeveniment" }).click()
+      await page.getByRole('button', { name: 'No, torna enrere' }).click()
+
+      await expect(page.getByRole('button', { name: "Cancel·la l'esdeveniment" })).toBeVisible()
+      expect(calls.eventCalls).toEqual([])
+    })
+
+    test('REQ-085: the admin can cancel someone else\'s event, but not complete it', async ({ page }) => {
+      await openEvent(page, { ...admin, balance: 100 }, mine)
+
+      await expect(page.getByRole('button', { name: "Cancel·la l'esdeveniment" })).toBeVisible()
+      await expect(page.getByRole('button', { name: 'Completa i paga' })).toHaveCount(0)
+    })
+
+    test('REQ-086, REQ-087: a participant has no way to cancel or withdraw', async ({ page }) => {
+      await openEvent(page, { ...bea }, mine)
+      await expect(person(page, 'bea')).toContainText('Hi participa')
+      await expect(page.locator(`${screen} button`)).toHaveCount(0)
+    })
+
+    test('REQ-086: nor does someone with nothing to do with it', async ({ page }) => {
+      await openEvent(page, { ...bea }, { ...mine, people: { marc: 'accepted' } })
+      await expect(page.locator(`${screen} button`)).toHaveCount(0)
+    })
+  })
+
+  test.describe('completing', () => {
+    const everyone: FakeEvent = {
+      id: 'e1',
+      name: 'Dards',
+      buy_in: 7,
+      creator: 'anna',
+      people: { bea: 'accepted', marc: 'accepted' },
+    }
+
+    const pick = async (page: Page, place: string, username: string) =>
+      page.getByLabel(place).selectOption({ label: username })
+
+    const finish = (page: Page) => page.getByRole('button', { name: 'Completa i paga' }).click()
+
+    test('REQ-088, REQ-089: alone, I can only wait', async ({ page }) => {
+      await openEvent(page, rich, { ...everyone, people: { bea: 'invited' } })
+
+      await expect(page.getByRole('button', { name: 'Completa i paga' })).toHaveCount(0)
+      await expect(page.locator(screen)).toContainText('Calen almenys 2 persones per completar-lo.')
+    })
+
+    test('REQ-091: with 2 players I pick the winner, who gets the whole pot', async ({ page }) => {
+      const calls = await openEvent(page, rich, { ...everyone, buy_in: 10, people: { bea: 'accepted' } })
+      await expect(page.locator(screen)).toContainText("Amb 2 persones, qui guanya s'ho emporta tot.")
+      await expect(page.getByLabel('1r lloc')).toHaveCount(0)
+      await pick(page, 'Qui guanya?', 'bea')
+      await finish(page)
+
+      await expect(page.locator(`${screen} .pill`)).toHaveText('Completat')
+      await expect(page.locator('[data-place]')).toHaveText(['1r bea 20 marcones'])
+      await expect(page.locator(`${screen} button`)).toHaveCount(0)
+      expect(calls.ledger.at(-1)).toMatchObject({ username: 'bea', delta: 20, kind: 'event_payout' })
+    })
+
+    test('REQ-092: the same person twice gets a Catalan error, and nothing is paid', async ({ page }) => {
+      const calls = await openEvent(page, rich, everyone)
+      await pick(page, '1r lloc', 'bea')
+      await pick(page, '2n lloc', 'bea')
+      await pick(page, '3r lloc', 'marc')
+      await finish(page)
+
+      await expect(page.getByRole('alert')).toHaveText('Tria una persona diferent per a cada lloc amb premi.')
+      await expect(page.locator(`${screen} .pill`)).toHaveText('Obert')
+      expect(calls.ledger.filter((movement) => movement.kind === 'event_payout')).toEqual([])
+    })
+
+    test('REQ-092: only participants can be picked, and a place of 0% asks for nobody', async ({ page }) => {
+      await openEvent(page, rich, { ...everyone, payouts: [0, 60, 40], people: { bea: 'accepted', marc: 'accepted', gone: 'declined' } })
+
+      await expect(page.getByLabel('1r lloc')).toHaveCount(0)
+      await expect(page.getByLabel('2n lloc').locator('option')).toHaveText(['Tria…', 'anna', 'bea', 'marc'])
+    })
+
+    test('REQ-093: a pot of 21 pays 11, 6 and 4, and shows it', async ({ page }) => {
+      await openEvent(page, rich, everyone)
+      await pick(page, '1r lloc', 'bea')
+      await pick(page, '2n lloc', 'anna')
+      await pick(page, '3r lloc', 'marc')
+      await finish(page)
+
+      await expect(page.locator('[data-place]')).toHaveText(['1r bea 11 marcones', '2n anna 6 marcones', '3r marc 4 marcones'])
+    })
+
+    test('REQ-093: a place that rounds down to 0 still shows', async ({ page }) => {
+      await openEvent(page, rich, { ...everyone, buy_in: 1, payouts: [98, 1, 1] })
+      await pick(page, '1r lloc', 'bea')
+      await pick(page, '2n lloc', 'anna')
+      await pick(page, '3r lloc', 'marc')
+      await finish(page)
+
+      await expect(page.locator('[data-place]')).toHaveText(['1r bea 3 marcones', '2n anna 0 marcones', '3r marc 0 marcones'])
+    })
+
+    test('REQ-083: a finished event offers no actions, even to its creator', async ({ page }) => {
+      const results = [{ place: 1, user_id: 'bea', percentage: 100, amount: 21 }]
+      await openEvent(page, rich, { ...everyone, status: 'completed', results })
+
+      await expect(page.locator(`${screen} button`)).toHaveCount(0)
+      await expect(page.locator('[data-place]')).toHaveText(['1r bea 21 marcones'])
+    })
+
+    test('REQ-023, REQ-024: the screen fits, with every action open, and has big enough targets', async ({ page }) => {
+      await openEvent(page, rich, everyone)
+      await page.getByRole('button', { name: "Cancel·la l'esdeveniment" }).click()
+
+      const fits = await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)
+      const small = await page.evaluate(() =>
+        [...document.querySelectorAll('[data-screen] a, [data-screen] button, [data-screen] select')]
+          .map((element) => ({ element, box: element.getBoundingClientRect() }))
+          .filter(({ box }) => box.width > 0 && (box.width < 44 || box.height < 44))
+          .map(({ element }) => element.outerHTML),
+      )
+      expect(fits).toBe(true)
+      expect(small).toEqual([])
+    })
+  })
+
+  test('REQ-099: a movement in the audit opens its event', async ({ page }) => {
+    const history: FakeMovement[] = [
+      {
+        username: 'anna',
+        delta: -10,
+        balance_after: 90,
+        concept: null,
+        kind: 'event_buy_in',
+        event: { id: 'e1', name: 'Pòquer' },
+        actor: { username: 'anna' },
+      },
+    ]
+    await start(page, rich, [poker], history)
+    await page.getByRole('link', { name: 'Auditoria' }).click()
+    await expect(page.locator('.movement-label')).toHaveText('Entrada · Pòquer')
+    await page.locator('[data-movement]').click()
+
+    await expect(page.locator('.detail-name')).toHaveText('Pòquer')
   })
 })

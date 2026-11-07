@@ -755,6 +755,98 @@ select {
   color: var(--danger);
 }
 
+/* One event. */
+.event-status-line {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.facts {
+  display: grid;
+  gap: 8px;
+  margin: 18px 0 0;
+}
+
+.facts div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--gold-hairline);
+}
+
+.facts dt {
+  flex: none;
+  color: var(--sage);
+}
+
+.facts dd {
+  margin: 0;
+  text-align: right;
+}
+
+.event-people {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.event-person {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+  border-bottom: 1px solid var(--gold-hairline);
+}
+
+.event-person:last-child {
+  border-bottom: 0;
+}
+
+.event-status {
+  flex: none;
+  color: var(--sage);
+  font-size: 14px;
+}
+
+.event-status--in {
+  color: var(--gold);
+}
+
+.event-place {
+  flex: none;
+  width: 34px;
+  font: 700 19px/1 var(--font-display);
+  color: var(--gold);
+}
+
+.event-person[data-place] .rank-username {
+  flex: 1;
+}
+
+.event-amount {
+  flex: none;
+}
+
+.crown {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  fill: var(--gold);
+}
+
+.event-actions {
+  display: grid;
+  gap: 24px;
+  margin-top: 28px;
+}
+
+.event-actions .primary {
+  margin-top: 0;
+}
+
 /* The new event form. */
 .group {
   display: grid;

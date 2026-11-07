@@ -9,7 +9,7 @@ Work through these in order. Each task leaves the tests passing.
 - [x] **T5:** Update removal to decline invitations and block on open events. (REQ-095, REQ-096)
 - [x] **T6:** Build the events list, and the new event form with its default percentages. (REQ-073, REQ-097)
 - [x] **T7:** Add forced participation to `create_event()` and the new event form. (REQ-186, REQ-187, REQ-188, REQ-189, REQ-190)
-- [ ] **T8:** Build the event detail screen with its actions. (REQ-098)
+- [x] **T8:** Build the event detail screen with its actions. (REQ-098)
 - [ ] **T9:** Add the phone-sized smoke test, and the script that plays demo accounts during reviews. (REQ-100)
 
 ## Review fixes

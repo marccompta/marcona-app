@@ -36,8 +36,9 @@ function Form({ people, isAdmin }: { people: Person[]; isAdmin: boolean }) {
     event.preventDefault()
     requestId.current ??= crypto.randomUUID()
     const id = requestId.current
+    let eventId = ''
     const created = await run(async () => {
-      await createEvent({
+      eventId = await createEvent({
         requestId: id,
         name,
         buyIn: Number(buyIn),
@@ -47,7 +48,7 @@ function Form({ people, isAdmin }: { people: Person[]; isAdmin: boolean }) {
       })
       return ''
     })
-    if (created) navigate('/esdeveniments', { replace: true })
+    if (created) navigate(`/esdeveniments/${eventId}`, { replace: true })
   }
 
   return (

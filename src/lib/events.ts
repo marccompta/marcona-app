@@ -1,3 +1,4 @@
+import { text } from '../i18n/text'
 import { supabase } from './supabase'
 
 export type EventStatus = 'open' | 'completed' | 'cancelled'
@@ -43,10 +44,22 @@ export async function fetchEvents(client = supabase) {
   return data as unknown as MarconaEvent[]
 }
 
+export async function fetchEvent(id: string, client = supabase) {
+  const { data, error } = await client.from('events').select(columns).eq('id', id).maybeSingle()
+  if (error) throw error
+  return data as unknown as MarconaEvent | null
+}
+
 export const inEvent = (event: MarconaEvent) => event.participants.filter((person) => person.status === 'accepted')
 
 // REQ-090: the buy-in times the people who have paid it.
 export const potOf = (event: MarconaEvent) => event.buy_in * inEvent(event).length
+
+// The places with a percentage above 0, which are the only ones that need a winner.
+export const paidPlaces = (event: MarconaEvent) =>
+  [event.payout_first, event.payout_second, event.payout_third]
+    .map((percentage, index) => ({ index, percentage, name: text.events.places[index] }))
+    .filter((place) => place.percentage > 0)
 
 const isInvited = (event: MarconaEvent, me: string) =>
   event.status === 'open' &&
@@ -75,4 +88,31 @@ export async function createEvent({ requestId, name, buyIn, invitees, payouts, f
   })
   if (error) throw error
   return (data as { event_id: string }).event_id
+}
+
+export async function answerInvitation(
+  { requestId, eventId, accept }: { requestId: string; eventId: string; accept: boolean },
+  client = supabase,
+) {
+  const { error } = await client.rpc('answer_invitation', { p_request_id: requestId, p_event_id: eventId, p_accept: accept })
+  if (error) throw error
+}
+
+export async function cancelEvent({ requestId, eventId }: { requestId: string; eventId: string }, client = supabase) {
+  const { error } = await client.rpc('cancel_event', { p_request_id: requestId, p_event_id: eventId })
+  if (error) throw error
+}
+
+export async function completeEvent(
+  { requestId, eventId, winners }: { requestId: string; eventId: string; winners: [string | null, string | null, string | null] },
+  client = supabase,
+) {
+  const { error } = await client.rpc('complete_event', {
+    p_request_id: requestId,
+    p_event_id: eventId,
+    p_first: winners[0],
+    p_second: winners[1],
+    p_third: winners[2],
+  })
+  if (error) throw error
 }

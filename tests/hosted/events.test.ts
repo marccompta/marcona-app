@@ -1,6 +1,16 @@
 import { randomUUID } from 'node:crypto'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { callAdminUsers } from '../../src/lib/adminUsers'
+import { fetchMovements } from '../../src/lib/data'
+import {
+  answerInvitation,
+  cancelEvent,
+  completeEvent,
+  createEvent,
+  fetchEvent,
+  fetchEvents,
+  potOf,
+} from '../../src/lib/events'
 import { adminClient, createTestAccount, createTestUser, publicClient, signOutAll, type TestAccount, type TestUser } from './env'
 
 afterAll(signOutAll)
@@ -740,6 +750,62 @@ describe('forced participation', () => {
   it('REQ-188: leaving it out, or asking for no force, is an ordinary event', async () => {
     const eventId = await openEvent(anna, [bea], { p_force: false })
     expect((await participants(eventId))[bea.userId]).toBe('invited')
+  })
+})
+
+describe('what the screens read', () => {
+  it('REQ-097, REQ-098: an event comes with its creator and participants, by name', async () => {
+    const eventId = await openEvent(anna, [bea, cesc])
+    await accepted(bea, eventId)
+    const event = await fetchEvent(eventId, dani.client)
+
+    expect(event).toMatchObject({ id: eventId, name: 'Pòquer', creator: { username: anna.username } })
+    expect(potOf(event!)).toBe(20)
+    expect(event!.participants.map((person) => [person.who.username, person.status]).sort()).toEqual(
+      [
+        [anna.username, 'accepted'],
+        [bea.username, 'accepted'],
+        [cesc.username, 'invited'],
+      ].sort(),
+    )
+    expect((await fetchEvents(dani.client)).some((candidate) => candidate.id === eventId)).toBe(true)
+  })
+
+  it('REQ-019: an event nobody can see reads as not found', async () => {
+    expect(await fetchEvent(randomUUID(), dani.client)).toBeNull()
+  })
+
+  it('REQ-098: the app calls each function with the right arguments', async () => {
+    await give(anna, 10)
+    await give(bea, 10)
+    const eventId = await createEvent(
+      { requestId: randomUUID(), name: 'Des de la app', buyIn: 10, invitees: [bea.userId], payouts: [50, 30, 20], force: false },
+      anna.client,
+    )
+    await answerInvitation({ requestId: randomUUID(), eventId, accept: true }, bea.client)
+    await completeEvent({ requestId: randomUUID(), eventId, winners: [bea.userId, null, null] }, anna.client)
+    expect((await readEvent(eventId)).status).toBe('completed')
+
+    await give(anna, 10)
+    const other = await createEvent(
+      { requestId: randomUUID(), name: 'Des de la app', buyIn: 10, invitees: [bea.userId], payouts: [50, 30, 20], force: false },
+      anna.client,
+    )
+    await cancelEvent({ requestId: randomUUID(), eventId: other }, anna.client)
+    expect((await readEvent(other)).status).toBe('cancelled')
+  })
+
+  it('REQ-069, REQ-099: a movement comes with its event and who made it', async () => {
+    const eventId = await openEvent(anna, [bea])
+    const [buyIn] = await fetchMovements(anna.userId, dani.client)
+
+    expect(buyIn).toMatchObject({
+      kind: 'event_buy_in',
+      concept: null,
+      event: { id: eventId, name: 'Pòquer' },
+      actor: { username: anna.username },
+      who: { username: anna.username },
+    })
   })
 })
 
