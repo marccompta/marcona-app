@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { adjustBalance, fetchPeople, type Person } from '../../src/lib/data'
 import { cancelEvent, fetchEvent } from '../../src/lib/events'
-import { createGameEvent, fetchGameState, lockIn, type DuelChoice } from '../../src/lib/games'
+import { createGameEvent, duelOutcomes, fetchGameState, lockIn, type DuelChoice } from '../../src/lib/games'
 import { adminClient, createTestUser, logInAsDemo, publicClient, signOutAll, type TestUser } from './env'
 
 // The rules and payouts are in tests/sql/games.sql, because a game needs the real
@@ -135,10 +135,12 @@ describe('secrecy', () => {
     for (const seen of after) expect(seen).not.toContain('"choice"')
 
     await tap(pau.client, eventId, 'confia')
-    const { reveal, phase } = await fetchGameState(eventId, admin)
+    // The admin can change the numbers, so these come from the duel's own copy.
+    const { reveal, phase, settings } = await fetchGameState(eventId, admin)
+    const { betrayer, betrayed } = duelOutcomes(10, settings)
     expect(phase).toBe('revealed')
-    expect(reveal?.players.find((player) => player.user_id === nuria.user_id)).toMatchObject({ choice: 'traeix', payout: 25 })
-    expect(reveal?.players.find((player) => player.user_id === pau.user_id)).toMatchObject({ choice: 'confia', payout: 0 })
+    expect(reveal?.players.find((player) => player.user_id === nuria.user_id)).toMatchObject({ choice: 'traeix', payout: betrayer })
+    expect(reveal?.players.find((player) => player.user_id === pau.user_id)).toMatchObject({ choice: 'confia', payout: betrayed })
   })
 
   it('REQ-128: the private schema answers nobody, logged in or not', async () => {
@@ -194,7 +196,8 @@ describe('at the same moment', () => {
       expect(answers.some((answer) => answer.revealed)).toBe(true)
 
       const payouts = await movements(eventId, 'event_payout')
-      expect(payouts.map((payout) => payout.delta)).toEqual([15, 15])
+      const { bothTrust } = duelOutcomes(10, (await fetchGameState(eventId, admin)).settings)
+      expect(payouts.map((payout) => payout.delta)).toEqual([bothTrust, bothTrust])
       expect(new Set(payouts.map((payout) => payout.user_id)).size).toBe(2)
       expect((await fetchEvent(eventId, admin))?.status).toBe('completed')
     }
