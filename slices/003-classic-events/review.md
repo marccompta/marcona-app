@@ -151,6 +151,10 @@ Type one of these in a Claude Code session started at the repo root:
 
 ### Round 1
 
+- Verdict: approve
+- Date: 2026-11-07
+- Notes: None.
+
 Departures from the design, for `record.md`:
 
 - **Added, not designed: `public.remove_profile()`.** Removal moved into Postgres, so an acceptance can't slip in between the check and the removal.
