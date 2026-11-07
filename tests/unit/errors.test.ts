@@ -87,6 +87,12 @@ describe('movement labels', () => {
     expect(movementLabel(movement({ kind: 'event_payout', event }))).toBe('Premi · Pòquer')
   })
 
+  it('REQ-111: a spin shows the choice and the result', () => {
+    const spin = (choice: string, result: string) => movement({ kind: 'roulette_spin', details: { choice, result } })
+    expect(movementLabel(spin('red', 'red'))).toBe('Ruleta: aposta a vermell, ha sortit vermell')
+    expect(movementLabel(spin('black', 'white'))).toBe('Ruleta: aposta a negre, ha sortit blanc')
+  })
+
   it('REQ-190: a buy-in someone else made is a forced one', () => {
     const forced = movement({ kind: 'event_buy_in', event, actor: { username: 'marc' } })
     expect(movementLabel(forced)).toBe('Entrada obligatòria · Pòquer')

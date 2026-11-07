@@ -89,16 +89,32 @@ export const text = {
       forceHelp: "Tothom qui convidis entra i paga ara mateix, sense haver d'acceptar.",
     },
   },
+  roulette: {
+    title: 'Ruleta',
+    balance: 'Saldo',
+    choice: 'Aposta a',
+    bet: 'Aposta',
+    maxBet: (amount: string) => `Aposta màxima: ${amount}`,
+    spin: 'Gira',
+    spinning: 'Girant…',
+    colours: { red: 'Vermell', black: 'Negre', white: 'Blanc' },
+    won: (amount: string) => `Guanyes ${amount}`,
+    lost: (amount: string) => `Perds ${amount}`,
+    closedTitle: 'La taula està tancada',
+    closedBody: 'Torna-hi quan torni a obrir.',
+  },
   movements: {
     empty: 'Encara no hi ha cap moviment.',
     balanceAfter: 'Saldo:',
     forced: 'Entrada obligatòria',
     forcedBy: (username: string) => `Feta per ${username}`,
+    spin: (choice: string, result: string) => `Ruleta: aposta a ${choice}, ha sortit ${result}`,
     kinds: {
       admin_adjustment: 'Ajust de marcones',
       event_buy_in: 'Entrada',
       event_refund: "Devolució de l'entrada",
       event_payout: 'Premi',
+      roulette_spin: 'Ruleta',
     },
   },
   audit: {
@@ -129,9 +145,6 @@ export const text = {
     removeConfirm: 'Sí, elimina',
     removeCancel: 'No, cancel·la',
     removed: (username: string) => `S'ha eliminat ${username}.`,
-  },
-  placeholder: {
-    body: 'Aquesta pantalla arribarà aviat.',
   },
   errors: {
     invalidCredentials: "El nom d'usuari o la contrasenya no són correctes.",

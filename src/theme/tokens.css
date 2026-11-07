@@ -44,6 +44,9 @@
   --gold-hairline: #f0c24b2e;
   --gold-foil: linear-gradient(100deg, var(--gold-light), var(--gold) 45%, #c8952b 70%, var(--gold-light));
 
+  --pocket-red: #a3212b;
+  --pocket-black: #16130f;
+
   --ivory: #f6f1dc;
   --sage: #9cc7b1;
   --danger: #ffb4a8;

@@ -18,6 +18,7 @@ export type FakeMovement = {
   balance_after: number
   concept: string | null
   kind?: string
+  details?: Record<string, unknown>
   created_at?: string
   event?: { id: string; name: string } | null
   actor?: { username: string } | null
@@ -118,6 +119,9 @@ export async function fakeSupabase(
     /** Sessions the server has ended, by username. */
     ended: new Set<string>(),
     ledger,
+    /** The colours the next spins land on, in order. Red once it's empty. */
+    spinResults: [] as ('red' | 'black' | 'white')[],
+    roulette: { enabled: true, white_one_in: 37, max_bet_percent: 5 },
   }
 
   await page.route('**/auth/v1/token**', async (route) => {
@@ -396,6 +400,42 @@ export async function fakeSupabase(
     lapse(event)
     Object.assign(event, { status: 'completed', results: places })
     return { event_id: event.id, results: places }
+  })
+
+  const maxBet = (balance: number) => Math.max(1, Math.floor((balance * calls.roulette.max_bet_percent) / 100))
+
+  await page.route('**/rest/v1/rpc/roulette_state', async (route) => {
+    if (await preflight(route)) return
+    const caller = people.find((u) => u.username === usernameFromToken(route))
+    if (!caller) return json(route, 403, { code: '42501', message: 'not_allowed' })
+    return json(route, 200, { ...calls.roulette, balance: caller.balance, max_bet: maxBet(caller.balance) })
+  })
+
+  await eventFunction('spin', (body, caller) => {
+    const bet = body.p_bet
+    if (body.p_choice !== 'red' && body.p_choice !== 'black') return refuse('invalid_choice')
+    if (!Number.isInteger(bet) || bet < 1) return refuse('invalid_bet')
+    if (!calls.roulette.enabled) return refuse('roulette_closed')
+    if (bet > caller.balance) return refuse('insufficient_balance')
+    if (bet > maxBet(caller.balance)) return refuse('bet_too_high')
+
+    const result = calls.spinResults.shift() ?? 'red'
+    const won = result === body.p_choice
+    const delta = won ? bet : -bet
+    caller.balance += delta
+    const movement = {
+      id: ledger.length + 1,
+      kind: 'roulette_spin',
+      created_at: new Date().toISOString(),
+      username: caller.username,
+      delta,
+      balance_after: caller.balance,
+      concept: null,
+      details: { choice: body.p_choice, result },
+      actor: { username: caller.username },
+    }
+    ledger.push(movement)
+    return { movement_id: movement.id, choice: body.p_choice, result, won, bet, delta, balance_after: caller.balance }
   })
 
   await page.route('**/functions/v1/admin-users', async (route) => {

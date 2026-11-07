@@ -931,6 +931,89 @@ select {
   outline-offset: 2px;
 }
 
+/* Ruleta. */
+.table-balance {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: -8px;
+  color: var(--sage);
+  font-size: 15px;
+}
+
+.table-balance .chips {
+  justify-self: auto;
+}
+
+.table-balance strong {
+  font: 700 23px/1 var(--font-display);
+  font-variant-numeric: lining-nums;
+  color: var(--ivory);
+}
+
+/* Keeps its height, so the controls don't jump when a result appears. */
+.spin-line {
+  display: grid;
+  place-items: center;
+  min-height: 56px;
+  text-align: center;
+}
+
+.spin-result {
+  display: grid;
+  justify-items: center;
+  color: var(--sage);
+  font-size: 16px;
+}
+
+.spin-result strong {
+  font: italic 700 25px/1.15 var(--font-display);
+  color: var(--gold);
+}
+
+.bet {
+  display: grid;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.bet .primary {
+  margin-top: 0;
+}
+
+.colours {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.colour {
+  min-height: 48px;
+  border: 1px solid var(--gold-hairline);
+  border-radius: 2px;
+  color: var(--ivory);
+  font-size: 17px;
+  cursor: pointer;
+  opacity: 0.62;
+  transition: opacity 0.2s var(--ease), border-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+}
+
+.colour--red {
+  background: var(--pocket-red);
+}
+
+.colour--black {
+  background: var(--pocket-black);
+}
+
+.colour[aria-pressed='true'] {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px var(--gold);
+  opacity: 1;
+}
+
 @keyframes land {
   from {
     opacity: 0;

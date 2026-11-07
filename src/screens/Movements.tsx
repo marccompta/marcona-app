@@ -2,13 +2,22 @@ import { Link } from 'react-router'
 import { formatMarcones, formatMoment, formatSigned } from '../i18n/format'
 import { text } from '../i18n/text'
 import type { Loaded, Movement } from '../lib/data'
+import type { Colour } from '../lib/roulette'
 
 // REQ-190: a buy-in is only ever made by someone else when it's forced.
 export const forcedBy = ({ kind, actor, who }: Movement) =>
   kind === 'event_buy_in' && actor && actor.username !== who.username ? actor.username : null
 
+// REQ-111: a spin shows what was chosen and what came up.
+function spinLabel({ details }: Movement) {
+  const { choice, result } = details as { choice: Colour; result: Colour }
+  const { colours } = text.roulette
+  return text.movements.spin(colours[choice].toLowerCase(), colours[result].toLowerCase())
+}
+
 export function movementLabel(movement: Movement) {
   if (movement.concept) return movement.concept
+  if (movement.kind === 'roulette_spin') return spinLabel(movement)
   const kind = forcedBy(movement)
     ? text.movements.forced
     : (text.movements.kinds[movement.kind as keyof typeof text.movements.kinds] ?? movement.kind)
