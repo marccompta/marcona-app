@@ -366,8 +366,10 @@ test.describe('an event', () => {
 
     test('REQ-082: an answer the server refuses shows a Catalan error', async ({ page }) => {
       const calls = await openEvent(page, rich, invited)
+      const accept = page.getByRole('button', { name: 'Accepta' })
+      await accept.waitFor()
       calls.events[0].people.anna = 'lapsed'
-      await page.getByRole('button', { name: 'Accepta' }).click()
+      await accept.click()
       await expect(page.getByRole('alert')).toHaveText('Aquesta invitació ja no està pendent.')
     })
   })
