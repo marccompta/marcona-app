@@ -2,7 +2,7 @@
 
 How the system is built **now**. Each slice updates this file when it closes.
 
-A static React site on GitHub Pages talks directly to one hosted Supabase project. There's no other server. See [ADR 0001](../adr/0001-static-react-site-on-github-pages.md) and [ADR 0007](../adr/0007-one-hosted-project-with-unattended-migrations.md).
+A static React site on GitHub Pages talks directly to one hosted Supabase project. There's no other server. See [ADR 0001](../adr/0001-static-react-site-on-github-pages.md) and [ADR 0008](../adr/0008-supabase-work-without-prompts.md).
 
 ## Components
 
