@@ -12,6 +12,9 @@ Domain terms, used the same way in specs, code and conversation. Specs, code and
 | Admin | Administració | The one organiser, who is also a player. |
 | Player | Jugador | Any active user, including the admin. |
 | Removed user | | A soft-deleted user: can't log in, not in the ranking, history kept in the audit. |
+| Test account | | An account made by automated tests. It only sees other test accounts, and real users never see it. |
+| Demo user | | An ordinary account used in reviews. The wipe deletes it. |
+| Client request ID | | The ID a phone sends with a money action, so a repeat applies only once. |
 | Ledger | | The append-only record of every change to a balance. Each row stores the balance after it. |
 | Movement | Moviment | One ledger row. |
 | Balance | Saldo | A user's current marcones. |
