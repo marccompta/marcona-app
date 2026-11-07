@@ -37,6 +37,17 @@ export type NewGameEvent = {
   force: boolean
 }
 
+// REQ-140 to REQ-143: only for showing the rules. The server decides what's paid.
+export function duelOutcomes(buyIn: number, settings: DuelSettings) {
+  const share = (percent: number) => Math.floor((buyIn * percent) / 100)
+  return {
+    bothTrust: share(settings.both_trust),
+    betrayer: share(settings.betrayer),
+    betrayed: share(settings.betrayed),
+    bothBetray: share(settings.both_betray),
+  }
+}
+
 export const gameName = (id: string) => text.games.names[id as keyof typeof text.games.names] ?? id
 
 export async function fetchGames(client = supabase) {
@@ -77,4 +88,53 @@ export async function lockIn(
   const { data, error } = await client.rpc('lock_in', { p_request_id: requestId, p_event_id: eventId, p_choice: choice })
   if (error) throw error.code ? error : new TypeError(error.message)
   return data as LockIn
+}
+
+type TapQueueOptions = {
+  send: (choice: DuelChoice, requestId: string) => Promise<LockIn>
+  onResult: (choice: DuelChoice, answer: LockIn) => void
+  onFailed: (error: unknown) => void
+  retryMs?: number
+}
+
+// REQ-202: taps go to the server one at a time, and only the newest waiting tap is
+// kept, so a slow network can't make an older tap win. REQ-062: a lost reply is
+// sent once more with the same ID, so it can't count twice.
+export function createTapQueue({ send, onResult, onFailed, retryMs = 800 }: TapQueueOptions) {
+  let waiting: DuelChoice | null = null
+  let sending = false
+
+  async function sendWithRetry(choice: DuelChoice) {
+    const requestId = crypto.randomUUID()
+    try {
+      return await send(choice, requestId)
+    } catch (error) {
+      if (!(error instanceof TypeError)) throw error
+      await new Promise((resolve) => setTimeout(resolve, retryMs))
+      return send(choice, requestId)
+    }
+  }
+
+  async function drain() {
+    sending = true
+    while (waiting) {
+      const choice = waiting
+      waiting = null
+      try {
+        const answer = await sendWithRetry(choice)
+        if (answer.revealed) waiting = null
+        onResult(choice, answer)
+      } catch (error) {
+        onFailed(error)
+      }
+    }
+    sending = false
+  }
+
+  return {
+    tap(choice: DuelChoice) {
+      waiting = choice
+      if (!sending) void drain()
+    },
+  }
 }

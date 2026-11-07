@@ -852,6 +852,88 @@ select {
   margin-top: 0;
 }
 
+/* One game. */
+.game-description {
+  margin: 8px 0 0;
+  line-height: 1.45;
+}
+
+.payoffs {
+  display: grid;
+  gap: 10px;
+  margin: 14px 0 10px;
+}
+
+.payoffs div {
+  padding: 10px 12px;
+  border: 1px solid var(--gold-hairline);
+  border-radius: 2px;
+}
+
+.payoffs dt {
+  font: italic 700 17px/1.25 var(--font-display);
+  color: var(--gold);
+}
+
+.payoffs dd {
+  margin: 4px 0 0;
+}
+
+[data-organiser] dd {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* The private panel covers everything, so a glance sees only these two buttons. */
+.choice-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: calc(24px + env(safe-area-inset-top)) 20px calc(20px + env(safe-area-inset-bottom));
+  overflow-y: auto;
+  background: var(--felt-950);
+  color: var(--ivory);
+}
+
+.choice-panel h2 {
+  font: italic 700 26px/1.2 var(--font-display);
+  color: var(--gold);
+}
+
+.choice-buttons {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: 56px;
+  width: 100%;
+  max-width: var(--column);
+  margin: 0 auto;
+}
+
+.choice-button {
+  min-height: 104px;
+  border: 1px solid var(--gold-line);
+  border-radius: 2px;
+  background: var(--felt-900);
+  color: var(--ivory);
+  font: italic 700 32px/1 var(--font-display);
+  cursor: pointer;
+  transition: box-shadow 0.16s var(--ease), background-color 0.16s var(--ease), color 0.16s var(--ease);
+  touch-action: manipulation;
+}
+
+.choice-button[data-glowing='true'] {
+  border-color: var(--gold-light);
+  background: var(--gold);
+  color: var(--on-gold);
+  box-shadow: 0 0 0 3px var(--gold-light), 0 0 42px 14px #f0c24b99;
+}
+
 /* The new event form. */
 .group {
   display: grid;
