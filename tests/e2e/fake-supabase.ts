@@ -148,7 +148,69 @@ export async function fakeSupabase(
     statePolls: 0,
     /** Plays another phone: locks in as this player, and reveals if that completes the pair. */
     lockInAs: (_eventId: string, _username: string, _choice: string) => {},
+    /** Every Realtime channel the page has joined, with the tables it watches. */
+    channels: [] as { topic: string; tables: string[]; filters: (string | undefined)[]; left: boolean }[],
+    /** Realtime messages sent to the page. */
+    messages: [] as { table: string; record: Record<string, unknown> }[],
+    /** When false, changes send no Realtime message, as if the connection had dropped. */
+    live: true,
+    /** Tells the page's Realtime channels that a row in this table changed. */
+    notify: (_table: string, _record: Record<string, unknown> = {}) => {},
+    /** Plays another phone: calls an event, game or roulette function as this person. */
+    actAs: (_username: string, _fn: string, _body: Record<string, unknown>) => ({}) as object,
+    /** Plays the admin on another phone: adds or removes marcones. */
+    adjustAs: (_username: string, _delta: number, _concept = 'Des d’un altre mòbil') => {},
   }
+
+  // REQ-150 to REQ-152: a stand-in for the Realtime socket. A change only says
+  // which table changed, as the app reads the data again through the REST fake.
+  type Binding = { id: number; table: string; filter?: string }
+  const sockets = new Set<{ send: (message: unknown[]) => void; channels: Map<string, Binding[]> }>()
+  let bindingIds = 0
+  const matches = (filter: string | undefined, record: Record<string, unknown>) => {
+    if (!filter) return true
+    const [column, value] = filter.split('=eq.')
+    return String(record[column]) === value
+  }
+
+  calls.notify = (table, record = {}) => {
+    if (!calls.live) return
+    calls.messages.push({ table, record })
+    for (const socket of sockets) {
+      for (const [topic, bindings] of socket.channels) {
+        const ids = bindings.filter((binding) => binding.table === table && matches(binding.filter, record)).map((b) => b.id)
+        if (ids.length === 0) continue
+        const columns = Object.keys(record).map((name) => ({ name, type: 'text' }))
+        const data = { schema: 'public', table, type: 'UPDATE', commit_timestamp: new Date().toISOString(), columns, record, old_record: {} }
+        socket.send([null, null, topic, 'postgres_changes', { ids, data }])
+      }
+    }
+  }
+
+  await page.routeWebSocket(/\/realtime\/v1\/websocket/, (ws) => {
+    const socket = { send: (message: unknown[]) => ws.send(JSON.stringify(message)), channels: new Map<string, Binding[]>() }
+    sockets.add(socket)
+    ws.onClose(() => sockets.delete(socket))
+    ws.onMessage((raw) => {
+      const [joinRef, ref, topic, event, payload] = JSON.parse(String(raw))
+      const reply = (response: object = {}) => socket.send([joinRef, ref, topic, 'phx_reply', { status: 'ok', response }])
+      if (event === 'phx_join') {
+        const filters = (payload.config?.postgres_changes ?? []) as { event: string; schema: string; table: string; filter?: string }[]
+        const bindings = filters.map((filter) => ({ ...filter, id: ++bindingIds }))
+        socket.channels.set(topic, bindings)
+        calls.channels.push({ topic, tables: filters.map((f) => f.table), filters: filters.map((f) => f.filter), left: false })
+        return reply({ postgres_changes: bindings })
+      }
+      if (event === 'phx_leave') {
+        socket.channels.delete(topic)
+        calls.channels.filter((channel) => channel.topic === topic).forEach((channel) => (channel.left = true))
+      }
+      return reply()
+    })
+  })
+  // Routing a socket only takes effect from the next page load, and most tests
+  // open the site before setting up the fake. Nobody has logged in yet.
+  if (page.url() !== 'about:blank') await page.reload()
 
   await page.route('**/auth/v1/token**', async (route) => {
     if (await preflight(route)) return
@@ -247,8 +309,24 @@ export async function fakeSupabase(
     ledger.push(movement)
     const result = { movement_id: movement.id, user_id: user.username, delta, balance_after: user.balance }
     results.set(body.p_request_id, result)
-    return json(route, 200, result)
+    await json(route, 200, result)
+    announce('admin_adjust', result)
   })
+
+  calls.adjustAs = (username, delta, concept = 'Des d’un altre mòbil') => {
+    const user = people.find((u) => u.username === username)!
+    user.balance += delta
+    ledger.push({
+      id: ledger.length + 1,
+      kind: 'admin_adjustment',
+      created_at: new Date().toISOString(),
+      username,
+      delta,
+      balance_after: user.balance,
+      concept,
+    })
+    announce('admin_adjust', { user_id: username })
+  }
 
   await page.route('**/rest/v1/games**', async (route) => {
     if (await preflight(route)) return
@@ -295,10 +373,33 @@ export async function fakeSupabase(
   // A handler returns the function's result, or refuse(code).
   const refuse = (code: string, details: string | null = null) => ({ refused: code, details })
 
-  const eventFunction = (
-    fn: string,
-    handler: (body: ReturnType<Request['postDataJSON']>, caller: (typeof people)[number]) => object,
-  ) =>
+  type Handler = (body: ReturnType<Request['postDataJSON']>, caller: (typeof people)[number]) => object
+  const handlers = new Map<string, Handler>()
+
+  // What the real database would publish after each function.
+  const announce = (fn: string, outcome: object) => {
+    const result = outcome as { event_id?: string; revealed?: boolean; user_id?: string }
+    if (fn === 'lock_in' && !result.revealed) return
+    if (result.event_id) {
+      calls.notify('events', { id: result.event_id })
+      calls.notify('event_participants', { event_id: result.event_id })
+      calls.notify('ledger', { event_id: result.event_id })
+      calls.notify('profiles')
+      return
+    }
+    calls.notify('ledger', { user_id: result.user_id })
+    calls.notify('profiles', { user_id: result.user_id })
+  }
+
+  calls.actAs = (username, fn, body) => {
+    const caller = people.find((u) => u.username === username)!
+    const outcome = handlers.get(fn)!(body, caller)
+    if (!('refused' in outcome)) announce(fn, { user_id: username, ...outcome })
+    return outcome
+  }
+
+  const eventFunction = (fn: string, handler: Handler) =>
+    handlers.set(fn, handler) &&
     page.route(`**/rest/v1/rpc/${fn}`, async (route) => {
       if (await preflight(route)) return
       const body = route.request().postDataJSON()
@@ -315,7 +416,8 @@ export async function fakeSupabase(
         return json(route, 400, { code: 'P0001', message: refused, details, hint: null })
       }
       results.set(body.p_request_id, outcome)
-      return json(route, 200, outcome)
+      await json(route, 200, outcome)
+      announce(fn, { user_id: caller.username, ...outcome })
     })
 
   const findEvent = (id: string) => events.find((event) => event.id === id)
@@ -524,7 +626,7 @@ export async function fakeSupabase(
   }
 
   calls.lockInAs = (eventId, username, choice) => {
-    saveChoice(findEvent(eventId)!, username, choice)
+    if (saveChoice(findEvent(eventId)!, username, choice)) announce('lock_in', { event_id: eventId, revealed: true })
   }
 
   await eventFunction('lock_in', (body, caller) => {
@@ -637,7 +739,8 @@ export async function fakeSupabase(
       if (people.some((u) => u.username === body.username)) return refuse('username_taken')
       if (body.password.length < minimumPassword) return refuse('weak_password')
       people.push({ username: body.username, password: body.password, role: 'player', balance: 0 })
-      return json(route, 200, { userId: body.username, username: body.username })
+      await json(route, 200, { userId: body.username, username: body.username })
+      return calls.notify('profiles', { user_id: body.username })
     }
 
     const target = people.find((u) => u.username === body.userId)
@@ -654,7 +757,8 @@ export async function fakeSupabase(
     if (target.inOpenEvent) return refuse('user_in_open_event')
     target.removed = true
     calls.ended.add(target.username)
-    return json(route, 200, { ok: true })
+    await json(route, 200, { ok: true })
+    return calls.notify('profiles', { user_id: target.username })
   })
 
   return calls

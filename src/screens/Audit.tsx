@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { text } from '../i18n/text'
 import { fetchMovements, fetchPeople, useLoad } from '../lib/data'
+import { useLive, type LiveSource } from '../lib/live'
 import { Movements, Pending } from './Movements'
 
 const loadAudit = async () => {
@@ -8,10 +9,14 @@ const loadAudit = async () => {
   return { movements, people: people.sort((a, b) => a.username.localeCompare(b.username, 'ca')) }
 }
 
+const live: LiveSource[] = [{ table: 'ledger' }, { table: 'profiles' }]
+
 // REQ-067, REQ-068: the whole timeline, or one person's part of it. Removed
 // people stay in the filter, because their history stays in the audit.
 export function Audit() {
-  const { state } = useLoad(loadAudit)
+  const { state, reload } = useLoad(loadAudit)
+  // REQ-151: new movements appear on every phone, and new people in the filter.
+  useLive(live, reload)
   const [userId, setUserId] = useState('')
 
   return (

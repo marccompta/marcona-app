@@ -4,6 +4,7 @@ import { adjustBalance, fetchPeople, type Person } from '../../src/lib/data'
 import { cancelEvent, fetchEvent } from '../../src/lib/events'
 import { createGameEvent, duelOutcomes, fetchGameState, lockIn, type DuelChoice } from '../../src/lib/games'
 import { adminClient, createTestUser, logInAsDemo, publicClient, signOutAll, type TestUser } from './env'
+import { listen, pause, until } from './live'
 
 // The rules and payouts are in tests/sql/games.sql, because a game needs the real
 // admin, who can't invite test accounts. This file covers what needs the real API,
@@ -158,21 +159,49 @@ describe('secrecy', () => {
     }
   })
 
-  it('REQ-128, REQ-194: Realtime sends nothing when someone locks in', async () => {
-    const eventId = await forcedDuel()
-    const seen: unknown[] = []
-    const channel = pau.client
-      .channel(`secrecy-${eventId}`)
-      .on('postgres_changes', { event: '*', schema: 'private', table: 'choices' }, (message) => seen.push(message))
-      .on('postgres_changes', { event: '*', schema: 'public' }, (message) => seen.push(message))
-    await new Promise((resolve) => channel.subscribe(resolve))
+  // REQ-150 to REQ-152 publish profiles, ledger, events and event_participants. A
+  // first pick must change none of them, and the reveal must reach players.
+  it('REQ-128, REQ-194: Realtime sends nothing when someone locks in, and the reveal arrives', async () => {
+    const watch = await listen(pau.client, [
+      { table: 'profiles' },
+      { table: 'ledger' },
+      { table: 'events' },
+      { table: 'event_participants' },
+    ])
+    const privateSeen: unknown[] = []
+    const publicSeen: { new: Record<string, unknown> }[] = []
+    const extra = pau.client
+      .channel(`secrecy-${randomUUID()}`)
+      .on('postgres_changes', { event: '*', schema: 'private', table: 'choices' }, (message) => privateSeen.push(message))
+      .on('postgres_changes', { event: '*', schema: 'public' }, (message) => publicSeen.push(message))
+    await new Promise((resolve) => extra.subscribe(resolve))
 
-    await tap(nuria.client, eventId, 'confia')
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    try {
+      const eventId = await forcedDuel()
+      const players = [nuria.user_id, pau.user_id]
+      const aboutDuel = (record: Record<string, unknown>) =>
+        record.id === eventId || record.event_id === eventId || players.includes(record.user_id as string)
+      // The forced buy-ins arrive first. Wait until they've settled.
+      expect(await until(() => watch.changes.some((change) => change.table === 'events' && aboutDuel(change.record)))).toBe(true)
+      await pause(2000)
+      const settled = watch.changes.filter((change) => aboutDuel(change.record)).length
+      const settledPublic = publicSeen.filter((message) => aboutDuel(message.new ?? {})).length
 
-    await pau.client.removeChannel(channel)
-    expect(seen).toEqual([])
-    await cancelEvent({ requestId: randomUUID(), eventId }, admin)
+      await tap(nuria.client, eventId, 'confia')
+      await pause(3000)
+      expect(watch.changes.filter((change) => aboutDuel(change.record)).length).toBe(settled)
+      expect(publicSeen.filter((message) => aboutDuel(message.new ?? {})).length).toBe(settledPublic)
+
+      await tap(pau.client, eventId, 'confia')
+      const revealed = await until(() =>
+        watch.changes.some((change) => change.table === 'events' && change.record.id === eventId && change.record.phase === 'revealed'),
+      )
+      expect(revealed).toBe(true)
+      expect(privateSeen).toEqual([])
+    } finally {
+      watch.stop()
+      await pau.client.removeChannel(extra)
+    }
   })
 
   it('REQ-194: a test account can read no real game', async () => {
