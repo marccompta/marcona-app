@@ -36,6 +36,7 @@ export const publicFunctions = (userId: string): Record<string, Record<string, u
     p_invitees: [crypto.randomUUID(), crypto.randomUUID()],
     p_force: false,
   },
+  lock_in: { p_request_id: crypto.randomUUID(), p_event_id: crypto.randomUUID(), p_choice: 'confia' },
   remove_profile: { p_user_id: userId },
   revoke_sessions: { p_user_id: userId },
   rls_auto_enable: {},

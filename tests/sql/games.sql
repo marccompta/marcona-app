@@ -10,10 +10,12 @@ declare
   anna uuid := gen_random_uuid();
   bea uuid := gen_random_uuid();
   cesc uuid := gen_random_uuid();
+  dani uuid := gen_random_uuid();
   admin_start bigint;
   duel uuid;
   request uuid := gen_random_uuid();
   defaults jsonb;
+  outcome jsonb;
 begin
   -- Says what a statement was refused with, or that it went through.
   create function pg_temp.refusal(statement text) returns text language plpgsql as $f$
@@ -45,15 +47,18 @@ begin
   insert into auth.users (id, email) values
     (anna, 'games-anna@marcona.invalid'),
     (bea, 'games-bea@marcona.invalid'),
-    (cesc, 'games-cesc@marcona.invalid');
+    (cesc, 'games-cesc@marcona.invalid'),
+    (dani, 'games-dani@marcona.invalid');
   insert into public.profiles (user_id, username) values
     (anna, 'games-anna'),
     (bea, 'games-bea'),
-    (cesc, 'games-cesc');
+    (cesc, 'games-cesc'),
+    (dani, 'games-dani');
   perform private.apply_movement(admin_id, 1000, 'admin_adjustment');
   perform private.apply_movement(anna, 1000, 'admin_adjustment');
   perform private.apply_movement(bea, 1000, 'admin_adjustment');
   perform private.apply_movement(cesc, 5, 'admin_adjustment');
+  perform private.apply_movement(dani, 1000, 'admin_adjustment');
   admin_start := pg_temp.balance(admin_id);
   update public.games
   set settings = '{"both_trust": 150, "betrayer": 250, "betrayed": 0, "both_betray": 50}', enabled = true
@@ -138,6 +143,115 @@ begin
   results := results || pg_temp.verdict('REQ-189 a short forced player stops the duel', pg_temp.refusal(format(
     $s$select public.create_game_event(gen_random_uuid(), 'confia_o_traeix', 'Prova', 10, false, array[%L::uuid, %L::uuid], true)$s$, anna, cesc
   )) = 'forced_insufficient_balance');
+
+  -- REQ-124: nobody picks a game's winner, not even its creator.
+  duel := pg_temp.new_duel(10, anna, bea, true);
+  results := results || pg_temp.verdict('REQ-124 the creator cannot complete a game', pg_temp.refusal(format(
+    $s$select public.complete_event(gen_random_uuid(), %L, %L, null, null)$s$, duel, anna
+  )) = 'game_decides_winners');
+  perform pg_temp.act_as(anna);
+  results := results || pg_temp.verdict('REQ-124 a player cannot complete a game', pg_temp.refusal(format(
+    $s$select public.complete_event(gen_random_uuid(), %L, %L, null, null)$s$, duel, anna
+  )) = 'game_decides_winners');
+  perform pg_temp.act_as(admin_id);
+  results := results || pg_temp.verdict('REQ-124 the game is still open',
+    (select status from public.events where id = duel) = 'open');
+
+  -- The second acceptance starts the choosing, and the first doesn't.
+  duel := pg_temp.new_duel(10, anna, bea, false);
+  perform pg_temp.act_as(anna);
+  perform public.answer_invitation(gen_random_uuid(), duel, true);
+  results := results || pg_temp.verdict('A duel waits for both to pay',
+    (select phase from public.events where id = duel) = 'inviting');
+  perform pg_temp.act_as(bea);
+  perform public.answer_invitation(gen_random_uuid(), duel, true);
+  results := results || pg_temp.verdict('A duel starts when both have paid',
+    (select phase from public.events where id = duel) = 'choosing');
+
+  -- REQ-183: a decline ends the duel, and whoever paid gets it back.
+  duel := pg_temp.new_duel(10, anna, bea, false);
+  perform pg_temp.act_as(anna);
+  perform public.answer_invitation(gen_random_uuid(), duel, true);
+  admin_start := pg_temp.balance(anna);
+  perform pg_temp.act_as(bea);
+  perform public.answer_invitation(gen_random_uuid(), duel, false);
+  results := results || pg_temp.verdict('REQ-183 a decline cancels and refunds',
+    (select status from public.events where id = duel) = 'cancelled'
+    and pg_temp.balance(anna) = admin_start + 10
+    and (select status from public.event_participants where event_id = duel and user_id = bea) = 'declined');
+
+  -- REQ-183: with nobody paid, the other invitation lapses.
+  perform pg_temp.act_as(admin_id);
+  duel := pg_temp.new_duel(10, anna, bea, false);
+  perform pg_temp.act_as(bea);
+  perform public.answer_invitation(gen_random_uuid(), duel, false);
+  results := results || pg_temp.verdict('REQ-183 a first decline lapses the other invitation',
+    (select status from public.events where id = duel) = 'cancelled'
+    and (select status from public.event_participants where event_id = duel and user_id = anna) = 'lapsed');
+
+  -- REQ-183: the admin paid to play, and their opponent says no.
+  perform pg_temp.act_as(admin_id);
+  admin_start := pg_temp.balance(admin_id);
+  duel := (public.create_game_event(gen_random_uuid(), 'confia_o_traeix', 'Prova', 10, true, array[anna]) ->> 'event_id')::uuid;
+  perform pg_temp.act_as(anna);
+  perform public.answer_invitation(gen_random_uuid(), duel, false);
+  results := results || pg_temp.verdict('REQ-183 the admin is refunded', pg_temp.balance(admin_id) = admin_start);
+
+  -- REQ-184: removing an invited player ends the duel, and anyone paid gets it back.
+  perform pg_temp.act_as(admin_id);
+  duel := pg_temp.new_duel(10, anna, dani, false);
+  perform pg_temp.act_as(anna);
+  perform public.answer_invitation(gen_random_uuid(), duel, true);
+  admin_start := pg_temp.balance(anna);
+  perform pg_temp.act_as(admin_id);
+
+  -- REQ-096: someone who has paid into a duel still blocks their own removal.
+  results := results || pg_temp.verdict('REQ-096 a paid player stays', pg_temp.refusal(format(
+    $s$select public.remove_profile(%L)$s$, anna
+  )) = 'user_in_open_event');
+
+  perform public.remove_profile(dani);
+  results := results || pg_temp.verdict('REQ-184 a removal cancels and refunds',
+    (select status from public.events where id = duel) = 'cancelled'
+    and pg_temp.balance(anna) = admin_start + 10
+    and (select status from public.event_participants where event_id = duel and user_id = dani) = 'declined'
+    and (select removed_at from public.profiles where user_id = dani) is not null);
+
+  -- REQ-125: only a player, only while choosing, and only a real choice.
+  perform pg_temp.act_as(admin_id);
+  duel := pg_temp.new_duel(10, anna, bea, false);
+  perform pg_temp.act_as(anna);
+  results := results || pg_temp.verdict('REQ-125 nobody locks in before both have paid', pg_temp.refusal(format(
+    $s$select public.lock_in(gen_random_uuid(), %L, 'confia')$s$, duel
+  )) = 'game_not_choosing');
+
+  perform pg_temp.act_as(admin_id);
+  duel := pg_temp.new_duel(10, anna, bea, true);
+  results := results || pg_temp.verdict('REQ-125 the admin who is not playing cannot lock in', pg_temp.refusal(format(
+    $s$select public.lock_in(gen_random_uuid(), %L, 'confia')$s$, duel
+  )) = 'not_allowed');
+  perform pg_temp.act_as(cesc);
+  results := results || pg_temp.verdict('REQ-125 an outsider cannot lock in', pg_temp.refusal(format(
+    $s$select public.lock_in(gen_random_uuid(), %L, 'confia')$s$, duel
+  )) = 'not_allowed');
+  perform pg_temp.act_as(anna);
+  results := results || pg_temp.verdict('REQ-139 only Confia or Traeix', pg_temp.refusal(format(
+    $s$select public.lock_in(gen_random_uuid(), %L, 'blanc')$s$, duel
+  )) = 'invalid_game_choice');
+
+  -- REQ-202: each tap replaces the last, and a repeat of the same tap changes nothing.
+  request := gen_random_uuid();
+  outcome := public.lock_in(request, duel, 'confia');
+  results := results || pg_temp.verdict('REQ-202 a tap is saved', (outcome ->> 'saved')::boolean
+    and not (outcome ->> 'revealed')::boolean
+    and (select choice from private.choices where event_id = duel and user_id = anna) = 'confia');
+  perform public.lock_in(gen_random_uuid(), duel, 'traeix');
+  results := results || pg_temp.verdict('REQ-202 the last tap counts',
+    (select choice from private.choices where event_id = duel and user_id = anna) = 'traeix'
+    and (select count(*) from private.choices where event_id = duel) = 1);
+  perform public.lock_in(request, duel, 'confia');
+  results := results || pg_temp.verdict('REQ-062 a repeat of an old tap changes nothing',
+    (select choice from private.choices where event_id = duel and user_id = anna) = 'traeix');
 
   -- NEXT
 
