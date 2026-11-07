@@ -31,6 +31,12 @@ Payout maths lives in one SQL function, which gets tested directly with awkward 
 - Forced participation is one option per event, not a choice per invitee.
 - The rejection returns the usernames that can't pay, and the app words the error in Catalan.
 
+- Added when the build started, because slice 002 shipped after this design was written. None of these changes what the human approved:
+  - **Test accounts stay hidden.** Event policies read through `profiles`, as the ledger's does, so real users never see a test account's event. The creator can only invite accounts of their own kind, so the real admin can't invite test accounts.
+  - **Forced participation is tested in a transaction that rolls back.** It needs the real admin, who can't invite test accounts, and topping up the admin would put test rows in the real audit. `tests/sql/events.sql` plays the admin through `execute_sql`, and leaves nothing behind. The review covers the real path on the phone.
+  - **Removal moves into Postgres.** `public.remove_profile()` locks the user's row, checks for open events, declines invitations and sets `removed_at` in one transaction, so an acceptance can't slip in between. Only the secret key can call it.
+  - **Finished events are frozen by a trigger,** as well as by the functions, so REQ-083 holds for the owner too.
+
 ## Tooling needed
 
 A small script that plays demo accounts during reviews, reusing the hosted test helpers. Slices 005 and 007 extend it.
