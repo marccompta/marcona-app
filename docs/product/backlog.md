@@ -43,42 +43,42 @@ Every requirement has a permanent ID. Raw input is kept in `docs/product/intake/
 | REQ-032 | The project shall keep migrations in `supabase/migrations/` and apply them to the hosted project, without relying on Docker or the local Supabase stack. | active | 001 | manual |
 | REQ-033 | When a slice is under review, the project shall deploy that slice's branch to the public site. | active | 001 | manual |
 | REQ-034 | The project shall scope the Supabase MCP server to this one project, with manual approval kept on. | superseded by REQ-206 | 001 | manual |
-| REQ-035 | When the admin submits a valid new username and password, the system shall create the user with 0 marcones. | planned | 002 | test |
-| REQ-036 | If a new username isn't 3 to 20 characters of lowercase `[a-z0-9_-]`, then the system shall reject it. | planned | 002 | test |
-| REQ-037 | If a new username matches an existing user, including a removed one, then the system shall reject it. | planned | 002 | test |
-| REQ-038 | If a new password is shorter than Supabase's minimum length, then the system shall reject it. | planned | 002 | test |
-| REQ-039 | When the admin adds marcones to a user with a Concept, the system shall raise that user's balance and record a ledger movement. | planned | 002 | test |
-| REQ-040 | When the admin removes marcones from a user with a Concept, the system shall lower that user's balance and record a ledger movement. | planned | 002 | test |
-| REQ-041 | If an admin adjustment has no Concept, then the system shall reject it. | planned | 002 | test |
-| REQ-042 | If an admin adjustment isn't a whole number of at least 1, then the system shall reject it. | planned | 002 | test |
-| REQ-043 | If an admin removal would take a balance below 0, then the system shall reject it and change nothing. | planned | 002 | test |
-| REQ-044 | When the admin resets a user's password, the system shall set the new password. | planned | 002 | test |
-| REQ-045 | When the admin resets a user's password, the system shall end that user's sessions. | planned | 002 | test |
-| REQ-046 | The system shall offer password changes only to the admin. | planned | 002 | test |
-| REQ-047 | When the admin starts removing a user, the system shall ask for a second confirmation before acting. | planned | 002 | test |
-| REQ-048 | When the admin confirms a removal, the system shall soft-delete the user and block their login. | planned | 002 | test |
-| REQ-049 | When a user is removed, the system shall revoke their sessions. | planned | 002 | test |
-| REQ-050 | When a user is removed, the system shall take them out of the ranking. | planned | 002 | test |
-| REQ-051 | When a user is removed, the system shall keep their history in the audit. | planned | 002 | test |
-| REQ-052 | If the admin tries to remove themselves, then the system shall reject it. | planned | 002 | test |
-| REQ-053 | While a user is removed, every function and policy shall reject them, even if their access token hasn't expired. | planned | 002 | test |
-| REQ-054 | The system shall create, remove and reset users only through Edge Functions, with the secret key stored only in Supabase. | planned | 002 | manual |
-| REQ-055 | If anyone other than the active admin calls an admin function, then the system shall reject the request. | planned | 002 | test |
-| REQ-056 | The system shall allow exactly one admin. | planned | 002 | test |
-| REQ-057 | The system shall make every change to marcones in a single Postgres function, in one transaction, with row locks. | planned | 002 | test |
-| REQ-058 | If a client writes directly to any table with the public key, then the system shall reject the write. | planned | 002 | test |
-| REQ-059 | If anyone tries to update or delete a ledger row, then the system shall reject it. | planned | 002 | test |
-| REQ-060 | The system shall store the balance after each movement on its ledger row. | planned | 002 | test |
-| REQ-061 | If a movement would take a balance below 0, then a database constraint shall stop it. | planned | 002 | test |
-| REQ-062 | When a money action is submitted again with the same client request ID, the system shall return the first result and apply the action only once. | planned | 002 | test |
-| REQ-063 | When a user opens the ranking, the system shall list active users and their balances, highest first. | planned | 002 | test |
-| REQ-064 | While two users have the same balance, the system shall order them alphabetically in the ranking. | planned | 002 | test |
-| REQ-065 | The system shall show medals for the top three places in the ranking. | planned | 002 | test |
-| REQ-066 | When a user taps someone in the ranking, the system shall show that person's balance and every movement involving them. | planned | 002 | test |
-| REQ-067 | When a user opens the audit, the system shall show all movements in one timeline, newest first. | planned | 002 | test |
-| REQ-068 | When a user picks a person in the audit filter, the system shall show only that person's movements. | planned | 002 | test |
-| REQ-069 | The system shall show who, the amount, the concept or event, the balance after, and the timestamp on each audit row. | planned | 002 | test |
-| REQ-070 | The system shall show balances as chip stacks with count-up numbers. | planned | 002 | manual |
+| REQ-035 | When the admin submits a valid new username and password, the system shall create the user with 0 marcones. | active | 002 | test |
+| REQ-036 | If a new username isn't 3 to 20 characters of lowercase `[a-z0-9_-]`, then the system shall reject it. | active | 002 | test |
+| REQ-037 | If a new username matches an existing user, including a removed one, then the system shall reject it. | active | 002 | test |
+| REQ-038 | If a new password is shorter than Supabase's minimum length, then the system shall reject it. | active | 002 | test |
+| REQ-039 | When the admin adds marcones to a user with a Concept, the system shall raise that user's balance and record a ledger movement. | active | 002 | test |
+| REQ-040 | When the admin removes marcones from a user with a Concept, the system shall lower that user's balance and record a ledger movement. | active | 002 | test |
+| REQ-041 | If an admin adjustment has no Concept, then the system shall reject it. | active | 002 | test |
+| REQ-042 | If an admin adjustment isn't a whole number of at least 1, then the system shall reject it. | active | 002 | test |
+| REQ-043 | If an admin removal would take a balance below 0, then the system shall reject it and change nothing. | active | 002 | test |
+| REQ-044 | When the admin resets a user's password, the system shall set the new password. | active | 002 | test |
+| REQ-045 | When the admin resets a user's password, the system shall end that user's sessions. | active | 002 | test |
+| REQ-046 | The system shall offer password changes only to the admin. | active | 002 | test |
+| REQ-047 | When the admin starts removing a user, the system shall ask for a second confirmation before acting. | active | 002 | test |
+| REQ-048 | When the admin confirms a removal, the system shall soft-delete the user and block their login. | active | 002 | test |
+| REQ-049 | When a user is removed, the system shall revoke their sessions. | active | 002 | test |
+| REQ-050 | When a user is removed, the system shall take them out of the ranking. | active | 002 | test |
+| REQ-051 | When a user is removed, the system shall keep their history in the audit. | active | 002 | test |
+| REQ-052 | If the admin tries to remove themselves, then the system shall reject it. | active | 002 | test |
+| REQ-053 | While a user is removed, every function and policy shall reject them, even if their access token hasn't expired. | active | 002 | test |
+| REQ-054 | The system shall create, remove and reset users only through Edge Functions, with the secret key stored only in Supabase. | active | 002 | manual |
+| REQ-055 | If anyone other than the active admin calls an admin function, then the system shall reject the request. | active | 002 | test |
+| REQ-056 | The system shall allow exactly one admin. | active | 002 | test |
+| REQ-057 | The system shall make every change to marcones in a single Postgres function, in one transaction, with row locks. | active | 002 | test |
+| REQ-058 | If a client writes directly to any table with the public key, then the system shall reject the write. | active | 002 | test |
+| REQ-059 | If anyone tries to update or delete a ledger row, then the system shall reject it. | active | 002 | test |
+| REQ-060 | The system shall store the balance after each movement on its ledger row. | active | 002 | test |
+| REQ-061 | If a movement would take a balance below 0, then a database constraint shall stop it. | active | 002 | test |
+| REQ-062 | When a money action is submitted again with the same client request ID, the system shall return the first result and apply the action only once. | active | 002 | test |
+| REQ-063 | When a user opens the ranking, the system shall list active users and their balances, highest first. | active | 002 | test |
+| REQ-064 | While two users have the same balance, the system shall order them alphabetically in the ranking. | active | 002 | test |
+| REQ-065 | The system shall show medals for the top three places in the ranking. | active | 002 | test |
+| REQ-066 | When a user taps someone in the ranking, the system shall show that person's balance and every movement involving them. | active | 002 | test |
+| REQ-067 | When a user opens the audit, the system shall show all movements in one timeline, newest first. | active | 002 | test |
+| REQ-068 | When a user picks a person in the audit filter, the system shall show only that person's movements. | active | 002 | test |
+| REQ-069 | The system shall show who, the amount, the concept or event, the balance after, and the timestamp on each audit row. | active | 002 | test |
+| REQ-070 | The system shall show balances as chip stacks with count-up numbers. | active | 002 | manual |
 | REQ-071 | When a user submits a valid classic event with a name, buy-in, invitees, and payout percentages for 1st, 2nd and 3rd, the system shall create it as open. | planned | 003 | test |
 | REQ-072 | When a classic event is created, the system shall make the creator an accepted participant and charge them the buy-in. | planned | 003 | test |
 | REQ-073 | The system shall default the payout percentages to 50, 30 and 20. | planned | 003 | test |
@@ -221,7 +221,7 @@ Every requirement has a permanent ID. Raw input is kept in `docs/product/intake/
 | Slice | Goal | Requirements | Status |
 |---|---|---|---|
 | 001 | Foundation: the stack and tools are in place, and the admin can log in on a phone at the public URL and see a styled, empty Catalan ranking. Includes the visual directions. | REQ-001 to REQ-033, REQ-206 | closed |
-| 002 | Users and marcones: the admin manages users and marcones, and everyone sees the ranking, user details and audit. | REQ-035 to REQ-070 | planned |
+| 002 | Users and marcones: the admin manages users and marcones, and everyone sees the ranking, user details and audit. | REQ-035 to REQ-070 | closed |
 | 003 | Classic events: the full event lifecycle, including payouts, refunds and rounding. | REQ-071 to REQ-100, REQ-186 to REQ-190 | planned |
 | 004 | Roulette: spin, payout, audit and admin settings. | REQ-101 to REQ-119 | planned |
 | 005 | Confia o traeix: the secret-choice engine, the first game, and admin game settings. | REQ-120 to REQ-149, REQ-175 to REQ-184, REQ-191, REQ-194 to REQ-196, REQ-198 to REQ-204 | planned |

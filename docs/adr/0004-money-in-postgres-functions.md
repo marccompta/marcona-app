@@ -1,6 +1,6 @@
 # 0004. All money moves in Postgres functions, on an append-only ledger
 
-- **Status:** proposed
+- **Status:** accepted
 - **Date:** 2026-11-06
 - **Slice:** 002
 

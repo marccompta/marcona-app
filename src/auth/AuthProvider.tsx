@@ -49,6 +49,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => data.subscription.unsubscribe()
   }, [])
 
+  // REQ-045, REQ-049: an access token outlives its session, so ask Auth. When the
+  // session has ended, getUser() clears it here and the login screen comes back.
+  useEffect(() => {
+    if (!userId) return
+    const verify = () => {
+      if (document.visibilityState === 'visible') void supabase.auth.getUser()
+    }
+    verify()
+    document.addEventListener('visibilitychange', verify)
+    return () => document.removeEventListener('visibilitychange', verify)
+  }, [userId])
+
   useEffect(() => {
     if (userId === undefined) return
     if (userId === null) {

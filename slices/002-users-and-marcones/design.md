@@ -21,15 +21,16 @@ Helpers in the `private` schema aren't reachable through the API. Every public f
 
 - `profiles` gains `balance` (at least 0), `removed_at` and `is_test`, with a unique index allowing only one admin.
 - New `ledger` table: user, delta, `balance_after` (at least 0), kind, concept, event, actor, details and time. A trigger rejects updates and deletes.
-- New `money_requests` table: client request ID, user, action and stored result.
+- New `private.money_requests` table: client request ID, user, action and stored result. Nothing outside Postgres needs it, so it stays out of the API.
 
 ## Decisions
 
 - [ADR 0003](../../docs/adr/0003-supabase-auth-with-hidden-emails.md): privileged actions in Edge Functions.
 - [ADR 0004](../../docs/adr/0004-money-in-postgres-functions.md): money in Postgres functions.
-- Test accounts have `is_test` set, and they only see each other. Real users never see them in the ranking or audit.
+- Only accounts made by automated tests have `is_test` set, and they only see each other. Real users, including the admin, never see them in the ranking, audit or admin list. Review demo users are ordinary accounts, which the wipe in slice 008 deletes.
 - Ledger rows store a kind and details, and the app turns these into Catalan. Only admin Concepts are free text.
 - Reviews use a few demo users, whose passwords go in chat.
+- Access tokens outlive their sessions, so the app also asks Auth to confirm the session on load and whenever the tab comes back. That's what signs a phone out after a reset or a removal.
 
 ## Tooling needed
 

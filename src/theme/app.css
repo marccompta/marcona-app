@@ -23,12 +23,14 @@ body {
 
 h1,
 h2,
+h3,
 p {
   margin: 0;
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
   color: inherit;
 }
@@ -322,6 +324,364 @@ input {
   padding: 24px;
   text-align: center;
   color: var(--sage);
+}
+
+/* The ranking: rows on the felt, as in direction B. */
+.summary {
+  margin: -10px 0 14px;
+  text-align: center;
+  color: var(--sage);
+  font-size: 15px;
+}
+
+.quiet {
+  margin-top: 24px;
+  text-align: center;
+  color: var(--sage);
+}
+
+.ranking,
+.movements,
+.admin-users {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rank-row {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) 34px auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 66px;
+  padding-block: 8px;
+  border-bottom: 1px solid var(--gold-hairline);
+  color: inherit;
+  text-decoration: none;
+}
+
+.ranking li:last-child .rank-row {
+  border-bottom: 0;
+}
+
+.medal {
+  justify-self: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 2px;
+  transform: rotate(45deg);
+  box-shadow: inset 0 0 0 1.5px #ffffff55, 0 1px 3px #0008;
+}
+
+.medal--gold {
+  background: linear-gradient(135deg, var(--gold-light), var(--gold) 55%, #c8952b);
+}
+
+.medal--silver {
+  background: linear-gradient(135deg, #f4f4f0, #c9ccc8 55%, #8f9391);
+}
+
+.medal--bronze {
+  background: linear-gradient(135deg, #eab98a, #c98a55 55%, #92592f);
+}
+
+.place {
+  justify-self: center;
+  font: 500 19px/1 var(--font-display);
+  color: var(--sage);
+}
+
+.rank-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.rank-username {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 18px;
+}
+
+.you {
+  flex: none;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--gold);
+  color: var(--on-gold);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.rank-amount {
+  min-width: 52px;
+  text-align: right;
+  font: 700 23px/1 var(--font-display);
+  font-variant-numeric: lining-nums;
+}
+
+.rank-amount--top {
+  color: var(--gold);
+}
+
+/* Chips land one after another, the one flourish on these screens. */
+.chips {
+  display: block;
+  justify-self: center;
+  overflow: visible;
+}
+
+.chip {
+  animation: land 0.32s var(--ease) both;
+}
+
+.chip-edge {
+  fill: var(--gold-dark);
+}
+
+.chip-face {
+  fill: var(--gold);
+}
+
+.chip-spots {
+  fill: none;
+  stroke: var(--gold-light);
+  stroke-width: 1;
+  stroke-dasharray: 2 6;
+}
+
+.chip-empty {
+  fill: none;
+  stroke: var(--gold-line);
+  stroke-dasharray: 3 3;
+}
+
+/* One person. */
+.back {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  margin-top: 2px;
+  color: var(--sage);
+  font-size: 15px;
+  text-decoration: none;
+}
+
+.back::before {
+  content: '‹';
+  margin-right: 6px;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.detail-name {
+  overflow-wrap: anywhere;
+  text-align: center;
+  font: italic 700 30px/1.2 var(--font-display);
+  color: var(--gold);
+}
+
+.detail-balance {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 14px;
+  margin: 14px 0 20px;
+}
+
+.detail-amount {
+  font: 700 42px/1 var(--font-display);
+  font-variant-numeric: lining-nums;
+}
+
+/* Movements, in the audit and on one person's screen. */
+.movement {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  padding-block: 11px;
+  border-bottom: 1px solid var(--gold-hairline);
+}
+
+.movement:last-child {
+  border-bottom: 0;
+}
+
+.movement-main,
+.movement-money {
+  display: grid;
+  align-content: start;
+  gap: 1px;
+}
+
+.movement-money {
+  justify-items: end;
+  text-align: right;
+}
+
+.movement-who {
+  font-size: 17px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.movement-label {
+  overflow-wrap: anywhere;
+}
+
+.movement-time,
+.movement-after {
+  color: var(--sage);
+  font-size: 14px;
+}
+
+.delta {
+  font: 700 21px/1.2 var(--font-display);
+  font-variant-numeric: lining-nums;
+}
+
+.delta--up {
+  color: var(--gold);
+}
+
+.delta--down {
+  color: var(--danger);
+}
+
+.filter {
+  margin-bottom: 8px;
+}
+
+.field select {
+  min-height: var(--tap);
+  width: 100%;
+  padding: 6px 2px;
+  border: 0;
+  border-bottom: 1px solid var(--gold-line);
+  border-radius: 0;
+  background: var(--felt-950);
+  color: var(--ivory);
+  font-size: 18px;
+}
+
+/* Administració. */
+.panel {
+  display: grid;
+  gap: 12px;
+}
+
+.panel h2,
+.section-title {
+  font: italic 700 22px/1.2 var(--font-display);
+  color: var(--gold);
+}
+
+.panel h3 {
+  font: italic 700 18px/1.2 var(--font-display);
+  color: var(--gold);
+}
+
+.section-title {
+  margin-top: 28px;
+}
+
+.panel .primary {
+  margin-top: 0;
+}
+
+.confirmed {
+  text-align: center;
+  color: var(--sage);
+  font-size: 16px;
+}
+
+.ask {
+  text-align: center;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.secondary {
+  min-height: var(--tap);
+  padding: 6px 10px;
+  border: 1px solid var(--gold-line);
+  border-radius: 2px;
+  background: none;
+  color: var(--gold);
+  font-size: 16px;
+  cursor: pointer;
+  transition: border-color 0.2s var(--ease);
+}
+
+.secondary:hover {
+  border-color: var(--gold);
+}
+
+.secondary:disabled {
+  opacity: 0.65;
+  cursor: default;
+}
+
+.secondary--danger {
+  border-color: #ffb4a866;
+  color: var(--danger);
+}
+
+.secondary--danger:hover {
+  border-color: var(--danger);
+}
+
+.admin-user {
+  border-bottom: 1px solid var(--gold-hairline);
+}
+
+.admin-user:last-child {
+  border-bottom: 0;
+}
+
+.admin-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 34px auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 58px;
+  padding: 6px 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.admin-row[aria-expanded='true'] .rank-username {
+  color: var(--gold);
+}
+
+.admin-balance {
+  color: var(--sage);
+  font-size: 15px;
+}
+
+.admin-panels {
+  display: grid;
+  gap: 24px;
+  padding: 6px 0 22px;
+}
+
+@keyframes land {
+  from {
+    opacity: 0;
+    transform: translateY(-7px);
+  }
 }
 
 @keyframes settle {
