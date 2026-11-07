@@ -348,6 +348,18 @@ test.describe('an event', () => {
       expect(calls.ledger).toEqual([])
     })
 
+    test('REQ-062: a retry of a refused answer keeps the same request ID', async ({ page }) => {
+      const calls = await openEvent(page, { ...rich, balance: 5 }, invited)
+      for (const attempt of [1, 2]) {
+        await page.getByRole('button', { name: 'Accepta' }).click()
+        await expect.poll(() => calls.eventCalls.length).toBe(attempt)
+        await expect(page.getByRole('alert')).toBeVisible()
+      }
+
+      const [first, second] = calls.eventCalls.map((call) => call.p_request_id)
+      expect(second).toBe(first)
+    })
+
     test('REQ-081: declining charges nothing and shows me as declined', async ({ page }) => {
       const calls = await openEvent(page, rich, invited)
       await page.getByRole('button', { name: 'Rebutja' }).click()
