@@ -560,14 +560,19 @@ select {
   margin-bottom: 8px;
 }
 
+/* Drawn by the site, because Safari's own control turns ivory text unreadable. */
 .field select {
+  -webkit-appearance: none;
+  appearance: none;
   min-height: var(--tap);
   width: 100%;
-  padding: 6px 2px;
+  padding: 6px 26px 6px 2px;
   border: 0;
   border-bottom: 1px solid var(--gold-line);
   border-radius: 0;
-  background: var(--felt-950);
+  background: var(--felt-950)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1.500l5 5 5-5' fill='none' stroke='%23f0c24b' stroke-width='1.500'/%3E%3C/svg%3E")
+    no-repeat right 6px center;
   color: var(--ivory);
   font-size: 18px;
 }

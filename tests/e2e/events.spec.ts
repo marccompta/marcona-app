@@ -504,6 +504,16 @@ test.describe('an event', () => {
       await expect(page.locator('[data-place]')).toHaveText(['1r bea 3 marcones', '2n anna 0 marcones', '3r marc 0 marcones'])
     })
 
+    test('REQ-020: the pickers are drawn by the site, so their text stays readable on Safari', async ({ page }) => {
+      await openEvent(page, rich, everyone)
+      const style = await page.getByLabel('1r lloc').evaluate((select) => {
+        const { appearance, backgroundColor, color } = getComputedStyle(select)
+        return { appearance, backgroundColor, color }
+      })
+
+      expect(style).toEqual({ appearance: 'none', backgroundColor: 'rgb(3, 26, 21)', color: 'rgb(246, 241, 220)' })
+    })
+
     test('REQ-083: a finished event offers no actions, even to its creator', async ({ page }) => {
       const results = [{ place: 1, user_id: 'bea', percentage: 100, amount: 21 }]
       await openEvent(page, rich, { ...everyone, status: 'completed', results })
