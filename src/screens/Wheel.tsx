@@ -51,8 +51,8 @@ function Disc({ ref }: { ref: Ref<SVGSVGElement> }) {
     <svg ref={ref} className="wheel-disc" viewBox="0 0 300 300" aria-hidden="true">
       <defs>
         <radialGradient id="wheel-cone">
-          <stop offset="0.3" stopColor="var(--felt-500)" />
-          <stop offset="1" stopColor="var(--felt-950)" />
+          <stop offset="0.3" style={{ stopColor: 'var(--felt-500)' }} />
+          <stop offset="1" style={{ stopColor: 'var(--felt-950)' }} />
         </radialGradient>
       </defs>
       <circle className="wheel-rim" cx={centre} cy={centre} r="147" />
