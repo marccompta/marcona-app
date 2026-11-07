@@ -135,6 +135,8 @@ Type one of these in a Claude Code session started at the repo root:
 
 ### Round 1
 
-- Verdict: pending
-- Date:
-- Notes:
+- Verdict: changes
+- Date: 2026-11-07
+- Notes: Add confetti and show in a more prominent way the marcones that you just win (for a second) in case of winning the roulette. Something a little bit more "dopaminic"
+  1. Add confetti in case of winning the roulette.
+  2. Show in a more prominent way the marcones that you just win (for a second).
