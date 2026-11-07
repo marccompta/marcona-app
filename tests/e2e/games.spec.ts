@@ -633,6 +633,11 @@ test.describe('waiting for the reveal', () => {
 
   test('REQ-134: a failed read waits for the next one', async ({ page }) => {
     const calls = await startDuel(page, anna)
+    // This is about polling, so live updates stay quiet, after the read the
+    // screen makes once it's listening.
+    await expect.poll(() => calls.channels.length).toBeGreaterThan(0)
+    await page.waitForTimeout(500)
+    calls.live = false
     let failures = 0
     await page.route('**/rest/v1/rpc/game_state', (route) => {
       failures += 1
@@ -735,6 +740,15 @@ test.describe('the reveal', () => {
 
     await expect(page.locator('[data-card]').first()).toBeInViewport({ ratio: 1, timeout: 8000 })
     await expect(page.locator('[data-card]').last()).toBeInViewport({ ratio: 1 })
+    // The smooth scroll can still be moving, so read once it has stopped.
+    const top = () => page.locator('.duel-headline').evaluate((headline) => headline.getBoundingClientRect().top)
+    await expect
+      .poll(async () => {
+        const before = await top()
+        await page.waitForTimeout(100)
+        return (await top()) === before
+      })
+      .toBe(true)
     const covered = await page.locator('.duel-headline').evaluate((headline) => {
       const { top, left, width } = headline.getBoundingClientRect()
       const seen = document.elementFromPoint(left + width / 2, top + 4)

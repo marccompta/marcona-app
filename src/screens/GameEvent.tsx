@@ -4,8 +4,9 @@ import type { Profile } from '../auth/AuthProvider'
 import { errorMessage } from '../i18n/errors'
 import { formatMarcones } from '../i18n/format'
 import { text } from '../i18n/text'
-import type { MarconaEvent } from '../lib/events'
+import { liveEvent, type MarconaEvent } from '../lib/events'
 import { createTapQueue, duelChoices, fetchGameState, gameName, lockIn, type DuelChoice } from '../lib/games'
+import { useLive } from '../lib/live'
 import { Crown } from '../shell/icons'
 import { DuelReveal } from './DuelReveal'
 import { Answer, Cancel, People } from './EventActions'
@@ -52,7 +53,14 @@ function useDuelTaps(eventId: string, showReveal: () => void) {
 
   useEffect(() => () => clearTimeout(timer.current), [])
 
-  return { glow, failure, tap: queue.tap, holdingReveal, stopGlow: () => holdingReveal.current || setGlow(null) }
+  return {
+    glow,
+    failure,
+    tap: queue.tap,
+    busy: queue.busy,
+    holdingReveal,
+    stopGlow: () => holdingReveal.current || setGlow(null),
+  }
 }
 
 // REQ-134: works with or without live updates, from when the screen opens until
@@ -117,8 +125,12 @@ function ChoicePanel(props: {
 // REQ-195: one resting screen for everyone in the duel, whether or not they've
 // picked. Nothing here depends on it, because nothing here knows.
 export function GameEvent({ event, profile, onChange }: { event: MarconaEvent; profile: Profile; onChange: () => void }) {
-  const { glow, failure, tap, holdingReveal, stopGlow } = useDuelTaps(event.id, onChange)
+  const { glow, failure, tap, busy, holdingReveal, stopGlow } = useDuelTaps(event.id, onChange)
   useGamePolling(event, onChange, holdingReveal)
+  // REQ-152, REQ-133: answers and the reveal arrive live, but never while my own
+  // tap is on its way or glowing, as its answer decides when the reveal starts.
+  // Polling stays as the fallback for anything skipped here.
+  useLive(liveEvent(event.id), () => holdingReveal.current || busy() || onChange(), { enabled: event.status === 'open' })
   const [panelOpen, setPanelOpen] = useState(false)
 
   const open = event.status === 'open'

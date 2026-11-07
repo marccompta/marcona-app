@@ -22,6 +22,18 @@ describe('duel payouts', () => {
 })
 
 describe('the tap queue', () => {
+  it('REQ-152, REQ-133: says it is busy from the tap until the answer, so a live change can wait', async () => {
+    const { sent, send } = heldSend()
+    const queue = createTapQueue({ send, onResult: vi.fn(), onFailed: vi.fn() })
+    expect(queue.busy()).toBe(false)
+
+    queue.tap('confia')
+    expect(queue.busy()).toBe(true)
+    sent[0].answer(revealed)
+    await settle()
+    expect(queue.busy()).toBe(false)
+  })
+
   it('REQ-202: sends a tap at once, and tells who asked', async () => {
     const { sent, send } = heldSend()
     const onResult = vi.fn()

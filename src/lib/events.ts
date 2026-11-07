@@ -1,5 +1,6 @@
 import { text } from '../i18n/text'
 import type { EventGameSettings, Phase, Reveal } from './games'
+import type { LiveSource } from './live'
 import { supabase } from './supabase'
 
 export type EventStatus = 'open' | 'completed' | 'cancelled'
@@ -58,6 +59,12 @@ export async function fetchEvent(id: string, client = supabase) {
   if (error) throw error
   return data as unknown as MarconaEvent | null
 }
+
+// REQ-152: what changes one event, for watching it live.
+export const liveEvent = (id: string): LiveSource[] => [
+  { table: 'events', filter: `id=eq.${id}` },
+  { table: 'event_participants', filter: `event_id=eq.${id}` },
+]
 
 export const inEvent = (event: MarconaEvent) => event.participants.filter((person) => person.status === 'accepted')
 

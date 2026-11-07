@@ -4,9 +4,11 @@ import type { Profile } from '../auth/AuthProvider'
 import { formatMarcones } from '../i18n/format'
 import { text } from '../i18n/text'
 import { useLoad } from '../lib/data'
+import { useLive } from '../lib/live'
 import {
   completeEvent,
   fetchEvent,
+  liveEvent,
   inEvent,
   paidPlaces,
   potOf,
@@ -152,6 +154,9 @@ function Body({ event, profile, onChange }: ActionProps & { profile: Profile }) 
 export function EventDetail({ profile }: { profile: Profile }) {
   const { id } = useParams()
   const { state, reload } = useLoad(() => fetchEvent(id!), id)
+  // REQ-152: a classic event follows along here. A game watches for itself,
+  // because its reveal waits for the glow of the tap that completed it.
+  useLive(liveEvent(id!), reload, { enabled: state.status === 'ready' && state.data?.type === 'classic' })
 
   return (
     <section className="screen" data-screen="esdeveniment">

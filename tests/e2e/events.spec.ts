@@ -380,6 +380,10 @@ test.describe('an event', () => {
       const calls = await openEvent(page, rich, invited)
       const accept = page.getByRole('button', { name: 'Accepta' })
       await accept.waitFor()
+      // The screen reads again once it's listening for changes. This change sends
+      // no message, so it has to come after that read.
+      await expect.poll(() => calls.channels.length).toBeGreaterThan(0)
+      await page.waitForTimeout(500)
       calls.events[0].people.anna = 'lapsed'
       await accept.click()
       await expect(page.getByRole('alert')).toHaveText('Aquesta invitació ja no està pendent.')

@@ -4,6 +4,7 @@ import { text } from '../i18n/text'
 import { useLoad } from '../lib/data'
 import { fetchEvents, groupEvents, potOf, type EventStatus, type MarconaEvent } from '../lib/events'
 import { gameName } from '../lib/games'
+import { useLive, type LiveSource } from '../lib/live'
 import { Pending } from './Movements'
 
 export function StatusPill({ status }: { status: EventStatus }) {
@@ -42,9 +43,13 @@ function Group({ id, title, empty, events }: { id: string; title: string; empty:
   )
 }
 
+const live: LiveSource[] = [{ table: 'events' }, { table: 'event_participants' }]
+
 // REQ-097: my invitations, open events and past events, in that order.
 export function Events({ me }: { me: string }) {
-  const { state } = useLoad(fetchEvents)
+  const { state, reload } = useLoad(fetchEvents)
+  // REQ-152: new invitations, answers and results appear on every phone.
+  useLive(live, reload)
 
   return (
     <section className="screen" data-screen="esdeveniments">

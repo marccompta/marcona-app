@@ -154,5 +154,7 @@ export function createTapQueue({ send, onResult, onFailed, retryMs = 800 }: TapQ
       waiting = choice
       if (!sending) void drain()
     },
+    /** True while a tap is on its way, whose answer may hold the reveal. */
+    busy: () => sending,
   }
 }

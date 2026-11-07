@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { admin, fakeSupabase, logIn, player, type FakeMovement, type FakeUser } from './fake-supabase'
+import { admin, fakeSupabase, logIn, player, type FakeEvent, type FakeMovement, type FakeUser } from './fake-supabase'
 
 // Live updates through the fake Realtime socket. Each test marks the page first,
 // so a reload would lose the mark and fail the check at the end.
@@ -101,4 +101,125 @@ test('REQ-150: a screen stops listening once it closes', async ({ page }) => {
   await page.locator('[data-screen="ruleta"]').waitFor()
 
   await expect.poll(() => calls.channels.filter((channel) => !channel.left)).toEqual([])
+})
+
+test.describe('events', () => {
+  const host: FakeUser = { ...admin, balance: 100 }
+  const anna: FakeUser = { ...player, balance: 100 }
+  const guest: FakeUser = { ...bea, balance: 100 }
+  const dinner: FakeEvent = { id: 'e1', name: 'Sopar', buy_in: 10, creator: 'marc', people: { anna: 'accepted', bea: 'invited' } }
+  const duel: FakeEvent = {
+    id: 'd1',
+    name: 'El duel',
+    buy_in: 10,
+    creator: 'marc',
+    game: 'confia_o_traeix',
+    phase: 'choosing',
+    creator_plays: false,
+    people: { anna: 'accepted', bea: 'accepted' },
+  }
+
+  const open = async (page: Page, user: FakeUser, events: FakeEvent[], name?: string) => {
+    const calls = await fakeSupabase(page, [host, anna, guest].map((u) => (u.username === user.username ? user : u)), [], events)
+    await logIn(page, user)
+    await page.getByRole('link', { name: 'Esdeveniments' }).click()
+    await page.locator('[data-screen="esdeveniments"]').waitFor()
+    if (name) {
+      await page.locator('[data-event]').filter({ hasText: name }).click()
+      await page.locator('[data-screen="esdeveniment"]').waitFor()
+    }
+    await joined(calls, 'event_participants')
+    // Subscribing reads once more. Let that finish first.
+    await page.waitForTimeout(500)
+    await markPage(page)
+    return calls
+  }
+
+  // Polling would also find a duel's reveal, so these tests stop it answering.
+  const noPolling = (page: Page) => page.route('**/rest/v1/rpc/game_state', () => {})
+
+  const pill = (page: Page) => page.locator('[data-screen="esdeveniment"] .pill')
+  const reveal = (page: Page) => page.locator('[data-reveal]')
+
+  test('REQ-152: the list shows a new invitation and an accepted one as they happen', async ({ page }) => {
+    const calls = await open(page, anna, [dinner])
+    const row = page.locator('[data-event]').filter({ hasText: 'Sopar' })
+    await expect(row).toContainText('Pot 20')
+
+    calls.actAs('bea', 'answer_invitation', { p_request_id: 'r1', p_event_id: 'e1', p_accept: true })
+    await expect(row).toContainText('Pot 30')
+
+    calls.actAs('marc', 'create_event', {
+      p_request_id: 'r2',
+      p_name: 'Partida nova',
+      p_buy_in: 5,
+      p_invitees: ['anna'],
+      p_payout_first: 100,
+      p_payout_second: 0,
+      p_payout_third: 0,
+      p_force: false,
+    })
+    await expect(page.locator('[data-group="invitacions"] [data-event]')).toHaveText([/Partida nova/])
+    expect(await stayed(page)).toBe(true)
+  })
+
+  test('REQ-152: an event screen shows someone accepting, then the results', async ({ page }) => {
+    const calls = await open(page, anna, [dinner], 'Sopar')
+    const bea = page.locator('[data-participant]').filter({ hasText: 'bea' })
+    await expect(bea).toContainText('Pendent')
+
+    calls.actAs('bea', 'answer_invitation', { p_request_id: 'r1', p_event_id: 'e1', p_accept: true })
+    await expect(bea).toContainText('Hi participa')
+    await expect(page.locator('[data-fact="pot"]')).toHaveText('30 marcones')
+
+    calls.actAs('marc', 'complete_event', { p_request_id: 'r2', p_event_id: 'e1', p_first: 'anna', p_second: 'bea', p_third: 'marc' })
+    await expect(pill(page)).toHaveText('Completat')
+    await expect(page.locator('[data-place]')).toHaveCount(3)
+    expect(await stayed(page)).toBe(true)
+  })
+
+  test('REQ-152: an event screen ignores changes to other events', async ({ page }) => {
+    const calls = await open(page, anna, [dinner, { ...dinner, id: 'e2', name: 'Esmorzar' }], 'Sopar')
+    const before = calls.messages.length
+    calls.actAs('bea', 'answer_invitation', { p_request_id: 'r1', p_event_id: 'e2', p_accept: true })
+    expect(calls.messages.length).toBeGreaterThan(before)
+    await page.waitForTimeout(500)
+    expect(await page.locator('[data-participant]').filter({ hasText: 'bea' }).textContent()).toContain('Pendent')
+  })
+
+  test('REQ-152: a duel shows a player paying at once, and the panel opens up', async ({ page }) => {
+    await noPolling(page)
+    const calls = await open(page, anna, [{ ...duel, phase: 'inviting', people: { anna: 'accepted', bea: 'invited' } }], 'El duel')
+    await expect(page.locator('[data-participant]').filter({ hasText: 'bea' })).toContainText('Pendent')
+
+    calls.actAs('bea', 'answer_invitation', { p_request_id: 'r1', p_event_id: 'd1', p_accept: true })
+
+    await expect(page.locator('[data-participant]').filter({ hasText: 'bea' })).toContainText('Hi participa')
+    await expect(page.getByRole('button', { name: 'Tria en privat' })).toBeVisible()
+  })
+
+  test('REQ-152: someone watching a duel sees the reveal as soon as it happens', async ({ page }) => {
+    await noPolling(page)
+    const calls = await open(page, host, [duel], 'El duel')
+
+    calls.lockInAs('d1', 'anna', 'confia')
+    calls.lockInAs('d1', 'bea', 'traeix')
+
+    await expect(reveal(page)).toBeVisible({ timeout: 2000 })
+    expect(await stayed(page)).toBe(true)
+  })
+
+  test('REQ-152, REQ-133: the tap that completes the pair still glows before the reveal', async ({ page }) => {
+    await noPolling(page)
+    const calls = await open(page, anna, [duel], 'El duel')
+    calls.lockInAs('d1', 'bea', 'traeix')
+    await page.getByRole('button', { name: 'Tria en privat' }).click()
+    await page.locator('[data-choice-panel]').getByRole('button', { name: 'Confia' }).click()
+
+    // The reveal's Realtime message arrives at once. It must wait for the glow.
+    await expect.poll(() => calls.messages.some((message) => message.table === 'events' && message.record.id === 'd1')).toBe(true)
+    await page.waitForTimeout(400)
+    expect(await reveal(page).count()).toBe(0)
+    await expect(reveal(page)).toBeVisible({ timeout: 3000 })
+  })
 })
