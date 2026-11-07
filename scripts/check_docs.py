@@ -15,6 +15,7 @@ STATUSES = {
     "changes-requested", "accepted", "closed", "rejected",
 }
 NEEDS_APPROVAL = {"accepted", "closed"}
+NEEDS_TASKS_DONE = {"in-review", "accepted", "closed"}
 REQ_ID = re.compile(r"REQ-\d{3}")
 BACKLOG_ROW = re.compile(r"^\|\s*(REQ-\d{3})\s*\|(.*)\|\s*$", re.MULTILINE)
 VERDICT = re.compile(r"^- Verdict:\s*(\w+)", re.MULTILINE)
@@ -106,6 +107,13 @@ def check_slice(folder, root, requirements, cited, errors):
         if req_id not in requirements:
             errors.append(f"{name}: {req_id} isn't in the backlog")
 
+    if status in NEEDS_TASKS_DONE:
+        tasks = folder / "tasks.md"
+        if not tasks.is_file():
+            errors.append(f"{name}: tasks.md is missing")
+        elif "- [ ]" in read(tasks):
+            errors.append(f"{name}: {status} with unchecked tasks")
+
     if status in NEEDS_APPROVAL:
         review = folder / "review.md"
         verdicts = VERDICT.findall(read(review)) if review.is_file() else []
@@ -117,11 +125,6 @@ def check_slice(folder, root, requirements, cited, errors):
 
     if not (folder / "record.md").is_file():
         errors.append(f"{name}: closed but record.md is missing")
-    tasks = folder / "tasks.md"
-    if not tasks.is_file():
-        errors.append(f"{name}: tasks.md is missing")
-    elif "- [ ]" in read(tasks):
-        errors.append(f"{name}: closed with unchecked tasks")
     history = root / "HISTORY.md"
     if not history.is_file() or f"slices/{name}" not in read(history):
         errors.append(f"{name}: closed but not in HISTORY.md")

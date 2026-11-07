@@ -25,10 +25,11 @@ All tasks in `tasks.md` must be checked and the tests must pass. If not, stop an
    - Put screenshots and sample output in `evidence/`, and link them.
    - Never include secrets. Name the environment variable or vault entry.
 3. Run every instruction exactly as written, from a clean state, and fix anything that doesn't match. If you can't run a step, say so in section 5.
+   - Open each screenshot in `evidence/` and look at it. Passing tests can't see unreadable text, clipped content, or a control the browser has drawn in its own style. Fix what's wrong, or list it in section 6.
 4. Run the tests and `python scripts/check_docs.py [project-path]`, and record the real results in section 5.
    - If the project has `tests/sql/constraints.sql` and this slice added a migration, run that file through the Supabase MCP server's `execute_sql`. It always ends in an exception, which rolls it back and carries the results. Every entry should say "rejected". Record the result in section 5.
 5. Ask the `slice-auditor` subagent to follow `review.md` with no other context. Fix what it reports, and record the outcome in section 5.
-6. Set `status: in-review`. Commit `review.md` and any evidence.
+6. Set `status: in-review`, then run `python scripts/check_docs.py [project-path]` again, because it only checks that every task is ticked once the status has changed. Commit `review.md` and any evidence.
 
 ### After a `changes` round
 

@@ -33,7 +33,7 @@ Which mechanism to use for what, and what's installed in this repo. Project tool
 |---|---|---|
 | `intake`, `slice-spec`, `slice-build`, `slice-review`, `slice-verdict`, `slice-close` | Skills | The workflow steps. They set `disable-model-invocation: true`, so only a human starts them. |
 | `slice-auditor` | Subagent | Follows review instructions with no prior context, and runs cold-start checks. |
-| `scripts/check_docs.py` | Script | Checks traceability and slice completeness, locally and in CI. |
+| `scripts/check_docs.py` | Script | Checks traceability and slice completeness, locally and in CI. A slice can't be `in-review`, `accepted` or `closed` with an unchecked task. |
 | `tests/hosted/demo.ts` | Script | Plays the demo accounts during a review, so one phone is enough. Uses `tsx` to run TypeScript, and the admin's login from `.env.test.local`. |
 | `scripts/protect_closed_slices.py` | `PreToolUse` hook | Blocks Claude's Edit and Write tools inside closed slices. It doesn't cover shell commands or non-Claude tools. |
 | `scripts/require_passing_tests.py` | `PreToolUse` hook | Blocks Claude's `git commit` while the unit tests fail. The tests run before the whole shell command, so edits made earlier in the same command aren't seen. It doesn't cover commits made outside Claude. |
