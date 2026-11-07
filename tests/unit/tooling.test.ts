@@ -5,25 +5,23 @@ const mcp = JSON.parse(readFileSync('.mcp.json', 'utf8')).mcpServers
 const settings = JSON.parse(readFileSync('.claude/settings.json', 'utf8'))
 
 describe('tooling', () => {
-  it('REQ-206: scopes the Supabase MCP server to this one project', () => {
+  it('REQ-209: scopes the Supabase MCP server to this one project', () => {
     expect(mcp.supabase.url).toMatch(/[?&]project_ref=ndkgmenntqhjojalqbdm(&|$)/)
   })
 
-  it('REQ-031, REQ-206: signs in through the browser, with no token in the repo', () => {
+  it('REQ-031, REQ-209: signs in through the browser, with no token in the repo', () => {
     expect(mcp.supabase.headers).toBeUndefined()
     expect(mcp.supabase.env).toBeUndefined()
   })
 
-  it('REQ-206: adds no blanket allow rule for Supabase tools', () => {
+  it('REQ-209: adds no blanket allow rule for Supabase tools', () => {
     const allowed: string[] = settings.permissions?.allow ?? []
     expect(allowed.filter((rule) => rule.includes('supabase'))).toEqual([])
   })
 
-  it('REQ-206: keeps asking before Supabase tools other than migrations that can change something', () => {
+  it('REQ-209: keeps asking before secrets and Supabase branches', () => {
     const asked: string[] = settings.permissions?.ask ?? []
     const tools = [
-      'execute_sql',
-      'deploy_edge_function',
       'create_edge_function_secret',
       'create_branch',
       'delete_branch',
@@ -34,8 +32,11 @@ describe('tooling', () => {
     for (const tool of tools) expect(asked, tool).toContain(`mcp__supabase__${tool}`)
   })
 
-  it('REQ-206: lets migrations run without a prompt', () => {
-    expect(settings.permissions?.ask ?? []).not.toContain('mcp__supabase__apply_migration')
+  it('REQ-209: lets migrations, SQL and Edge Function deploys run without a prompt', () => {
+    const asked: string[] = settings.permissions?.ask ?? []
+    for (const tool of ['apply_migration', 'execute_sql', 'deploy_edge_function']) {
+      expect(asked, tool).not.toContain(`mcp__supabase__${tool}`)
+    }
   })
 
   it('REQ-029: names every MCP server in docs/tooling.md', () => {

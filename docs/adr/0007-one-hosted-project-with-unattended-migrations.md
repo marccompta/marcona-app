@@ -1,6 +1,6 @@
 # 0007. One hosted Supabase project, with migrations that don't need manual approval
 
-- **Status:** accepted
+- **Status:** superseded by [0008](0008-supabase-work-without-prompts.md)
 - **Date:** 2026-11-06
 - **Slice:** 001
 
