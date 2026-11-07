@@ -106,7 +106,7 @@ export const text = {
     each: (amount: string, percent: number) => `Cada persona rep ${amount} (${percent}%)`,
     betrayer: (amount: string, percent: number) => `Qui traeix rep ${amount} (${percent}%)`,
     betrayed: (amount: string, percent: number) => `Qui confia rep ${amount} (${percent}%)`,
-    house: 'Els percentatges són sobre l’entrada. La banca cobreix o es queda la diferència.',
+    house: 'Els percentatges són sobre l'entrada. La banca cobreix o es queda la diferència.',
     waitingPlayers: 'Falta que les dues persones hi entrin.',
     choosing: 'Les dues persones estan triant.',
     panelTitle: 'Tria en privat',
