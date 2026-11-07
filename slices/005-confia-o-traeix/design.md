@@ -18,7 +18,7 @@ A duel's event screen has one resting state for everyone: the rules, the payoffs
 |---|---|
 | `supabase/migrations/` | Games, phases, private choices, functions, updated invitations and removal |
 | `src/` | Event type choice, game event detail, reveal, admin game settings |
-| `tests/` | Hosted payout, secrecy, permission and concurrency tests, plus unit and browser tests |
+| `tests/` | `tests/sql/games.sql` for the rules and payouts, hosted secrecy, permission and concurrency tests, plus unit and browser tests |
 
 ## Data changes
 
@@ -40,6 +40,8 @@ A duel's event screen has one resting state for everyone: the rules, the payoffs
 - A payout of 0 creates no ledger row, and the event detail still shows it.
 - When the admin doesn't play, they appear as the organiser, with the crown, and not in the player list.
 - Payout percentages are whole numbers from 0 to 1000.
+- Only the admin can create a game, and the admin can't invite test accounts, so the rules are tested in a rolled-back SQL file, as forced participation is. Hosted duels use the `demo-` accounts, and only for what needs the real API: secrecy and concurrency.
+- `lock_in()` and every function that can meet a game lock the event before claiming the request. Claiming takes a shared lock on the caller's row, so a tap that claimed first would deadlock with the reveal paying that player.
 
 ## Tooling needed
 
