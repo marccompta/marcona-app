@@ -18,6 +18,6 @@ Work through these in order. Each task leaves the tests passing.
 
 Added by `/slice-verdict`, one task per review item, e.g. **R1.1** for round 1, item 1.
 
-- [ ] **R1.1:** Make the glow last 0.7 seconds, not 2. (REQ-210)
-- [ ] **R1.2:** Glow only the outer border of the card, not the whole card. (REQ-210)
-- [ ] **R1.3:** Make the choice buttons look like the result cards: side by side, with their rounded corners and colours. (REQ-198)
+- [x] **R1.1:** Make the glow last 0.7 seconds, not 2. (REQ-210)
+- [x] **R1.2:** Glow only the outer border of the card, not the whole card. (REQ-210)
+- [x] **R1.3:** Make the choice buttons look like the result cards: side by side, with their rounded corners and colours. (REQ-198)

@@ -905,33 +905,32 @@ select {
 }
 
 .choice-buttons {
-  display: flex;
+  display: grid;
   flex: 1;
-  flex-direction: column;
-  justify-content: center;
-  gap: 56px;
+  grid-template-columns: 1fr 1fr;
+  align-content: center;
+  gap: 14px;
   width: 100%;
   max-width: var(--column);
   margin: 0 auto;
 }
 
+/* The same cards as the reveal, whose tones are defined with it. */
 .choice-button {
-  min-height: 104px;
+  aspect-ratio: 5 / 7;
+  padding: 0;
   border: 1px solid var(--gold-line);
-  border-radius: 2px;
-  background: var(--felt-900);
-  color: var(--ivory);
-  font: italic 700 32px/1 var(--font-display);
+  border-radius: 6px;
+  font: italic 700 26px/1 var(--font-display);
   cursor: pointer;
-  transition: box-shadow 0.16s var(--ease), background-color 0.16s var(--ease), color 0.16s var(--ease);
+  transition: box-shadow 0.12s var(--ease), border-color 0.12s var(--ease);
   touch-action: manipulation;
 }
 
+/* REQ-210: only the edge lights up, so the card itself doesn't change. */
 .choice-button[data-glowing='true'] {
   border-color: var(--gold-light);
-  background: var(--gold);
-  color: var(--on-gold);
-  box-shadow: 0 0 0 3px var(--gold-light), 0 0 42px 14px #f0c24b99;
+  box-shadow: 0 0 0 2px var(--gold-light), 0 0 14px 4px var(--gold);
 }
 
 /* The reveal: two cards on the felt, turned one at a time. */
@@ -1018,12 +1017,14 @@ select {
   background: var(--felt-700);
 }
 
-.duel-card-front[data-tone='confia'] {
+.duel-card-front[data-tone='confia'],
+.choice-button[data-tone='confia'] {
   background: var(--ivory);
   color: var(--felt-900);
 }
 
-.duel-card-front[data-tone='traeix'] {
+.duel-card-front[data-tone='traeix'],
+.choice-button[data-tone='traeix'] {
   background: var(--pocket-red);
   color: var(--ivory);
 }

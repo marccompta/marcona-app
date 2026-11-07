@@ -12,7 +12,7 @@ import { Answer, Cancel, People } from './EventActions'
 import { StatusPill } from './Events'
 import { Payoffs } from './Payoffs'
 
-const glowMs = 2000
+const glowMs = 700
 const pollMs = 3000
 
 // REQ-202, REQ-210, REQ-204: sends taps in order, and lights a button only once the
@@ -75,7 +75,8 @@ function useGamePolling(event: MarconaEvent, onChange: () => void, holdingReveal
   }, [event.id, event.status, event.phase, holdingReveal])
 }
 
-// REQ-198: always the same two buttons, and nothing says what was picked before.
+// REQ-198: always the same two cards, in the look of the result cards, and nothing
+// says what was picked before.
 function ChoicePanel(props: {
   glow: DuelChoice | null
   failure: string | null
@@ -97,6 +98,7 @@ function ChoicePanel(props: {
             key={choice}
             type="button"
             className="choice-button"
+            data-tone={choice}
             data-glowing={props.glow === choice}
             onClick={() => props.onTap(choice)}
           >

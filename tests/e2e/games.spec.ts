@@ -282,16 +282,19 @@ test.describe('the event screen of a duel', () => {
     ])
   })
 
-  test('REQ-023, REQ-024: fits the phone, and the panel has big targets set well apart', async ({ page }) => {
+  test('REQ-023, REQ-024: fits the phone, and the panel has two big cards side by side', async ({ page }) => {
     await startDuel(page, anna)
     await panelOpener(page).click()
 
     const width = await page.evaluate(() => document.documentElement.scrollWidth)
     expect(width).toBeLessThanOrEqual(360)
     const [confia, traeix] = await Promise.all([choiceButton(page, 'Confia').boundingBox(), choiceButton(page, 'Traeix').boundingBox()])
-    expect(confia!.height).toBeGreaterThanOrEqual(44)
-    expect(traeix!.height).toBeGreaterThanOrEqual(44)
-    expect(traeix!.y - (confia!.y + confia!.height)).toBeGreaterThanOrEqual(40)
+    expect(confia!.width).toBeGreaterThanOrEqual(120)
+    expect(traeix!.width).toBeCloseTo(confia!.width)
+    expect(traeix!.y).toBeCloseTo(confia!.y)
+    expect(traeix!.x - (confia!.x + confia!.width)).toBeGreaterThanOrEqual(12)
+    await expect(choiceButton(page, 'Confia')).toBeInViewport({ ratio: 1 })
+    await expect(choiceButton(page, 'Traeix')).toBeInViewport({ ratio: 1 })
   })
 })
 
@@ -306,7 +309,7 @@ test.describe('the private panel', () => {
     await expect(choiceButton(page, 'Traeix')).toBeVisible()
   })
 
-  test('REQ-202, REQ-210: one tap saves at once, and that button glows for two seconds', async ({ page }) => {
+  test('REQ-202, REQ-210: one tap saves at once, and that card glows for 0.7 seconds', async ({ page }) => {
     const calls = await startDuel(page, anna)
     await panelOpener(page).click()
     const before = await panel(page).evaluate((element) => element.outerHTML)
@@ -330,10 +333,68 @@ test.describe('the private panel', () => {
     expect(calls.eventCalls.filter((call) => call.fn === 'lock_in')).toHaveLength(1)
 
     const lit = await glowMs
-    expect(lit).toBeGreaterThan(1800)
-    expect(lit).toBeLessThan(2500)
+    expect(lit).toBeGreaterThan(550)
+    expect(lit).toBeLessThan(1000)
     // REQ-210: no other feedback, so the panel is back exactly as it was.
     expect(await panel(page).evaluate((element) => element.outerHTML)).toBe(before)
+  })
+
+  test('REQ-210: only the outer border glows, and the card itself stays as it was', async ({ page }) => {
+    await startDuel(page, anna)
+    await panelOpener(page).click()
+    const look = (name: 'Confia' | 'Traeix') =>
+      choiceButton(page, name).evaluate((card) => {
+        const { backgroundColor, backgroundImage, color, boxShadow } = getComputedStyle(card)
+        return { fill: `${backgroundColor} ${backgroundImage}`, text: color, shadow: boxShadow }
+      })
+    const before = await look('Traeix')
+
+    await choiceButton(page, 'Traeix').click()
+    await expect(choiceButton(page, 'Traeix')).toHaveAttribute('data-glowing', 'true')
+    // Past the fade in, or a changed fill wouldn't show yet.
+    await page.waitForTimeout(300)
+    const lit = await look('Traeix')
+
+    expect(lit.fill).toBe(before.fill)
+    expect(lit.text).toBe(before.text)
+    expect(before.shadow).toBe('none')
+    expect(lit.shadow).not.toBe('none')
+    expect(lit.shadow).not.toContain('inset')
+  })
+
+  test('REQ-198: the cards look like the ones on the result screen', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    const calls = await startDuel(page, anna)
+    await panelOpener(page).click()
+    const look = (selector: string) =>
+      page.locator(selector).evaluate((card) => {
+        const style = getComputedStyle(card)
+        const { width, height } = card.getBoundingClientRect()
+        return {
+          fill: style.backgroundColor,
+          text: style.color,
+          corners: style.borderTopLeftRadius,
+          font: `${style.fontFamily} ${style.fontStyle} ${style.fontWeight}`,
+          shape: Math.round((width / height) * 100),
+        }
+      })
+    const confia = await look('[data-choice-panel] button[data-tone="confia"]')
+    const traeix = await look('[data-choice-panel] button[data-tone="traeix"]')
+
+    calls.lockInAs('d1', 'anna', 'confia')
+    calls.lockInAs('d1', 'bea', 'traeix')
+    await revealDone(page).waitFor({ timeout: 8000 })
+
+    const shown = async (tone: string) => {
+      const front = await look(`.duel-card-front[data-tone="${tone}"]`)
+      const words = await page.locator(`.duel-card-front[data-tone="${tone}"] strong`).evaluate((text) => {
+        const style = getComputedStyle(text)
+        return `${style.fontFamily} ${style.fontStyle} ${style.fontWeight}`
+      })
+      return { ...front, font: words }
+    }
+    expect(confia).toEqual(await shown('confia'))
+    expect(traeix).toEqual(await shown('traeix'))
   })
 
   test('REQ-210: the glow means saved, so it waits for the server', async ({ page }) => {
@@ -592,8 +653,9 @@ test.describe('waiting for the reveal', () => {
 
     await expect(choiceButton(page, 'Confia')).toHaveAttribute('data-glowing', 'true')
     await expect(reveal(page)).toHaveCount(0)
-    await page.waitForTimeout(1500)
+    await page.waitForTimeout(350)
     await expect(choiceButton(page, 'Confia')).toHaveAttribute('data-glowing', 'true')
+    await expect(reveal(page)).toHaveCount(0)
     await expect(reveal(page)).toBeVisible({ timeout: 3000 })
     await expect(panel(page)).toHaveCount(0)
   })
@@ -603,10 +665,16 @@ test.describe('waiting for the reveal', () => {
     await panelOpener(page).click()
     calls.lockInAs('d1', 'anna', 'traeix')
     calls.lockInAs('d1', 'bea', 'confia')
+    // Watches every change, because a retrying check would just wait a glow out.
+    await page.evaluate(() => {
+      new MutationObserver(() => {
+        if (document.querySelector('[data-glowing="true"]')) document.body.dataset.lit = 'yes'
+      }).observe(document.body, { subtree: true, attributes: true })
+    })
     await choiceButton(page, 'Confia').click()
 
-    // Sooner than a glow could end, because a retrying check would just wait one out.
-    await expect(reveal(page)).toBeVisible({ timeout: 1200 })
+    await expect(reveal(page)).toBeVisible()
+    expect(await page.evaluate(() => document.body.dataset.lit)).toBeUndefined()
     await expect(panel(page)).toHaveCount(0)
     expect(calls.choices.d1).toEqual({ anna: 'traeix', bea: 'confia' })
   })
