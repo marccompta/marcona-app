@@ -31,3 +31,20 @@ jobs:
       - name: Run demo tests
         working-directory: examples/task-tracker
         run: python -m unittest discover
+
+  # Tests that need .env.test.local skip themselves here, so nothing in this job
+  # touches the real project.
+  browsers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install browsers
+        run: npx playwright install --with-deps chromium webkit
+      - name: Run browser tests
+        run: npm run test:e2e

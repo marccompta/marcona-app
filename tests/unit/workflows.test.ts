@@ -22,4 +22,9 @@ describe('workflows', () => {
     expect(ci()).toContain('npm test')
     expect(ci()).toContain('npm run build')
   })
+
+  it('REQ-001: CI runs the browser tests in both engines, as Windows here can block WebKit', () => {
+    expect(ci()).toMatch(/playwright install --with-deps chromium webkit/)
+    expect(ci()).toContain('npm run test:e2e')
+  })
 })

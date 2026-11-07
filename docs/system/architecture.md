@@ -19,7 +19,7 @@ A static React site on GitHub Pages talks directly to one hosted Supabase projec
 | `supabase/migrations/` | Every schema change, applied to the hosted project through the Supabase MCP server |
 | `supabase/functions/admin-users/` | The Edge Function that creates, resets and removes users, and the only use of the secret key |
 | `.github/workflows/deploy.yml` | Tests, builds and deploys `main` and `slice/**` to Pages. The last push wins |
-| `.github/workflows/ci.yml` | Runs the docs check, unit tests and build |
+| `.github/workflows/ci.yml` | Runs the docs check, unit tests, build and browser tests |
 
 The site is React, TypeScript and Vite, under the base path `/marcona-app/`. Supabase is on the free plan, in an EU region, with public sign-ups and anonymous sign-ins off.
 
@@ -53,4 +53,4 @@ The commands are in `AGENTS.md`. The human's one-off steps are in `docs/setup.md
 - `tests/e2e/smoke.spec.ts` is the phone-sized smoke test of the main flows, on the real project. Each later slice extends it.
 - `tests/sql/constraints.sql` tries what only the database owner can try, and `tests/sql/events.sql` tests the payout maths and forced participation, playing the real admin. They run through the Supabase MCP server, and always roll back.
 - `tests/hosted/demo.ts`, run with `npm run demo`, plays the demo accounts during a review. It's for use before the wipe only: `fund` cancels every open event.
-- CI doesn't run browser or hosted tests.
+- CI runs the browser tests in both engines, on Linux. Tests that need `.env.test.local` skip themselves there, and CI runs no hosted tests. This is the only WebKit cover when Windows Smart App Control blocks it on the human's machine.
