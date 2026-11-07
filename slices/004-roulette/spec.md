@@ -1,7 +1,7 @@
 ---
 slice: "004"
 title: Roulette
-status: approved
+status: building
 requirements: [REQ-101, REQ-102, REQ-103, REQ-104, REQ-105, REQ-106, REQ-107, REQ-108, REQ-109, REQ-110, REQ-111, REQ-112, REQ-113, REQ-114, REQ-115, REQ-116, REQ-117, REQ-118, REQ-119]
 ---
 
