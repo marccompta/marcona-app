@@ -4,6 +4,7 @@
 //   npm run demo -- fund 100                Cancels every open event, then sets the admin and
 //                                           each demo player to exactly 100, for a clean start
 //   npm run demo -- status                  Lists demo players, balances and pending invitations
+//   npm run demo -- give <player> <amount>  The admin adds marcones to anyone, as another phone would
 //   npm run demo -- accept [event] [player] Accepts pending invitations, optionally only these
 //   npm run demo -- decline [event] [player]
 //   npm run demo -- invite <event> <buy-in> The first demo player invites the admin to a new event
@@ -48,6 +49,17 @@ async function fund(admin: Client, target: number) {
     }
     console.log(`${person.username}: ${target}`)
   }
+}
+
+async function give(admin: Client, username: string | undefined, amount: number) {
+  if (!username || !Number.isInteger(amount) || amount < 1) throw new Error('Say who and how many, such as: give demo-nuria 25')
+  const person = (await fetchPeople(admin)).find((candidate) => candidate.username === username && !candidate.removed_at)
+  if (!person) throw new Error(`Nobody active is called ${username}`)
+  await adjustBalance(
+    { requestId: randomUUID(), userId: person.user_id, action: 'add', amount, concept: 'Revisió en directe' },
+    admin,
+  )
+  console.log(`${username}: ${person.balance + amount}`)
 }
 
 async function invite(admin: Client, name: string | undefined, buyIn: number) {
@@ -122,11 +134,12 @@ async function main() {
 
   if (command === 'fund') return fund(admin, Number(first))
   if (command === 'status') return status(admin)
+  if (command === 'give') return give(admin, first, Number(second))
   if (command === 'accept') return answer(admin, true, first, second)
   if (command === 'decline') return answer(admin, false, first, second)
   if (command === 'invite') return invite(admin, first, Number(second))
   if (command === 'pick') return pick(admin, first, second, process.argv[5])
-  throw new Error('Use one of: fund, status, accept, decline, invite, pick')
+  throw new Error('Use one of: fund, status, give, accept, decline, invite, pick')
 }
 
 main()
