@@ -163,6 +163,9 @@ export const text = {
     invitationNotPending: 'Aquesta invitació ja no està pendent.',
     notEnoughParticipants: "Calen almenys 2 persones a l'esdeveniment.",
     invalidWinners: 'Tria una persona diferent per a cada lloc amb premi.',
+    invalidBet: "L'aposta ha de ser un nombre enter d'1 o més.",
+    invalidChoice: 'Tria vermell o negre.',
+    betTooHigh: "L'aposta supera el màxim que pots apostar ara.",
     unknown: 'Alguna cosa ha fallat. Torna-ho a provar.',
   },
 } as const

@@ -31,4 +31,5 @@ export const publicFunctions = (userId: string): Record<string, Record<string, u
   revoke_sessions: { p_user_id: userId },
   rls_auto_enable: {},
   rls_report: {},
+  spin: { p_request_id: crypto.randomUUID(), p_choice: 'red', p_bet: 1 },
 })

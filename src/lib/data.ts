@@ -11,6 +11,8 @@ export type Movement = {
   balance_after: number
   kind: string
   concept: string | null
+  /** A spin holds its `choice` and `result`. */
+  details: Record<string, unknown>
   created_at: string
   who: { username: string }
   event: { id: string; name: string } | null
@@ -50,7 +52,7 @@ export async function fetchMovements(userId?: string, client = supabase) {
     let query = client
       .from('ledger')
       .select(
-        `id, user_id, delta, balance_after, kind, concept, created_at, who:profiles!ledger_user_id_fkey(username),
+        `id, user_id, delta, balance_after, kind, concept, details, created_at, who:profiles!ledger_user_id_fkey(username),
         actor:profiles!ledger_actor_id_fkey(username), event:events(id, name)`,
       )
     if (userId) query = query.eq('user_id', userId)
