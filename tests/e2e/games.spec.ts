@@ -530,6 +530,8 @@ test.describe('giving nothing away', () => {
     const otherPage = await other.newPage()
     await otherPage.goto('')
     await startDuel(otherPage, anna)
+    // The screen exists while it's still loading, so wait as for the first phone.
+    await panelOpener(otherPage).waitFor()
     expect(await resting(otherPage)).toBe(locked)
     await panelOpener(otherPage).click()
     expect(await panel(otherPage).evaluate((element) => element.outerHTML)).toBe(lockedPanel)

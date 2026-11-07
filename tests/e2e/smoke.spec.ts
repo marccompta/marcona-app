@@ -163,7 +163,8 @@ test('REQ-100, REQ-150, REQ-151: the ranking and audit update by themselves', as
   await expect(row.locator('.rank-amount')).toHaveText('7', { timeout: 15000 })
 
   await page.getByRole('link', { name: 'Auditoria' }).click()
-  await expect(page.locator('[data-movement]').first()).toBeVisible()
+  // A test account's audit holds every test movement so far, read 1,000 at a time.
+  await expect(page.locator('[data-movement]').first()).toBeVisible({ timeout: 20000 })
   await give(other, 5)
   await expect(page.locator('[data-movement]').filter({ hasText: other.username })).toHaveCount(2, { timeout: 15000 })
   expect(await page.evaluate(() => (window as unknown as { stayed?: boolean }).stayed)).toBe(true)
