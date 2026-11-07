@@ -605,10 +605,10 @@ test.describe('waiting for the reveal', () => {
     calls.lockInAs('d1', 'bea', 'confia')
     await choiceButton(page, 'Confia').click()
 
-    await expect(reveal(page)).toBeVisible()
+    // Sooner than a glow could end, because a retrying check would just wait one out.
+    await expect(reveal(page)).toBeVisible({ timeout: 1200 })
     await expect(panel(page)).toHaveCount(0)
     expect(calls.choices.d1).toEqual({ anna: 'traeix', bea: 'confia' })
-    await expect(revealDone(page).or(reveal(page))).toBeVisible()
   })
 })
 
@@ -681,7 +681,9 @@ test.describe('the reveal', () => {
     await page.emulateMedia({ reducedMotion: 'reduce' })
     await startDuel(page, anna, betrayal)
 
-    await expect(reveal(page)).toHaveAttribute('data-stage', 'done')
+    // Read at once: a retrying check would just wait for the animation to end.
+    await reveal(page).waitFor()
+    expect(await reveal(page).getAttribute('data-stage')).toBe('done')
     await expect(page.locator('[data-reveal-player]')).toHaveCount(2)
     expect(await page.locator('[data-confetti]').count()).toBe(0)
   })
@@ -691,7 +693,8 @@ test.describe('the reveal', () => {
     await expect(revealDone(page)).toBeVisible({ timeout: 8000 })
 
     await page.reload()
-    await expect(reveal(page)).toHaveAttribute('data-stage', 'done')
+    await reveal(page).waitFor()
+    expect(await reveal(page).getAttribute('data-stage')).toBe('done')
     expect(await page.locator('[data-confetti]').count()).toBe(0)
   })
 
