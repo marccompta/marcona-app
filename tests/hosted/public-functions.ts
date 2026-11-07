@@ -43,6 +43,12 @@ export const publicFunctions = (userId: string): Record<string, Record<string, u
   rls_auto_enable: {},
   rls_report: {},
   roulette_state: {},
+  set_game_settings: {
+    p_game: 'confia_o_traeix',
+    p_enabled: true,
+    p_description: 'Prova',
+    p_settings: { both_trust: 150, betrayer: 250, betrayed: 0, both_betray: 50 },
+  },
   set_roulette_settings: { p_enabled: true, p_white_one_in: 37, p_max_bet_percent: 5 },
   spin: { p_request_id: crypto.randomUUID(), p_choice: 'red', p_bet: 1 },
 })

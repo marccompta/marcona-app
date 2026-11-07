@@ -504,3 +504,241 @@ test.describe('giving nothing away', () => {
     expect(await resting(page)).not.toContain('data-choice=')
   })
 })
+
+const reveal = (page: Page) => page.locator('[data-reveal]')
+const revealDone = (page: Page) => page.locator('[data-reveal][data-stage="done"]')
+const finished = (players: [string, string, number, number][]): Partial<FakeEvent> => ({
+  status: 'completed',
+  phase: 'revealed',
+  reveal: {
+    players: players.map(([user_id, choice, percentage, payout]) => ({ user_id, choice, percentage, payout })),
+  },
+})
+const betrayal = finished([
+  ['anna', 'traeix', 250, 27],
+  ['bea', 'confia', 0, 0],
+])
+
+test.describe('waiting for the reveal', () => {
+  test('REQ-134: the screen checks every few seconds, whether or not I have locked in', async ({ page }) => {
+    const calls = await startDuel(page, anna)
+    const polls = calls.statePolls
+
+    await expect.poll(() => calls.statePolls, { timeout: 8000 }).toBeGreaterThanOrEqual(polls + 2)
+  })
+
+  test('REQ-134: when the other player locks in, I see the reveal without reloading', async ({ page }) => {
+    const calls = await startDuel(page, anna)
+    await panelOpener(page).click()
+    await choiceButton(page, 'Confia').click()
+    await expect(glowing(page)).toHaveCount(1)
+    await closePanel(page)
+
+    calls.lockInAs('d1', 'bea', 'traeix')
+
+    await expect(reveal(page)).toBeVisible({ timeout: 8000 })
+    await expect(page.locator('[data-screen="esdeveniment"] .pill')).toHaveText('Completat')
+  })
+
+  test('REQ-134: an open panel gives way to the reveal', async ({ page }) => {
+    const calls = await startDuel(page, anna)
+    await panelOpener(page).click()
+    await choiceButton(page, 'Confia').click()
+    await expect(glowing(page)).toHaveCount(0, { timeout: 4000 })
+
+    calls.lockInAs('d1', 'bea', 'confia')
+
+    await expect(reveal(page)).toBeVisible({ timeout: 8000 })
+    await expect(panel(page)).toHaveCount(0)
+  })
+
+  test('REQ-134: someone watching sees the reveal too', async ({ page }) => {
+    const calls = await startDuel(page, richAdmin)
+    calls.lockInAs('d1', 'anna', 'confia')
+    calls.lockInAs('d1', 'bea', 'confia')
+
+    await expect(reveal(page)).toBeVisible({ timeout: 8000 })
+  })
+
+  test('REQ-134: the panel appears when the second player pays, and a cancel shows too', async ({ page }) => {
+    const calls = await startDuel(page, anna, { phase: 'inviting', people: { anna: 'accepted', bea: 'invited' } })
+    calls.events[0].phase = 'choosing'
+    calls.events[0].people.bea = 'accepted'
+    await expect(panelOpener(page)).toBeVisible({ timeout: 8000 })
+
+    calls.events[0].status = 'cancelled'
+    await expect(page.locator('[data-screen="esdeveniment"] .pill')).toHaveText('Cancel·lat', { timeout: 8000 })
+  })
+
+  test('REQ-134: a failed read waits for the next one', async ({ page }) => {
+    const calls = await startDuel(page, anna)
+    let failures = 0
+    await page.route('**/rest/v1/rpc/game_state', (route) => {
+      failures += 1
+      return failures === 1 ? route.abort('connectionreset') : route.fallback()
+    })
+    calls.lockInAs('d1', 'anna', 'confia')
+    calls.lockInAs('d1', 'bea', 'confia')
+
+    await expect(reveal(page)).toBeVisible({ timeout: 10000 })
+    expect(failures).toBeGreaterThanOrEqual(2)
+  })
+
+  test('REQ-133: the tap that completes the pair glows first, and then the reveal starts', async ({ page }) => {
+    const calls = await startDuel(page, anna)
+    calls.lockInAs('d1', 'bea', 'traeix')
+    await panelOpener(page).click()
+    await choiceButton(page, 'Confia').click()
+
+    await expect(choiceButton(page, 'Confia')).toHaveAttribute('data-glowing', 'true')
+    await expect(reveal(page)).toHaveCount(0)
+    await page.waitForTimeout(1500)
+    await expect(choiceButton(page, 'Confia')).toHaveAttribute('data-glowing', 'true')
+    await expect(reveal(page)).toBeVisible({ timeout: 3000 })
+    await expect(panel(page)).toHaveCount(0)
+  })
+
+  test('REQ-204: a tap after both have picked changes nothing, and shows the reveal with no glow', async ({ page }) => {
+    const calls = await startDuel(page, anna)
+    await panelOpener(page).click()
+    calls.lockInAs('d1', 'anna', 'traeix')
+    calls.lockInAs('d1', 'bea', 'confia')
+    await choiceButton(page, 'Confia').click()
+
+    await expect(reveal(page)).toBeVisible()
+    await expect(panel(page)).toHaveCount(0)
+    expect(calls.choices.d1).toEqual({ anna: 'traeix', bea: 'confia' })
+    await expect(revealDone(page).or(reveal(page))).toBeVisible()
+  })
+})
+
+test.describe('the reveal', () => {
+  test('REQ-132: shows every choice and payout, including a payout of 0', async ({ page }) => {
+    await startDuel(page, anna, betrayal)
+
+    await expect(revealDone(page)).toBeVisible({ timeout: 8000 })
+    await expect(page.locator('[data-reveal-player]')).toHaveText([/anna.*Traeix.*27 marcones/, /bea.*Confia.*0 marcones/])
+    await expect(page.locator('[data-verdict]')).toHaveText('Traïció!')
+    await expect(page.locator('[data-verdict-detail]')).toHaveText('anna ha traït bea.')
+    await expect(page.locator('[data-game-rules]')).toBeVisible()
+    await expect(page.getByRole('button', { name: "Cancel·la l'esdeveniment" })).toHaveCount(0)
+  })
+
+  test('REQ-132: says what kind of ending it was', async ({ page }) => {
+    await startDuel(page, anna, finished([['anna', 'confia', 150, 16], ['bea', 'confia', 150, 16]]))
+    await expect(revealDone(page)).toBeVisible({ timeout: 8000 })
+    await expect(page.locator('[data-verdict]')).toHaveText('Confiança mútua')
+    await expect(page.locator('[data-verdict-detail]')).toHaveCount(0)
+  })
+
+  test('REQ-132: two betrayals have their own ending', async ({ page }) => {
+    await startDuel(page, anna, finished([['anna', 'traeix', 50, 5], ['bea', 'traeix', 50, 5]]))
+    await expect(revealDone(page)).toBeVisible({ timeout: 8000 })
+    await expect(page.locator('[data-verdict]')).toHaveText('Doble traïció')
+  })
+
+  test('REQ-133: the cards turn one at a time, and the result waits for the end', async ({ page }) => {
+    await startDuel(page, bea, betrayal)
+
+    await expect(reveal(page)).toHaveAttribute('data-stage', 'waiting')
+    await expect(page.locator('[data-reveal-player]')).toHaveCount(0)
+    await expect(page.locator('[data-verdict]')).toHaveCount(0)
+    await expect(page.locator('[data-reveal] [data-choice]')).toHaveCount(0)
+
+    await expect(reveal(page)).toHaveAttribute('data-stage', 'first', { timeout: 3000 })
+    await expect(page.locator('[data-reveal] [data-choice]')).toHaveCount(1)
+
+    await expect(reveal(page)).toHaveAttribute('data-stage', 'second', { timeout: 3000 })
+    await expect(page.locator('[data-reveal] [data-choice]')).toHaveCount(2)
+    await expect(page.locator('[data-reveal-player]')).toHaveCount(0)
+
+    await expect(revealDone(page)).toBeVisible({ timeout: 3000 })
+  })
+
+  test('REQ-133: my own card turns first', async ({ page }) => {
+    await startDuel(page, bea, betrayal)
+
+    await expect(reveal(page)).toHaveAttribute('data-stage', 'first', { timeout: 3000 })
+    await expect(page.locator('[data-reveal] [data-choice]')).toHaveAttribute('data-choice', 'confia')
+    await expect(page.locator('[data-card]').first()).toContainText('bea')
+  })
+
+  test('REQ-133: a winner gets the celebration, and a loser does not', async ({ page, browser }, info) => {
+    await startDuel(page, anna, betrayal)
+    await expect(page.locator('[data-confetti]')).toBeAttached({ timeout: 8000 })
+
+    const { viewport, isMobile, hasTouch, locale, timezoneId, baseURL } = info.project.use
+    const other = await browser.newContext({ viewport, isMobile, hasTouch, locale, timezoneId, baseURL })
+    const loser = await other.newPage()
+    await loser.goto('')
+    await startDuel(loser, bea, betrayal)
+    await expect(revealDone(loser)).toBeVisible({ timeout: 8000 })
+    expect(await loser.locator('[data-confetti]').count()).toBe(0)
+    await other.close()
+  })
+
+  test('REQ-133: with reduced motion, the result shows at once, still', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await startDuel(page, anna, betrayal)
+
+    await expect(reveal(page)).toHaveAttribute('data-stage', 'done')
+    await expect(page.locator('[data-reveal-player]')).toHaveCount(2)
+    expect(await page.locator('[data-confetti]').count()).toBe(0)
+  })
+
+  test('REQ-133: it plays once on this phone, and later visits go straight to the result', async ({ page }) => {
+    await startDuel(page, anna, betrayal)
+    await expect(revealDone(page)).toBeVisible({ timeout: 8000 })
+
+    await page.reload()
+    await expect(reveal(page)).toHaveAttribute('data-stage', 'done')
+    expect(await page.locator('[data-confetti]').count()).toBe(0)
+  })
+
+  test('REQ-133: it still plays when browser storage is blocked', async ({ page }) => {
+    await page.addInitScript(() => {
+      const { getItem, setItem } = Storage.prototype
+      Storage.prototype.getItem = function (key) {
+        if (key.startsWith('marcona-reveal')) throw new Error('blocked')
+        return getItem.call(this, key)
+      }
+      Storage.prototype.setItem = function (key, value) {
+        if (key.startsWith('marcona-reveal')) throw new Error('blocked')
+        setItem.call(this, key, value)
+      }
+    })
+    await startDuel(page, anna, betrayal)
+    await expect(revealDone(page)).toBeVisible({ timeout: 8000 })
+  })
+
+  test('REQ-023: the finished duel fits the phone', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await startDuel(page, anna, betrayal)
+    await expect(revealDone(page)).toBeVisible()
+
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360)
+  })
+
+  test('REQ-145: the payouts are ordinary movements in the audit', async ({ page }) => {
+    const calls = await startDuel(page, anna)
+    await panelOpener(page).click()
+    calls.lockInAs('d1', 'bea', 'confia')
+    await choiceButton(page, 'Traeix').click()
+    await expect(reveal(page)).toBeVisible({ timeout: 8000 })
+
+    await page.getByRole('link', { name: 'Auditoria' }).click()
+    const movement = page.locator('[data-movement]').filter({ hasText: 'anna' }).first()
+    await expect(movement).toContainText('Premi')
+    await expect(movement).toContainText('+27')
+    await expect(movement).toContainText('El duel')
+  })
+})
+
+test.describe('the events list', () => {
+  test('REQ-097: a game shows its name, not a pot', async ({ page }) => {
+    await start(page, anna, [duel()])
+
+    await expect(page.locator('[data-event]').filter({ hasText: 'El duel' })).toContainText('Entrada 11 · Confia o traeix')
+    await expect(page.locator('[data-event]').filter({ hasText: 'El duel' })).not.toContainText('Pot')
+  })
+})

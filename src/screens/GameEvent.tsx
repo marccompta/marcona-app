@@ -7,6 +7,7 @@ import { text } from '../i18n/text'
 import type { MarconaEvent } from '../lib/events'
 import { createTapQueue, duelChoices, fetchGameState, gameName, lockIn, type DuelChoice } from '../lib/games'
 import { Crown } from '../shell/icons'
+import { DuelReveal } from './DuelReveal'
 import { Answer, Cancel, People } from './EventActions'
 import { StatusPill } from './Events'
 import { Payoffs } from './Payoffs'
@@ -133,6 +134,7 @@ export function GameEvent({ event, profile, onChange }: { event: MarconaEvent; p
       <div className="event-status-line">
         <StatusPill status={event.status} />
       </div>
+      {event.reveal && <DuelReveal event={event} me={profile.username} />}
       <dl className="facts">
         <div>
           <dt>{text.games.game}</dt>

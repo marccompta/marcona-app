@@ -48,6 +48,11 @@ export function duelOutcomes(buyIn: number, settings: DuelSettings) {
   }
 }
 
+export function duelVerdict(players: RevealedPlayer[]) {
+  const betrayals = players.filter((player) => player.choice === 'traeix').length
+  return betrayals === 0 ? 'bothTrust' : betrayals === 1 ? 'betrayal' : 'bothBetray'
+}
+
 export const gameName = (id: string) => text.games.names[id as keyof typeof text.games.names] ?? id
 
 export async function fetchGames(client = supabase) {
