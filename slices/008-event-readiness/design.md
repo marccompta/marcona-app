@@ -43,6 +43,15 @@ None. The rehearsal uses real phones.
 | The rehearsal finds bugs late | Rehearse straight after this slice is built, and fix before the wipe |
 | Export is awkward on an iPhone | It's tested on a real iPhone in the rehearsal |
 
+## Notes from slice 005
+
+The full list is under Gotchas in [its record](../005-confia-o-traeix/record.md).
+
+- **Delete `private.choices` before events and profiles,** because it references both.
+- **Leave `public.games` alone,** like `app_settings`. If it's reset, the defaults are: on, 150 / 250 / 0 / 50, with the seeded description.
+- **Any wipe ends the game tests that use the demo players:** `tests/hosted/games.test.ts` and the smoke duel in `tests/e2e/smoke.spec.ts` play `demo-nuria` and `demo-pau`, because the admin can't invite test accounts. That includes a rehearsal wipe. This slice must say what happens to those tests.
+- **`logInAsDemo()` sets a new password,** which ends that player's session, so these tests can't run while someone is using a demo account.
+
 ## How this will be reviewed
 
 On the phone: export, then try the wipe's confirmation. Then follow the rehearsal checklist on real phones, ideally with a friend, which takes longer than a normal review. The final wipe comes after the verdict, because it's the human's call.
