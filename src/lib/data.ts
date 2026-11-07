@@ -13,6 +13,9 @@ export type Movement = {
   concept: string | null
   created_at: string
   who: { username: string }
+  event: { id: string; name: string } | null
+  /** Null when this viewer can't see them, as a test account can't see the admin. */
+  actor: { username: string } | null
 }
 
 export type Adjustment = {
@@ -39,16 +42,22 @@ export const rankPeople = (people: Person[]) =>
     .sort((a, b) => b.balance - a.balance || a.username.localeCompare(b.username, 'ca'))
 
 // REQ-067: newest first. Supabase caps a response at 1,000 rows, so this reads
-// page by page to show every movement.
+// page by page to show every movement. Each page starts after the last ID seen,
+// because a movement landing mid-read would shift a page counted by position.
 export async function fetchMovements(userId?: string, client = supabase) {
   const movements: Movement[] = []
-  for (let from = 0; ; from += pageSize) {
+  for (;;) {
     let query = client
       .from('ledger')
-      .select('id, user_id, delta, balance_after, kind, concept, created_at, who:profiles!ledger_user_id_fkey(username)')
+      .select(
+        `id, user_id, delta, balance_after, kind, concept, created_at, who:profiles!ledger_user_id_fkey(username),
+        actor:profiles!ledger_actor_id_fkey(username), event:events(id, name)`,
+      )
     if (userId) query = query.eq('user_id', userId)
+    const last = movements.at(-1)
+    if (last) query = query.lt('id', last.id)
 
-    const { data, error } = await query.order('id', { ascending: false }).range(from, from + pageSize - 1)
+    const { data, error } = await query.order('id', { ascending: false }).limit(pageSize)
     if (error) throw error
     movements.push(...(data as unknown as Movement[]))
     if (data.length < pageSize) return movements

@@ -16,6 +16,7 @@ What the system does **now**. Each slice updates this file when it closes. Requi
 - A username is 3 to 20 characters of `a-z`, `0-9`, `_` and `-`, and it's never reused, even after a removal.
 - Only the admin can change a password, and a reset ends that person's sessions.
 - Removing a user needs a second confirmation, and the admin can't remove themselves. A removed user can't log in, leaves the ranking, and keeps their history in the audit.
+- Removal declines the person's pending invitations, and it's blocked while they've accepted an open event, whether or not it was forced.
 - A phone notices a reset or a removal when it reloads or comes back to the tab, and returns to the login.
 
 ## Marcones
@@ -25,12 +26,27 @@ What the system does **now**. Each slice updates this file when it closes. Requi
 - Every change is a movement in an append-only ledger, which stores the balance after it.
 - Sending the same action twice, or two at the same moment, can't apply it twice or overdraw a balance.
 
+## Events
+
+- Anyone can create a classic event with a name of up to 40 characters, a whole buy-in of at least 1, and at least one invitee from the other active users. Payout percentages for 1st, 2nd and 3rd start at 50, 30 and 20, must sum to 100, and a place may be 0%.
+- The creator is always a participant, and pays when the event is created.
+- An invited person can accept, which charges the buy-in at once, or decline. They can be invited with too low a balance, but can't accept until they have enough.
+- A participant who has paid can't withdraw.
+- An event is open, completed or cancelled, and only an open one can change.
+- The creator or the admin can cancel an open event, with a second confirmation, which refunds everyone in it.
+- Only the creator can complete an event, once at least 2 people are in. The pot is the buy-in times the people in it.
+- With 2 people, the creator picks a winner, who takes the pot. With 3 or more, they pick a different person for each paid place. Each share rounds down, and the remainder goes to the first paid place, so the total equals the pot.
+- Pending invitations lapse when an event completes or is cancelled.
+- The admin can force participation on a new event: every invitee joins and pays at once, or the event is rejected and those who can't pay are named. Nobody else can.
+- Every buy-in, refund and payout is a movement linked to its event. A forced buy-in shows who made it.
+
 ## Screens
 
 - **Classificació:** active users by balance, then alphabetically, with medals on the top three and a "tu" pill. A styled empty state shows until a second active user exists. Tapping someone opens their balance and every movement on it.
-- **Auditoria:** every movement, newest first, with who, the amount, the concept, the balance after and the time. A filter shows one person, including removed people.
+- **Auditoria:** every movement, newest first, with who, the amount, the concept or event, the balance after and the time. A movement on an event opens it. A filter shows one person, including removed people.
 - **Administració:** create users, adjust marcones, reset passwords and remove users. Only the admin has this tab.
-- **Esdeveniments, Ruleta:** placeholders.
+- **Esdeveniments:** my invitations, open events and past events, with each one's buy-in, pot and status pill. **Nou esdeveniment** opens the form. An event shows its buy-in, pot, payout rule, results and participants, with a crown on the creator, and the actions open to this person.
+- **Ruleta:** a placeholder.
 - Balances show as chip stacks, with numbers that count up. With reduced motion they appear at once.
 
 ## Security

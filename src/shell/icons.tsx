@@ -52,6 +52,15 @@ export function Spade() {
   )
 }
 
+// REQ-098: marks who created an event.
+export function Crown({ label }: { label: string }) {
+  return (
+    <svg className="crown" viewBox="0 0 24 24" role="img" aria-label={label}>
+      <path d="M3.5 18.5 2 7.5l5.6 4.2L12 4.5l4.4 7.2L22 7.5l-1.5 11h-17Z" />
+    </svg>
+  )
+}
+
 export function Flourish() {
   return (
     <svg className="flourish" width="92" height="12" viewBox="0 0 92 12" fill="none" strokeWidth=".9" aria-hidden="true">

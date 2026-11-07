@@ -7,6 +7,7 @@ do $$
 declare
   anna uuid := gen_random_uuid();
   movement_id bigint;
+  event_id uuid;
   results jsonb := '{}';
 begin
   insert into auth.users (id, email) values (anna, 'constraint-check@marcona.invalid');
@@ -66,6 +67,60 @@ begin
     results := results || '{"REQ-059 truncate as owner": "ACCEPTED"}';
   exception when raise_exception then
     results := results || '{"REQ-059 truncate as owner": "rejected"}';
+  end;
+
+  -- REQ-074: percentages that don't sum to 100, stored directly.
+  begin
+    insert into public.events (name, buy_in, creator_id, payout_first, payout_second, payout_third)
+    values ('Prova', 1, anna, 50, 30, 10);
+    results := results || '{"REQ-074 percentages not 100": "ACCEPTED"}';
+  exception when check_violation then
+    results := results || '{"REQ-074 percentages not 100": "rejected"}';
+  end;
+
+  -- REQ-075: a buy-in of 0, stored directly.
+  begin
+    insert into public.events (name, buy_in, creator_id, payout_first, payout_second, payout_third)
+    values ('Prova', 0, anna, 50, 30, 20);
+    results := results || '{"REQ-075 buy-in of 0": "ACCEPTED"}';
+  exception when check_violation then
+    results := results || '{"REQ-075 buy-in of 0": "rejected"}';
+  end;
+
+  -- REQ-083: a fourth state, and changing a finished event as the owner.
+  insert into public.events (name, buy_in, creator_id, payout_first, payout_second, payout_third)
+  values ('Prova', 1, anna, 50, 30, 20)
+  returning id into event_id;
+
+  begin
+    update public.events set status = 'paused' where id = event_id;
+    results := results || '{"REQ-083 unknown state": "ACCEPTED"}';
+  exception when check_violation then
+    results := results || '{"REQ-083 unknown state": "rejected"}';
+  end;
+
+  update public.events set status = 'completed' where id = event_id;
+
+  begin
+    update public.events set status = 'open' where id = event_id;
+    results := results || '{"REQ-083 reopen as owner": "ACCEPTED"}';
+  exception when raise_exception then
+    results := results || '{"REQ-083 reopen as owner": "rejected"}';
+  end;
+
+  begin
+    update public.events set name = 'Una altra' where id = event_id;
+    results := results || '{"REQ-083 rename as owner": "ACCEPTED"}';
+  exception when raise_exception then
+    results := results || '{"REQ-083 rename as owner": "rejected"}';
+  end;
+
+  -- REQ-099: a movement pointing at an event that doesn't exist.
+  begin
+    perform private.apply_movement(anna, 1, 'event_payout', null, gen_random_uuid());
+    results := results || '{"REQ-099 movement with unknown event": "ACCEPTED"}';
+  exception when foreign_key_violation then
+    results := results || '{"REQ-099 movement with unknown event": "rejected"}';
   end;
 
   raise exception 'RESULTS %', results;

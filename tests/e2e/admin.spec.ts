@@ -198,6 +198,16 @@ test.describe('removing a user', () => {
     expect(calls.functions).toEqual([{ action: 'remove', userId: 'anna' }])
   })
 
+  test('REQ-096: a user in an open event gets a Catalan error, and stays', async ({ page }) => {
+    await startOnAdmin(page, [{ ...admin }, { ...player, inOpenEvent: true }])
+    await open(page, 'anna')
+    await page.getByRole('button', { name: "Elimina l'usuari" }).click()
+    await page.getByRole('button', { name: 'Sí, elimina' }).click()
+
+    await expect(page.getByRole('alert')).toHaveText('Aquesta persona és dins un esdeveniment obert. Cal completar-lo o cancel·lar-lo abans.')
+    await expect(page.getByRole('button', { name: /^anna/ })).toBeVisible()
+  })
+
   test('REQ-052: removing myself gets a Catalan error', async ({ page }) => {
     await startOnAdmin(page)
     await open(page, 'marc')

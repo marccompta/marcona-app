@@ -13,3 +13,16 @@ All notable user-facing changes are documented here. The format follows [Keep a 
 - A screen for each person, with their balance and every movement on it.
 - The audit: every movement, newest first, with a filter by person.
 - The admin screen, to create and remove users, reset passwords, and add or remove marcones.
+- Classic events: create one, invite friends, collect buy-ins, then pay out the winners or cancel with full refunds.
+- The Esdeveniments screen, with invitations, open events and past events, and a screen for each event.
+- Forced participation for the admin, where every invitee joins and pays at once.
+- Buy-ins, refunds and payouts in the audit, each opening its event.
+
+### Changed
+
+- A user can't be removed while they've accepted an open event, and removal declines their pending invitations.
+
+### Fixed
+
+- The audit could show a movement twice on a busy night.
+- The audit's filter was hard to read on Safari.

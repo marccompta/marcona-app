@@ -11,9 +11,9 @@ A static React site on GitHub Pages talks directly to one hosted Supabase projec
 | `src/App.tsx` | Hash routes, and the choice between splash, login and the shell |
 | `src/auth/` | Session, profile, and the username-to-email mapping |
 | `src/i18n/` | The one text module, `Intl` helpers, plurals and error mapping |
-| `src/shell/` | The framed layout, tab bar, logo, icons, chip stacks and count-up numbers |
-| `src/screens/` | Login, the ranking, a person's detail, the audit, the admin screen, and placeholders for unbuilt screens |
-| `src/lib/` | The Supabase client, the data reads, and calls to `admin_adjust` and `admin-users` |
+| `src/shell/` | The framed layout, tab bar, logo, icons, chip stacks, count-up numbers and form helpers |
+| `src/screens/` | Login, the ranking, a person's detail, the audit, the admin screen, the events list, the new event form, the event screen, and a placeholder for Ruleta |
+| `src/lib/` | The Supabase client, the data reads, and calls to `admin_adjust`, the event functions and `admin-users` |
 | `src/theme/`, `public/fonts/` | Design tokens, styles and self-hosted fonts |
 | `src/config.ts` | The Supabase URL and publishable key, which are safe to publish |
 | `supabase/migrations/` | Every schema change, applied to the hosted project through the Supabase MCP server |
@@ -35,11 +35,13 @@ The site is React, TypeScript and Vite, under the base path `/marcona-app/`. Sup
 
 **Moving marcones:** the browser calls `admin_adjust()` with a client request ID. It checks the caller and the input, claims the ID, and calls `private.apply_movement()`, which locks the user's row and writes the ledger. It's all one transaction. See [ADR 0004](../adr/0004-money-in-postgres-functions.md).
 
+**Running an event:** the browser calls `create_event()`, `answer_invitation()`, `cancel_event()` or `complete_event()`, each with a client request ID. Each one claims the ID, locks the event row and moves money through `private.apply_movement()`, in one transaction. Locks always go in the same order: the event, then users by ID, then participant rows. Payout maths lives in `private.split_pot()`.
+
 **Managing users:** the browser calls `admin-users`, which checks the token with Auth and that the profile is the active admin. See [ADR 0003](../adr/0003-supabase-auth-with-hidden-emails.md).
 
-**Removing a user:** `admin-users` sets `removed_at` first, so every policy and function rejects them at once. It then bans the Auth user and deletes their sessions. Every step is safe to repeat.
+**Removing a user:** `admin-users` calls `remove_profile()` first. It locks the user's row, refuses if they've accepted an open event, declines their pending invitations and sets `removed_at`, so every policy and function rejects them at once. The Edge Function then bans the Auth user and deletes their sessions. Every step is safe to repeat.
 
-**Errors:** functions return codes, and `errorMessage()` turns any error into Catalan, never showing the original text.
+**Errors:** functions return codes, and `errorMessage()` turns any error into Catalan, never showing the original text. One refusal carries data: `forced_insufficient_balance` has the usernames in its detail.
 
 ## How to run and test
 
@@ -48,5 +50,7 @@ The commands are in `AGENTS.md`. The human's one-off steps are in `docs/setup.md
 - Unit tests run everywhere, including the secret scan.
 - Browser tests run at 360px in Chromium and WebKit, against a fake Supabase in `tests/e2e/fake-supabase.ts`.
 - `tests/hosted/` and `tests/e2e/hosted.spec.ts` use the real project, and need the gitignored `.env.test.local`, so they run only on the human's machine. The accounts they create have `is_test` set, and stay until the wipe.
-- `tests/sql/constraints.sql` tries what only the database owner can try. It runs through the Supabase MCP server, and always rolls back.
+- `tests/e2e/smoke.spec.ts` is the phone-sized smoke test of the main flows, on the real project. Each later slice extends it.
+- `tests/sql/constraints.sql` tries what only the database owner can try, and `tests/sql/events.sql` tests the payout maths and forced participation, playing the real admin. They run through the Supabase MCP server, and always roll back.
+- `tests/hosted/demo.ts`, run with `npm run demo`, plays the demo accounts during a review. It's for use before the wipe only: `fund` cancels every open event.
 - CI doesn't run browser or hosted tests.

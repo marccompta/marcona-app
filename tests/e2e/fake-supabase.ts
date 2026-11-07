@@ -1,4 +1,4 @@
-import type { Page, Route } from '@playwright/test'
+import type { Page, Request, Route } from '@playwright/test'
 
 // Answers the Supabase Auth, REST and Edge Function calls in the browser, so
 // these tests run with no hosted project. tests/hosted/ covers the real one.
@@ -8,6 +8,8 @@ export type FakeUser = {
   role: 'admin' | 'player'
   balance?: number
   removed?: boolean
+  /** Has accepted an open event, so removal refuses them. */
+  inOpenEvent?: boolean
 }
 
 export type FakeMovement = {
@@ -17,6 +19,20 @@ export type FakeMovement = {
   concept: string | null
   kind?: string
   created_at?: string
+  event?: { id: string; name: string } | null
+  actor?: { username: string } | null
+}
+
+export type FakeEvent = {
+  id: string
+  name: string
+  buy_in: number
+  creator: string
+  status?: 'open' | 'completed' | 'cancelled'
+  payouts?: [number, number, number]
+  /** By username. The creator is added as accepted if missing. */
+  people?: Record<string, 'invited' | 'accepted' | 'declined' | 'lapsed'>
+  results?: { place: number; user_id: string; percentage: number; amount: number }[] | null
 }
 
 export const admin: FakeUser = { username: 'marc', password: 'contrasenya-de-prova', role: 'admin' }
@@ -68,7 +84,12 @@ const usernameFromToken = (route: Route) => {
   }
 }
 
-export async function fakeSupabase(page: Page, users: FakeUser[] = [admin, player], movements: FakeMovement[] = []) {
+export async function fakeSupabase(
+  page: Page,
+  users: FakeUser[] = [admin, player],
+  movements: FakeMovement[] = [],
+  seededEvents: FakeEvent[] = [],
+) {
   const people = users.map((user) => ({ balance: 0, ...user }))
   const ledger = movements.map((movement, index) => ({
     id: index + 1,
@@ -77,10 +98,22 @@ export async function fakeSupabase(page: Page, users: FakeUser[] = [admin, playe
     ...movement,
   }))
   const results = new Map<string, unknown>()
+  const events = seededEvents.map((event, index) => ({
+    status: 'open' as const,
+    payouts: [50, 30, 20] as [number, number, number],
+    results: null,
+    created_at: `2026-11-06T1${index % 10}:00:00Z`,
+    finished_at: null as string | null,
+    ...event,
+    people: { [event.creator]: 'accepted' as const, ...event.people } as NonNullable<FakeEvent['people']>,
+  }))
   const calls = {
     logins: [] as string[],
     logouts: 0,
     adjustments: [] as string[],
+    /** Every call to an event function, with its arguments. */
+    eventCalls: [] as { fn: string; [argument: string]: unknown }[],
+    events,
     functions: [] as { action: string }[],
     /** Sessions the server has ended, by username. */
     ended: new Set<string>(),
@@ -138,13 +171,19 @@ export async function fakeSupabase(page: Page, users: FakeUser[] = [admin, playe
     if (await preflight(route)) return
     const url = new URL(route.request().url())
     const id = url.searchParams.get('user_id')?.replace('eq.', '')
-    const offset = Number(url.searchParams.get('offset') ?? 0)
+    const before = Number(url.searchParams.get('id')?.replace('lt.', '') ?? Infinity)
     const limit = Number(url.searchParams.get('limit') ?? 1000)
     const rows = ledger
-      .filter((movement) => !id || movement.username === id)
+      .filter((movement) => (!id || movement.username === id) && movement.id < before)
       .sort((a, b) => b.id - a.id)
-      .slice(offset, offset + limit)
-      .map(({ username, ...movement }) => ({ ...movement, user_id: username, who: { username } }))
+      .slice(0, limit)
+      .map(({ username, ...movement }) => ({
+        event: null,
+        actor: null,
+        ...movement,
+        user_id: username,
+        who: { username },
+      }))
     return json(route, 200, rows)
   })
 
@@ -181,6 +220,184 @@ export async function fakeSupabase(page: Page, users: FakeUser[] = [admin, playe
     return json(route, 200, result)
   })
 
+  await page.route('**/rest/v1/events**', async (route) => {
+    if (await preflight(route)) return
+    const id = new URL(route.request().url()).searchParams.get('id')?.replace('eq.', '')
+    const rows = events
+      .filter((event) => !id || event.id === id)
+      .map(({ creator, people: everyone, payouts, ...event }) => ({
+        ...event,
+        type: 'classic',
+        creator_id: creator,
+        creator: { username: creator },
+        payout_first: payouts[0],
+        payout_second: payouts[1],
+        payout_third: payouts[2],
+        participants: Object.entries(everyone).map(([username, status]) => ({
+          user_id: username,
+          status,
+          who: { username },
+        })),
+      }))
+    return json(route, 200, id ? rows.slice(0, 1) : [...rows].reverse())
+  })
+
+  const move = (user: (typeof people)[number], delta: number, kind: string, event: (typeof events)[number], actor: string) => {
+    user.balance += delta
+    ledger.push({
+      id: ledger.length + 1,
+      kind,
+      created_at: new Date().toISOString(),
+      username: user.username,
+      delta,
+      balance_after: user.balance,
+      concept: null,
+      event: { id: event.id, name: event.name },
+      actor: { username: actor },
+    })
+  }
+
+  // A handler returns the function's result, or refuse(code).
+  const refuse = (code: string, details: string | null = null) => ({ refused: code, details })
+
+  const eventFunction = (
+    fn: string,
+    handler: (body: ReturnType<Request['postDataJSON']>, caller: (typeof people)[number]) => object,
+  ) =>
+    page.route(`**/rest/v1/rpc/${fn}`, async (route) => {
+      if (await preflight(route)) return
+      const body = route.request().postDataJSON()
+      calls.eventCalls.push({ fn, ...body })
+      if (results.has(body.p_request_id)) return json(route, 200, results.get(body.p_request_id))
+
+      const caller = people.find((u) => u.username === usernameFromToken(route))
+      if (!caller) return json(route, 403, { code: '42501', message: 'not_allowed' })
+
+      const outcome = handler(body, caller)
+      if ('refused' in outcome) {
+        const { refused, details } = outcome as ReturnType<typeof refuse>
+        if (refused === 'not_allowed') return json(route, 403, { code: '42501', message: refused })
+        return json(route, 400, { code: 'P0001', message: refused, details, hint: null })
+      }
+      results.set(body.p_request_id, outcome)
+      return json(route, 200, outcome)
+    })
+
+  const findEvent = (id: string) => events.find((event) => event.id === id)
+
+  await eventFunction('create_event', (body, caller) => {
+    const name = String(body.p_name ?? '').trim()
+    const buyIn = Number(body.p_buy_in)
+    const payouts = [body.p_payout_first, body.p_payout_second, body.p_payout_third].map(Number) as [number, number, number]
+    const invitees = (body.p_invitees ?? []) as string[]
+    const forced = Boolean(body.p_force)
+
+    if (forced && caller.role !== 'admin') return refuse('not_allowed')
+    if (!name) return refuse('event_name_required')
+    if (name.length > 40) return refuse('event_name_too_long')
+    if (!Number.isInteger(buyIn) || buyIn < 1) return refuse('invalid_buy_in')
+    if (payouts.some((payout) => !Number.isInteger(payout) || payout < 0) || payouts[0] + payouts[1] + payouts[2] !== 100) {
+      return refuse('invalid_percentages')
+    }
+    if (invitees.length === 0) return refuse('no_invitees')
+    if (caller.balance < buyIn) return refuse('insufficient_balance')
+
+    const players = invitees.map((id) => people.find((u) => u.username === id)!)
+    const short = players.filter((user) => user.balance < buyIn).map((user) => user.username)
+    if (forced && short.length > 0) return refuse('forced_insufficient_balance', short.sort().join(', '))
+
+    const event = {
+      id: `event-${events.length + 1}`,
+      name,
+      buy_in: buyIn,
+      creator: caller.username,
+      status: 'open' as const,
+      payouts,
+      results: null,
+      created_at: new Date().toISOString(),
+      finished_at: null,
+      people: {
+        [caller.username]: 'accepted',
+        ...Object.fromEntries(invitees.map((id) => [id, forced ? 'accepted' : 'invited'])),
+      } as NonNullable<FakeEvent['people']>,
+    }
+    events.push(event)
+    for (const user of [caller, ...(forced ? players : [])]) move(user, -buyIn, 'event_buy_in', event, caller.username)
+    return { event_id: event.id }
+  })
+
+  await eventFunction('answer_invitation', (body, caller) => {
+    const event = findEvent(body.p_event_id)
+    if (!event) return refuse('event_not_found')
+    if (event.status !== 'open') return refuse('event_not_open')
+    if (event.people[caller.username] !== 'invited') return refuse('invitation_not_pending')
+    if (body.p_accept) {
+      if (caller.balance < event.buy_in) return refuse('insufficient_balance')
+      move(caller, -event.buy_in, 'event_buy_in', event, caller.username)
+    }
+    event.people[caller.username] = body.p_accept ? 'accepted' : 'declined'
+    return { event_id: event.id }
+  })
+
+  const lapse = (event: (typeof events)[number]) => {
+    for (const [username, status] of Object.entries(event.people)) {
+      if (status === 'invited') event.people[username] = 'lapsed'
+    }
+    event.finished_at = new Date().toISOString()
+  }
+
+  const accepted = (event: (typeof events)[number]) =>
+    Object.keys(event.people).filter((username) => event.people[username] === 'accepted')
+
+  await eventFunction('cancel_event', (body, caller) => {
+    const event = findEvent(body.p_event_id)
+    if (!event) return refuse('event_not_found')
+    if (event.status !== 'open') return refuse('event_not_open')
+    if (event.creator !== caller.username && caller.role !== 'admin') return refuse('not_allowed')
+    for (const username of accepted(event)) {
+      move(people.find((u) => u.username === username)!, event.buy_in, 'event_refund', event, caller.username)
+    }
+    lapse(event)
+    Object.assign(event, { status: 'cancelled' })
+    return { event_id: event.id }
+  })
+
+  await eventFunction('complete_event', (body, caller) => {
+    const event = findEvent(body.p_event_id)
+    if (!event) return refuse('event_not_found')
+    if (event.status !== 'open') return refuse('event_not_open')
+    if (event.creator !== caller.username) return refuse('not_allowed')
+
+    const players = accepted(event)
+    if (players.length < 2) return refuse('not_enough_participants')
+    const pot = event.buy_in * players.length
+    const two = players.length === 2
+    const percentages = two ? [100, 0, 0] : event.payouts
+    const winners = [body.p_first, body.p_second, body.p_third] as (string | null)[]
+    const paid = [0, 1, 2].filter((index) => percentages[index] > 0)
+    const chosen = paid.map((index) => winners[index])
+    if (chosen.some((winner) => !winner || !players.includes(winner)) || new Set(chosen).size !== chosen.length) {
+      return refuse('invalid_winners')
+    }
+
+    const shares = percentages.map((percentage) => Math.floor((pot * percentage) / 100))
+    shares[paid[0]] += pot - shares[0] - shares[1] - shares[2]
+    const places = paid.map((index) => ({
+      place: index + 1,
+      user_id: winners[index]!,
+      percentage: percentages[index],
+      amount: shares[index],
+    }))
+    for (const place of places) {
+      if (place.amount > 0) {
+        move(people.find((u) => u.username === place.user_id)!, place.amount, 'event_payout', event, caller.username)
+      }
+    }
+    lapse(event)
+    Object.assign(event, { status: 'completed', results: places })
+    return { event_id: event.id, results: places }
+  })
+
   await page.route('**/functions/v1/admin-users', async (route) => {
     if (await preflight(route)) return
     const body = route.request().postDataJSON()
@@ -209,6 +426,7 @@ export async function fakeSupabase(page: Page, users: FakeUser[] = [admin, playe
     }
 
     if (target.username === caller.username) return refuse('cannot_remove_self')
+    if (target.inOpenEvent) return refuse('user_in_open_event')
     target.removed = true
     calls.ended.add(target.username)
     return json(route, 200, { ok: true })

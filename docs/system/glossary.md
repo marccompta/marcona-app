@@ -30,7 +30,7 @@ Domain terms, used the same way in specs, code and conversation. Specs, code and
 | Forced participation | Participació obligatòria | An option only the admin has: every invitee joins and pays at once, without accepting. |
 | Buy-in | Entrada | What each participant pays to join an event. |
 | Pot | Pot | Buy-in times accepted participants. Wording flagged, see below. |
-| Lapse | | What happens to a pending invitation when its event moves on. No one is charged. |
+| Lapse | Caducada | What happens to a pending invitation when its event moves on. No one is charged. |
 | Secret choice | | A player's hidden pick in a game. |
 | Lock in | | To submit a secret choice. In La minoria it can't then be changed. In a duel, each tap replaces it until both players have picked. |
 | Choice panel | | The private panel in a duel where a player chooses with one tap. It looks the same whether or not they've chosen. |

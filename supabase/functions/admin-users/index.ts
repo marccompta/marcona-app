@@ -100,13 +100,10 @@ async function removeUser({ userId }: Body, adminId: string) {
   const profile = await findProfile(userId)
   if (!profile) return fail('user_not_found')
 
-  if (!profile.removed_at) {
-    const { error } = await supabase
-      .from('profiles')
-      .update({ removed_at: new Date().toISOString() })
-      .eq('user_id', userId as string)
-    if (error) throw error
-  }
+  // REQ-095, REQ-096: this also declines invitations, or refuses during an open event.
+  const { error: removalError } = await supabase.rpc('remove_profile', { p_user_id: userId })
+  if (removalError?.message === 'user_in_open_event') return fail('user_in_open_event')
+  if (removalError) throw removalError
 
   const { error } = await supabase.auth.admin.updateUserById(userId as string, { ban_duration: '876000h' })
   if (error) throw error
