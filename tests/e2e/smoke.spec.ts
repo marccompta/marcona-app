@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { existsSync } from 'node:fs'
 import { expect, test, type Page } from '@playwright/test'
 import { adjustBalance } from '../../src/lib/data'
-import { adminClient, createTestAccount, signOutAll, type TestAccount } from '../hosted/env'
+import { adminClient, adminLogin, createTestAccount, signOutAll, type TestAccount } from '../hosted/env'
 
 // REQ-100: the main flows on a phone-sized screen, on the real project, with no
 // fake. Each later slice extends this. It needs .env.test.local, so it only runs
@@ -26,6 +26,39 @@ async function give(user: TestAccount, amount: number) {
     await adminClient(),
   )
 }
+
+test('REQ-100, REQ-102, REQ-112: spins on the real server, and the wheel, balance and audit all agree', async ({ page }, info) => {
+  const player = await createTestAccount(`fum-r-${info.project.name.slice(0, 3)}`)
+  await give(player, 100)
+  await logIn(page, player)
+
+  await page.getByRole('link', { name: 'Ruleta', exact: true }).click()
+  await expect(page.locator('[data-max-bet]')).toHaveText('Aposta màxima: 5 marcones')
+  await page.getByLabel('Aposta', { exact: true }).fill('5')
+  await page.getByRole('button', { name: 'Gira' }).click()
+
+  const shown = page.locator('[data-result]')
+  await expect(shown).toBeVisible({ timeout: 15000 })
+  const result = (await shown.getAttribute('data-result'))!
+  await expect(page.locator('[data-wheel]')).toHaveAttribute('data-landed', result)
+  await expect(page.locator('[data-balance] .count')).toHaveAttribute('data-value', result === 'red' ? '105' : '95')
+
+  await page.getByRole('link', { name: 'Auditoria' }).click()
+  const colour = { red: 'vermell', black: 'negre', white: 'blanc' }[result]
+  await expect(page.locator('[data-movement]').filter({ hasText: player.username }).first()).toContainText(
+    `Ruleta: aposta a vermell, ha sortit ${colour}`,
+  )
+})
+
+// Reads only: another engine may be spinning at the same moment.
+test('REQ-100, REQ-115: the admin sees the real roulette settings', async ({ page }) => {
+  const { username, password } = adminLogin()
+  await logIn(page, { userId: '', username, password })
+  await page.getByRole('link', { name: 'Administració' }).click()
+
+  await expect(page.getByLabel('Blanc: 1 de cada')).toHaveValue(/^\d+$/)
+  await expect(page.getByLabel('Aposta màxima (% del saldo)')).toHaveValue(/^\d+$/)
+})
 
 test('REQ-100: logs in, creates an event, accepts it, completes it and checks the ranking', async ({ page, browser }, info) => {
   const engine = info.project.name.slice(0, 3)

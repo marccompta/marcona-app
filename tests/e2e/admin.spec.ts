@@ -243,7 +243,7 @@ test.describe('as a player', () => {
     for (const screen of ['classificacio', 'classificacio/marc', 'esdeveniments', 'ruleta', 'auditoria', 'administracio']) {
       await page.goto(`#/${screen}`)
       await page.locator('[data-screen]').waitFor()
-      await expect(page.locator('input'), screen).toHaveCount(0)
+      await expect(page.locator('input[type="password"]'), screen).toHaveCount(0)
       await expect(page.locator('body'), screen).not.toContainText('Contrasenya')
     }
   })

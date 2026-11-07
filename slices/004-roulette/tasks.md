@@ -7,7 +7,7 @@ Work through these in order. Each task leaves the tests passing.
 - [x] **T3:** Add the admin settings functions, and reject spins when closed. (REQ-115, REQ-116, REQ-117, REQ-118, REQ-119)
 - [x] **T4:** Build the Ruleta tab with the maximum bet. (REQ-101, REQ-109)
 - [x] **T5:** Add the animation, driven only by the server's result, with reduced motion. (REQ-112, REQ-113, REQ-114)
-- [ ] **T6:** Add the roulette settings to the admin screen, and extend the smoke test. (REQ-115, REQ-116, REQ-117)
+- [x] **T6:** Add the roulette settings to the admin screen, and extend the smoke test. (REQ-115, REQ-116, REQ-117)
 
 ## Review fixes
 

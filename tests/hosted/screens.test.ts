@@ -56,6 +56,7 @@ describe('what the screens read', () => {
       balance_after: 20,
       kind: 'admin_adjustment',
       concept: 'Tercera',
+      details: {},
       created_at: expect.any(String),
       who: { username: anna.username },
       event: null,

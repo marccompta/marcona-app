@@ -3,6 +3,7 @@ import { formatMarcones } from '../i18n/format'
 import { text } from '../i18n/text'
 import { callAdminUsers } from '../lib/adminUsers'
 import { adjustBalance, fetchPeople, useLoad, type Person } from '../lib/data'
+import { fetchRoulette, saveRouletteSettings, type RouletteSettings } from '../lib/roulette'
 import { supabase } from '../lib/supabase'
 import { ChipStack } from '../shell/Balance'
 import { Field, Outcome, plainInput, useAction } from '../shell/Form'
@@ -40,6 +41,62 @@ function CreateUser({ onChange }: { onChange: () => void }) {
         {text.admin.create}
       </button>
     </form>
+  )
+}
+
+// REQ-115 to REQ-117: applies to later spins. The server checks the values.
+function RouletteForm({ loaded }: { loaded: RouletteSettings }) {
+  const [enabled, setEnabled] = useState(loaded.enabled)
+  const [whiteOneIn, setWhiteOneIn] = useState(String(loaded.white_one_in))
+  const [maxBetPercent, setMaxBetPercent] = useState(String(loaded.max_bet_percent))
+  const { busy, outcome, run } = useAction()
+
+  async function submit(event: FormEvent) {
+    event.preventDefault()
+    await run(async () => {
+      await saveRouletteSettings({
+        enabled,
+        white_one_in: Number(whiteOneIn),
+        max_bet_percent: Number(maxBetPercent),
+      })
+      return text.admin.rouletteSaved
+    })
+  }
+
+  return (
+    <form className="panel" onSubmit={submit} noValidate>
+      <label className="invitee">
+        <input type="checkbox" checked={enabled} onChange={(event) => setEnabled(event.target.checked)} />
+        <span className="tick" />
+        {text.admin.rouletteOpen}
+      </label>
+      <Field label={text.admin.whiteOneIn}>
+        <input inputMode="numeric" value={whiteOneIn} onChange={(event) => setWhiteOneIn(event.target.value)} {...plainInput} />
+      </Field>
+      <Field label={text.admin.maxBetPercent}>
+        <input
+          inputMode="numeric"
+          value={maxBetPercent}
+          onChange={(event) => setMaxBetPercent(event.target.value)}
+          {...plainInput}
+        />
+      </Field>
+      <Outcome outcome={outcome} />
+      <button type="submit" className="secondary" disabled={busy}>
+        {text.admin.saveRoulette}
+      </button>
+    </form>
+  )
+}
+
+function RouletteSettingsPanel() {
+  const { state } = useLoad(fetchRoulette)
+
+  return (
+    <>
+      <h2 className="section-title">{text.admin.roulette}</h2>
+      {state.status === 'ready' ? <RouletteForm loaded={state.data} /> : <Pending state={state} />}
+    </>
   )
 }
 
@@ -190,6 +247,7 @@ export function Admin() {
     <section className="screen" data-screen="administracio">
       <h1 className="screen-title">{text.admin.title}</h1>
       <CreateUser onChange={reload} />
+      <RouletteSettingsPanel />
       <h2 className="section-title">{text.admin.users}</h2>
       {state.status !== 'ready' && <Pending state={state} />}
       {state.status === 'ready' && (

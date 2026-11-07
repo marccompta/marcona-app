@@ -146,6 +146,12 @@ export const text = {
     removeConfirm: 'Sí, elimina',
     removeCancel: 'No, cancel·la',
     removed: (username: string) => `S'ha eliminat ${username}.`,
+    roulette: 'Ruleta',
+    rouletteOpen: 'Taula oberta',
+    whiteOneIn: 'Blanc: 1 de cada',
+    maxBetPercent: 'Aposta màxima (% del saldo)',
+    saveRoulette: 'Desa la ruleta',
+    rouletteSaved: "S'han desat els canvis de la ruleta.",
   },
   errors: {
     invalidCredentials: "El nom d'usuari o la contrasenya no són correctes.",

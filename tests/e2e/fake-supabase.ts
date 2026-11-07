@@ -411,6 +411,24 @@ export async function fakeSupabase(
     return json(route, 200, { ...calls.roulette, balance: caller.balance, max_bet: maxBet(caller.balance) })
   })
 
+  await page.route('**/rest/v1/rpc/set_roulette_settings', async (route) => {
+    if (await preflight(route)) return
+    const body = route.request().postDataJSON()
+    const caller = people.find((u) => u.username === usernameFromToken(route))
+    if (caller?.role !== 'admin') return json(route, 403, { code: '42501', message: 'not_allowed' })
+
+    const refused = (code: string) => json(route, 400, { code: 'P0001', message: code, details: null, hint: null })
+    const whole = (value: unknown, lowest: number, highest: number) =>
+      Number.isInteger(value) && (value as number) >= lowest && (value as number) <= highest
+    if (!whole(body.p_white_one_in, 2, 1000)) return refused('invalid_white_chance')
+    if (!whole(body.p_max_bet_percent, 1, 100)) return refused('invalid_max_bet_percent')
+
+    calls.roulette.enabled = body.p_enabled
+    calls.roulette.white_one_in = body.p_white_one_in
+    calls.roulette.max_bet_percent = body.p_max_bet_percent
+    return json(route, 200, calls.roulette)
+  })
+
   await eventFunction('spin', (body, caller) => {
     const bet = body.p_bet
     if (body.p_choice !== 'red' && body.p_choice !== 'black') return refuse('invalid_choice')
