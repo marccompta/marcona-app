@@ -8,6 +8,8 @@ export type FakeUser = {
   role: 'admin' | 'player'
   balance?: number
   removed?: boolean
+  /** Has accepted an open event, so removal refuses them. */
+  inOpenEvent?: boolean
 }
 
 export type FakeMovement = {
@@ -209,6 +211,7 @@ export async function fakeSupabase(page: Page, users: FakeUser[] = [admin, playe
     }
 
     if (target.username === caller.username) return refuse('cannot_remove_self')
+    if (target.inOpenEvent) return refuse('user_in_open_event')
     target.removed = true
     calls.ended.add(target.username)
     return json(route, 200, { ok: true })

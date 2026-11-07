@@ -98,6 +98,7 @@ export const text = {
     weakPassword: 'La contrasenya és massa curta.',
     samePassword: "La contrasenya nova ha de ser diferent de l'anterior.",
     cannotRemoveSelf: 'No pots eliminar el teu propi compte.',
+    userInOpenEvent: 'Aquesta persona és dins un esdeveniment obert. Cal completar-lo o cancel·lar-lo abans.',
     eventNameRequired: "Escriu un nom per a l'esdeveniment.",
     eventNameTooLong: 'El nom pot tenir 40 caràcters com a màxim.',
     invalidBuyIn: "L'entrada ha de ser un nombre enter d'1 o més.",

@@ -648,6 +648,82 @@ describe('completing an event', () => {
   })
 })
 
+describe('removing a user with events', () => {
+  const remove = (user: TestAccount) => callAdminUsers(admin, { action: 'remove', userId: user.userId })
+
+  const isActive = async (user: TestAccount) => {
+    const { data, error } = await anna.client.from('profiles').select('removed_at').eq('user_id', user.userId).single()
+    expect(error).toBeNull()
+    return data!.removed_at === null
+  }
+
+  it('REQ-095: declines their pending invitations, and the event carries on', async () => {
+    const leaving = await createTestAccount('e-marxa')
+    const eventId = await openEvent(anna, [leaving, bea])
+    await remove(leaving)
+
+    expect(await participants(eventId)).toEqual({
+      [anna.userId]: 'accepted',
+      [leaving.userId]: 'declined',
+      [bea.userId]: 'invited',
+    })
+    expect(await isActive(leaving)).toBe(false)
+    expect((await readEvent(eventId)).status).toBe('open')
+  })
+
+  it('REQ-096: is blocked while they have accepted an open event, and works once it is over', async () => {
+    const staying = await createTestUser('e-queda')
+    const eventId = await openEvent(anna, [staying])
+    await accepted(staying, eventId)
+
+    await expect(remove(staying)).rejects.toEqual({ code: 'user_in_open_event' })
+    expect(await isActive(staying)).toBe(true)
+    expect((await staying.client.from('profiles').select('username').eq('user_id', staying.userId)).data).toHaveLength(1)
+
+    expect((await cancel(anna.client, eventId)).error).toBeNull()
+    await expect(remove(staying)).resolves.toBeDefined()
+    expect(await isActive(staying)).toBe(false)
+  })
+
+  it('REQ-096: is blocked for the creator of an open event too', async () => {
+    const creator = await createTestUser('e-crea')
+    const eventId = await openEvent(creator, [bea])
+
+    await expect(remove(creator)).rejects.toEqual({ code: 'user_in_open_event' })
+    expect((await cancel(creator.client, eventId)).error).toBeNull()
+  })
+
+  it('REQ-096: past events do not block it', async () => {
+    const player = await createTestUser('e-passat')
+    const eventId = await openEvent(anna, [player])
+    await accepted(player, eventId)
+    expect((await complete(anna, eventId, [player])).error).toBeNull()
+
+    await expect(remove(player)).resolves.toBeDefined()
+  })
+
+  it('REQ-095, REQ-096: an acceptance at the moment of removal does one or the other', async () => {
+    for (let round = 0; round < 2; round += 1) {
+      const player = await createTestUser(`e-alhora${round}`)
+      const eventId = await openEvent(anna, [player])
+      await give(player, 10)
+      const [answered, removal] = await Promise.allSettled([answer(player, eventId, true), remove(player)])
+
+      expect(answered.status).toBe('fulfilled')
+      const refused = answered.status === 'fulfilled' && answered.value.error !== null
+      if (refused) {
+        expect(removal.status).toBe('fulfilled')
+        expect(await balanceOf(player)).toBe(10)
+        expect((await participants(eventId))[player.userId]).toBe('declined')
+      } else {
+        expect(removal).toMatchObject({ status: 'rejected', reason: { code: 'user_in_open_event' } })
+        expect(await balanceOf(player)).toBe(0)
+        expect((await participants(eventId))[player.userId]).toBe('accepted')
+      }
+    }
+  })
+})
+
 describe('who can read and write events', () => {
   it('REQ-058: nobody can write to the event tables from the browser', async () => {
     const eventId = await openEvent(anna, [bea])

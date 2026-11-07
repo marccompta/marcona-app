@@ -26,6 +26,7 @@ export const publicFunctions = (userId: string): Record<string, Record<string, u
     p_payout_second: 30,
     p_payout_third: 20,
   },
+  remove_profile: { p_user_id: userId },
   revoke_sessions: { p_user_id: userId },
   rls_auto_enable: {},
   rls_report: {},

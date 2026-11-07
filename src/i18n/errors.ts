@@ -32,6 +32,7 @@ export const byCode: Record<string, string> = {
   weak_password: text.errors.weakPassword,
   same_password: text.errors.samePassword,
   cannot_remove_self: text.errors.cannotRemoveSelf,
+  user_in_open_event: text.errors.userInOpenEvent,
   unknown_action: text.errors.unknown,
   failed: text.errors.unknown,
 }
