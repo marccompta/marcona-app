@@ -9,6 +9,7 @@ export const publicFunctions = (userId: string): Record<string, Record<string, u
     p_concept: 'Prova',
   },
   answer_invitation: { p_request_id: crypto.randomUUID(), p_event_id: crypto.randomUUID(), p_accept: true },
+  cancel_event: { p_request_id: crypto.randomUUID(), p_event_id: crypto.randomUUID() },
   create_event: {
     p_request_id: crypto.randomUUID(),
     p_name: 'Prova',

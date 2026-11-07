@@ -320,6 +320,122 @@ describe('answering an invitation', () => {
   })
 })
 
+const cancel = (client: TestUser['client'], eventId: string, requestId = randomUUID()) =>
+  client.rpc('cancel_event', { p_request_id: requestId, p_event_id: eventId })
+
+const adminId = async () => (await admin.auth.getSession()).data.session!.user.id
+
+describe('cancelling an event', () => {
+  async function eventOfThree() {
+    const eventId = await openEvent(anna, [bea, cesc])
+    await accepted(bea, eventId)
+    await accepted(cesc, eventId)
+    return { eventId, before: await Promise.all([anna, bea, cesc].map(balanceOf)) }
+  }
+
+  const refunded = async (before: number[]) =>
+    expect(await Promise.all([anna, bea, cesc].map(balanceOf))).toEqual(before.map((balance) => balance + 10))
+
+  it('REQ-084, REQ-099: the creator cancels, and everyone in is refunded', async () => {
+    const { eventId, before } = await eventOfThree()
+    const { error } = await cancel(anna.client, eventId)
+
+    expect(error).toBeNull()
+    expect(await readEvent(eventId)).toMatchObject({ status: 'cancelled', finished_by: anna.userId })
+    await refunded(before)
+    const refunds = (await eventMovements(eventId)).filter((movement) => movement.kind === 'event_refund')
+    expect(refunds.map((movement) => movement.user_id).sort()).toEqual([anna.userId, bea.userId, cesc.userId].sort())
+    for (const refund of refunds) expect(refund).toMatchObject({ delta: 10, event_id: eventId, actor_id: anna.userId })
+  })
+
+  it('REQ-085: the admin cancels someone else\'s event, and everyone in is refunded', async () => {
+    const { eventId, before } = await eventOfThree()
+    const { error } = await cancel(admin, eventId)
+
+    expect(error).toBeNull()
+    expect(await readEvent(eventId)).toMatchObject({ status: 'cancelled', finished_by: await adminId() })
+    await refunded(before)
+  })
+
+  it('REQ-086: nobody else can cancel, not even a participant', async () => {
+    const { eventId } = await eventOfThree()
+    const before = await Promise.all([anna, bea, cesc].map(balanceOf))
+
+    for (const user of [bea, dani]) {
+      const { error } = await cancel(user.client, eventId)
+      expect(error?.code).toBe('42501')
+    }
+    expect((await readEvent(eventId)).status).toBe('open')
+    expect(await Promise.all([anna, bea, cesc].map(balanceOf))).toEqual(before)
+  })
+
+  it('REQ-087: a participant who has paid cannot withdraw', async () => {
+    const { eventId } = await eventOfThree()
+    const before = await balanceOf(bea)
+    const { error } = await answer(bea, eventId, false)
+
+    expect(error?.message).toBe('invitation_not_pending')
+    expect((await participants(eventId))[bea.userId]).toBe('accepted')
+    expect(await balanceOf(bea)).toBe(before)
+  })
+
+  it('REQ-094, REQ-082: pending invitations lapse, and can no longer be answered', async () => {
+    const eventId = await openEvent(anna, [bea, cesc, dani])
+    await accepted(bea, eventId)
+    await give(cesc, 10)
+    expect((await answer(cesc, eventId, false)).error).toBeNull()
+    expect((await cancel(anna.client, eventId)).error).toBeNull()
+
+    expect(await participants(eventId)).toEqual({
+      [anna.userId]: 'accepted',
+      [bea.userId]: 'accepted',
+      [cesc.userId]: 'declined',
+      [dani.userId]: 'lapsed',
+    })
+    await give(dani, 10)
+    const before = await balanceOf(dani)
+    expect((await answer(dani, eventId, true)).error?.message).toBe('event_not_open')
+    expect(await balanceOf(dani)).toBe(before)
+  })
+
+  it('REQ-083: a cancelled event cannot be cancelled again', async () => {
+    const { eventId } = await eventOfThree()
+    expect((await cancel(anna.client, eventId)).error).toBeNull()
+    const before = await balanceOf(bea)
+
+    expect((await cancel(anna.client, eventId)).error?.message).toBe('event_not_open')
+    expect((await cancel(admin, eventId)).error?.message).toBe('event_not_open')
+    expect(await balanceOf(bea)).toBe(before)
+  })
+
+  it('REQ-062: a double tap on cancel refunds once', async () => {
+    const { eventId, before } = await eventOfThree()
+    const requestId = randomUUID()
+    const [first, second] = await Promise.all([cancel(anna.client, eventId, requestId), cancel(anna.client, eventId, requestId)])
+
+    expect(first.error).toBeNull()
+    expect(second.data).toEqual(first.data)
+    await refunded(before)
+  })
+
+  it('REQ-084: an acceptance at the moment of cancelling never loses marcones', async () => {
+    for (let round = 0; round < 5; round += 1) {
+      const eventId = await openEvent(anna, [bea])
+      await give(bea, 10)
+      const before = await balanceOf(bea)
+      const [answered, cancelled] = await Promise.all([answer(bea, eventId, true), cancel(anna.client, eventId)])
+
+      expect(cancelled.error).toBeNull()
+      if (answered.error) expect(answered.error.message).toBe('event_not_open')
+      expect(await balanceOf(bea)).toBe(before)
+    }
+  })
+
+  it('REQ-085: an event that does not exist cannot be cancelled', async () => {
+    expect((await cancel(anna.client, randomUUID())).error?.message).toBe('event_not_found')
+  })
+})
+
 describe('who can read and write events', () => {
   it('REQ-058: nobody can write to the event tables from the browser', async () => {
     const eventId = await openEvent(anna, [bea])
