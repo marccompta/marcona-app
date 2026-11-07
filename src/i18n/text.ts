@@ -152,6 +152,12 @@ export const text = {
     everyone: 'Tothom',
     removedSuffix: '(de baixa)',
   },
+  qr: {
+    open: 'Codi QR per entrar',
+    title: 'Escaneja per entrar',
+    help: 'Obre la càmera del mòbil i apunta al codi.',
+    label: 'Codi QR amb l’adreça de la MarcOna',
+  },
   admin: {
     title: 'Administració',
     newUser: 'Nou usuari',

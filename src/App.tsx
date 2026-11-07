@@ -7,6 +7,7 @@ import { EventDetail } from './screens/EventDetail'
 import { Events } from './screens/Events'
 import { Login } from './screens/Login'
 import { NewEvent } from './screens/NewEvent'
+import { QrCode } from './screens/QrCode'
 import { Ranking } from './screens/Ranking'
 import { Roulette } from './screens/Roulette'
 import { UserDetail } from './screens/UserDetail'
@@ -48,6 +49,7 @@ function Screens() {
         <Route path="/ruleta" element={<Roulette />} />
         <Route path="/auditoria" element={<Audit />} />
         {profile.role === 'admin' && <Route path="/administracio" element={<Admin />} />}
+        {profile.role === 'admin' && <Route path="/administracio/qr" element={<QrCode />} />}
       </Route>
       <Route path="*" element={<Navigate to="/classificacio" replace />} />
     </Routes>

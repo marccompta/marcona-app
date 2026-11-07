@@ -1,4 +1,5 @@
 import { useRef, useState, type FormEvent } from 'react'
+import { Link } from 'react-router'
 import { formatMarcones } from '../i18n/format'
 import { text } from '../i18n/text'
 import { callAdminUsers } from '../lib/adminUsers'
@@ -247,6 +248,9 @@ export function Admin() {
   return (
     <section className="screen" data-screen="administracio">
       <h1 className="screen-title">{text.admin.title}</h1>
+      <Link to="/administracio/qr" className="secondary qr-link">
+        {text.qr.open}
+      </Link>
       <CreateUser onChange={reload} />
       <RouletteSettingsPanel />
       <GameSettingsPanel />
