@@ -34,7 +34,18 @@ export type FakeEvent = {
   /** By username. The creator is added as accepted if missing. */
   people?: Record<string, 'invited' | 'accepted' | 'declined' | 'lapsed'>
   results?: { place: number; user_id: string; percentage: number; amount: number }[] | null
+  /** Set for a game. Its settings default to the duel's. */
+  game?: string
+  phase?: 'inviting' | 'choosing' | 'revealed'
+  settings?: typeof duelDefaults & { description: string }
+  reveal?: FakeReveal | null
+  creator_plays?: boolean
 }
+
+export type FakeReveal = { players: { user_id: string; choice: string; percentage: number; payout: number }[] }
+
+export const duelDefaults = { both_trust: 150, betrayer: 250, betrayed: 0, both_betray: 50 }
+export const duelDescription = 'Dues persones, una decisió secreta.'
 
 export const admin: FakeUser = { username: 'marc', password: 'contrasenya-de-prova', role: 'admin' }
 export const player: FakeUser = { username: 'anna', password: 'una-altra-de-prova', role: 'player' }
@@ -105,8 +116,16 @@ export async function fakeSupabase(
     results: null,
     created_at: `2026-11-06T1${index % 10}:00:00Z`,
     finished_at: null as string | null,
+    game: null as string | null,
+    phase: null as FakeEvent['phase'] | null,
+    settings: event.game ? { ...duelDefaults, description: duelDescription } : null,
+    reveal: null as FakeReveal | null,
+    creator_plays: true,
     ...event,
-    people: { [event.creator]: 'accepted' as const, ...event.people } as NonNullable<FakeEvent['people']>,
+    people: {
+      ...(event.creator_plays === false ? {} : { [event.creator]: 'accepted' as const }),
+      ...event.people,
+    } as NonNullable<FakeEvent['people']>,
   }))
   const calls = {
     logins: [] as string[],
@@ -122,6 +141,13 @@ export async function fakeSupabase(
     /** The colours the next spins land on, in order. Red once it's empty. */
     spinResults: [] as ('red' | 'black' | 'white')[],
     roulette: { enabled: true, white_one_in: 37, max_bet_percent: 5 },
+    games: [{ id: 'confia_o_traeix', enabled: true, description: duelDescription, settings: { ...duelDefaults } }],
+    /** Secret choices by event and username, which no fake read returns. */
+    choices: {} as Record<string, Record<string, string>>,
+    /** How many times game_state() has been read. */
+    statePolls: 0,
+    /** Plays another phone: locks in as this player, and reveals if that completes the pair. */
+    lockInAs: (_eventId: string, _username: string, _choice: string) => {},
   }
 
   await page.route('**/auth/v1/token**', async (route) => {
@@ -224,6 +250,11 @@ export async function fakeSupabase(
     return json(route, 200, result)
   })
 
+  await page.route('**/rest/v1/games**', async (route) => {
+    if (await preflight(route)) return
+    return json(route, 200, calls.games)
+  })
+
   await page.route('**/rest/v1/events**', async (route) => {
     if (await preflight(route)) return
     const id = new URL(route.request().url()).searchParams.get('id')?.replace('eq.', '')
@@ -231,12 +262,12 @@ export async function fakeSupabase(
       .filter((event) => !id || event.id === id)
       .map(({ creator, people: everyone, payouts, ...event }) => ({
         ...event,
-        type: 'classic',
+        type: event.game ? 'game' : 'classic',
         creator_id: creator,
         creator: { username: creator },
-        payout_first: payouts[0],
-        payout_second: payouts[1],
-        payout_third: payouts[2],
+        payout_first: event.game ? null : payouts[0],
+        payout_second: event.game ? null : payouts[1],
+        payout_third: event.game ? null : payouts[2],
         participants: Object.entries(everyone).map(([username, status]) => ({
           user_id: username,
           status,
@@ -320,6 +351,11 @@ export async function fakeSupabase(
       results: null,
       created_at: new Date().toISOString(),
       finished_at: null,
+      game: null,
+      phase: null,
+      settings: null,
+      reveal: null,
+      creator_plays: true,
       people: {
         [caller.username]: 'accepted',
         ...Object.fromEntries(invitees.map((id) => [id, forced ? 'accepted' : 'invited'])),
@@ -340,6 +376,10 @@ export async function fakeSupabase(
       move(caller, -event.buy_in, 'event_buy_in', event, caller.username)
     }
     event.people[caller.username] = body.p_accept ? 'accepted' : 'declined'
+    if (event.game) {
+      if (!body.p_accept) cancel(event, caller.username)
+      else if (!Object.values(event.people).includes('invited')) event.phase = 'choosing'
+    }
     return { event_id: event.id }
   })
 
@@ -353,22 +393,27 @@ export async function fakeSupabase(
   const accepted = (event: (typeof events)[number]) =>
     Object.keys(event.people).filter((username) => event.people[username] === 'accepted')
 
+  const cancel = (event: (typeof events)[number], actor: string) => {
+    for (const username of accepted(event)) {
+      move(people.find((u) => u.username === username)!, event.buy_in, 'event_refund', event, actor)
+    }
+    lapse(event)
+    Object.assign(event, { status: 'cancelled' })
+  }
+
   await eventFunction('cancel_event', (body, caller) => {
     const event = findEvent(body.p_event_id)
     if (!event) return refuse('event_not_found')
     if (event.status !== 'open') return refuse('event_not_open')
     if (event.creator !== caller.username && caller.role !== 'admin') return refuse('not_allowed')
-    for (const username of accepted(event)) {
-      move(people.find((u) => u.username === username)!, event.buy_in, 'event_refund', event, caller.username)
-    }
-    lapse(event)
-    Object.assign(event, { status: 'cancelled' })
+    cancel(event, caller.username)
     return { event_id: event.id }
   })
 
   await eventFunction('complete_event', (body, caller) => {
     const event = findEvent(body.p_event_id)
     if (!event) return refuse('event_not_found')
+    if (event.game) return refuse('game_decides_winners')
     if (event.status !== 'open') return refuse('event_not_open')
     if (event.creator !== caller.username) return refuse('not_allowed')
 
@@ -400,6 +445,106 @@ export async function fakeSupabase(
     lapse(event)
     Object.assign(event, { status: 'completed', results: places })
     return { event_id: event.id, results: places }
+  })
+
+  await eventFunction('create_game_event', (body, caller) => {
+    if (caller.role !== 'admin') return refuse('not_allowed')
+    const name = String(body.p_name ?? '').trim()
+    const buyIn = Number(body.p_buy_in)
+    const invitees = (body.p_invitees ?? []) as string[]
+    const plays = Boolean(body.p_plays)
+    const forced = Boolean(body.p_force)
+
+    if (!name) return refuse('event_name_required')
+    if (name.length > 40) return refuse('event_name_too_long')
+    if (!Number.isInteger(buyIn) || buyIn < 1) return refuse('invalid_buy_in')
+    const game = calls.games.find((candidate) => candidate.id === body.p_game)
+    if (!game) return refuse('game_not_found')
+    if (!game.enabled) return refuse('game_off')
+    if (invitees.length + (plays ? 1 : 0) !== 2) return refuse('duel_needs_two_players')
+
+    const players = invitees.map((id) => people.find((u) => u.username === id)!)
+    const short = players.filter((user) => user.balance < buyIn).map((user) => user.username)
+    if (forced && short.length > 0) return refuse('forced_insufficient_balance', short.sort().join(', '))
+    if (plays && caller.balance < buyIn) return refuse('insufficient_balance')
+
+    const event = {
+      id: `event-${events.length + 1}`,
+      name,
+      buy_in: buyIn,
+      creator: caller.username,
+      status: 'open' as const,
+      payouts: [100, 0, 0] as [number, number, number],
+      results: null,
+      created_at: new Date().toISOString(),
+      finished_at: null,
+      game: game.id,
+      phase: (forced ? 'choosing' : 'inviting') as FakeEvent['phase'],
+      settings: { ...game.settings, description: game.description },
+      reveal: null,
+      creator_plays: plays,
+      people: {
+        ...(plays ? { [caller.username]: 'accepted' } : {}),
+        ...Object.fromEntries(invitees.map((id) => [id, forced ? 'accepted' : 'invited'])),
+      } as NonNullable<FakeEvent['people']>,
+    }
+    events.push(event)
+    for (const user of [...(plays ? [caller] : []), ...(forced ? players : [])]) {
+      move(user, -buyIn, 'event_buy_in', event, caller.username)
+    }
+    return { event_id: event.id }
+  })
+
+  const resolveDuel = (event: (typeof events)[number]) => {
+    const choices = calls.choices[event.id]
+    const rules = event.settings!
+    const [one, other] = accepted(event)
+    const percentage = (mine: string, theirs: string) =>
+      mine === 'confia'
+        ? theirs === 'confia' ? rules.both_trust : rules.betrayed
+        : theirs === 'confia' ? rules.betrayer : rules.both_betray
+    const players = [[one, other], [other, one]].map(([me, them]) => {
+      const share = percentage(choices[me], choices[them])
+      return { user_id: me, choice: choices[me], percentage: share, payout: Math.floor((event.buy_in * share) / 100) }
+    })
+    for (const player of players) {
+      if (player.payout > 0) {
+        move(people.find((u) => u.username === player.user_id)!, player.payout, 'event_payout', event, event.creator)
+      }
+    }
+    Object.assign(event, { status: 'completed', phase: 'revealed', reveal: { players }, finished_at: new Date().toISOString() })
+  }
+
+  const saveChoice = (event: (typeof events)[number], username: string, choice: string) => {
+    const choices = (calls.choices[event.id] ??= {})
+    choices[username] = choice
+    const revealed = accepted(event).every((player) => choices[player])
+    if (revealed) resolveDuel(event)
+    return revealed
+  }
+
+  calls.lockInAs = (eventId, username, choice) => {
+    saveChoice(findEvent(eventId)!, username, choice)
+  }
+
+  await eventFunction('lock_in', (body, caller) => {
+    const event = findEvent(body.p_event_id)
+    if (!event?.game) return refuse('event_not_found')
+    if (event.people[caller.username] !== 'accepted') return refuse('not_allowed')
+    if (event.status === 'cancelled') return refuse('event_not_open')
+    if (event.phase === 'revealed') return { event_id: event.id, saved: false, revealed: true }
+    if (event.phase !== 'choosing') return refuse('game_not_choosing')
+    if (body.p_choice !== 'confia' && body.p_choice !== 'traeix') return refuse('invalid_game_choice')
+    return { event_id: event.id, saved: true, revealed: saveChoice(event, caller.username, body.p_choice) }
+  })
+
+  await page.route('**/rest/v1/rpc/game_state', async (route) => {
+    if (await preflight(route)) return
+    calls.statePolls += 1
+    const event = findEvent(route.request().postDataJSON().p_event_id)
+    if (!event?.game) return json(route, 400, { code: 'P0001', message: 'event_not_found', details: null, hint: null })
+    const { id, game, status, phase, settings, reveal } = event
+    return json(route, 200, { event_id: id, game, status, phase, settings, reveal })
   })
 
   const maxBet = (balance: number) => Math.max(1, Math.floor((balance * calls.roulette.max_bet_percent) / 100))

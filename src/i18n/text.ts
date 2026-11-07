@@ -89,6 +89,15 @@ export const text = {
       forceHelp: "Tothom qui convidis entra i paga ara mateix, sense haver d'acceptar.",
     },
   },
+  games: {
+    names: { confia_o_traeix: 'Confia o traeix' },
+    type: 'Tipus',
+    classic: 'Clàssic',
+    plays: 'Hi jugo',
+    playsHelp: "Si hi jugues, pagues l'entrada ara mateix.",
+    inviteOne: 'Convida 1 persona.',
+    inviteTwo: 'Convida 2 persones.',
+  },
   roulette: {
     title: 'Ruleta',
     wheel: 'Roda de la ruleta',

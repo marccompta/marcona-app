@@ -1,3 +1,4 @@
+import { text } from '../i18n/text'
 import { supabase } from './supabase'
 
 export type DuelChoice = 'confia' | 'traeix'
@@ -35,6 +36,8 @@ export type NewGameEvent = {
   invitees: string[]
   force: boolean
 }
+
+export const gameName = (id: string) => text.games.names[id as keyof typeof text.games.names] ?? id
 
 export async function fetchGames(client = supabase) {
   const { data, error } = await client.from('games').select('id, enabled, description, settings').order('id')
