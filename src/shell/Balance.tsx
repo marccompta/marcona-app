@@ -40,7 +40,7 @@ export function ChipStack({ balance, large = false }: { balance: number; large?:
   )
 }
 
-const prefersStillness = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
+export const prefersStillness = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
 
 // REQ-070: counts from the last value shown. Screen readers get the final value.
 export function CountUp({ value }: { value: number }) {

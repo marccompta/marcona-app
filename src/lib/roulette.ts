@@ -3,6 +3,26 @@ import { supabase } from './supabase'
 export type Choice = 'red' | 'black'
 export type Colour = Choice | 'white'
 
+// What the wheel draws: one white pocket, then red and black in turn. It's only
+// a picture, and the odds come from the server's settings.
+export const pockets: Colour[] = ['white', ...Array.from({ length: 36 }, (_, index) => (index % 2 ? 'black' : 'red') as Colour)]
+export const pocketStep = 360 / pockets.length
+
+// The pocket under the pointer, which sits at the top of the wheel.
+export function pocketAt(rotation: number) {
+  const index = Math.round(-rotation / pocketStep) % pockets.length
+  return pockets[(index + pockets.length) % pockets.length]
+}
+
+// REQ-112: where the wheel must stop to show this result. It always travels
+// forward. `pick`, from 0 up to 1, only chooses among pockets of that colour.
+export function stopRotation(result: Colour, from: number, minimumTravel: number, pick: number) {
+  const matching = pockets.flatMap((colour, index) => (colour === result ? [index] : []))
+  const pocket = matching[Math.floor(pick * matching.length)]
+  const resting = (360 - pocket * pocketStep) % 360
+  return resting + Math.ceil((from + minimumTravel - resting) / 360) * 360
+}
+
 export type Spin = {
   movement_id: number
   choice: Choice

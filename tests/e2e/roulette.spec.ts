@@ -12,7 +12,8 @@ const open = async (page: Page, balance = 100, user: FakeUser = player) => {
   await page.goto('')
   await logIn(page, me)
   await page.getByRole('link', { name: 'Ruleta' }).click()
-  await page.locator('[data-screen="ruleta"]').waitFor()
+  // Not just the screen: a test may change the fake once the table has loaded.
+  await page.locator('[data-wheel]').waitFor()
   return calls
 }
 
@@ -115,7 +116,7 @@ test.describe('a spin', () => {
     })
 
     await spin(page, 'Vermell', '5')
-    await expect(page.getByRole('alert')).toContainText('connexió')
+    await expect(page.getByRole('alert')).toContainText('Torna-ho a provar')
     await page.getByRole('button', { name: 'Gira' }).click()
     await expect(page.locator('[data-result="red"]')).toBeVisible()
 
@@ -194,6 +195,128 @@ test.describe('a closed table', () => {
     await expect(page.getByRole('button', { name: 'Gira' })).toHaveCount(0)
     expect(calls.ledger).toHaveLength(0)
   })
+})
+
+const wheel = (page: Page) => page.locator('[data-wheel]')
+const turning = /^(spinning|settling)$/
+const angle = (page: Page) => page.locator('.wheel-disc').evaluate((disc) => (disc as unknown as SVGElement).style.transform)
+
+// Holds the server's answer to a spin until release() is called.
+async function holdSpin(page: Page) {
+  let release = () => {}
+  const held = new Promise<void>((resolve) => {
+    release = resolve
+  })
+  await page.route('**/rest/v1/rpc/spin', async (route) => {
+    await held
+    await route.fallback()
+  })
+  return release
+}
+
+test.describe('the animation', () => {
+  test.use({ reducedMotion: 'no-preference' })
+
+  for (const result of ['red', 'black', 'white'] as const) {
+    test(`REQ-112: the wheel lands on ${result} when the server says so`, async ({ page }) => {
+      const calls = await open(page)
+      calls.spinResults.push(result)
+      await spin(page, 'Negre', '5')
+
+      await expect(wheel(page)).toHaveAttribute('data-wheel', 'landed', { timeout: 10000 })
+      await expect(wheel(page)).toHaveAttribute('data-landed', result)
+      await expect(page.locator(`[data-result="${result}"]`)).toBeVisible()
+    })
+  }
+
+  test('REQ-112: it starts on the tap, and keeps spinning until the server answers', async ({ page }) => {
+    await open(page)
+    const release = await holdSpin(page)
+    await spin(page, 'Vermell', '5')
+
+    await expect(wheel(page)).toHaveAttribute('data-wheel', 'spinning')
+    const first = await angle(page)
+    await expect.poll(() => angle(page)).not.toBe(first)
+    await expect(page.locator('[data-result]')).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Girant…' })).toBeDisabled()
+
+    release()
+    await expect(wheel(page)).toHaveAttribute('data-wheel', 'landed', { timeout: 10000 })
+  })
+
+  test('REQ-112: nothing gives the result away before the wheel stops', async ({ page }) => {
+    await open(page)
+    const answered = page.waitForResponse('**/rest/v1/rpc/spin')
+    await spin(page, 'Vermell', '5')
+
+    // The server has answered, and the wheel is still turning.
+    await answered
+    await expect(wheel(page)).toHaveAttribute('data-wheel', turning)
+    await expect(page.locator('[data-result]')).toHaveCount(0)
+    await expect(balance(page)).toHaveAttribute('data-value', '100')
+    await expect(wheel(page)).not.toHaveAttribute('data-landed', /./)
+
+    await expect(page.locator('[data-result="red"]')).toBeVisible({ timeout: 10000 })
+    await expect(balance(page)).toHaveAttribute('data-value', '105')
+  })
+
+  test('REQ-112: a refused spin stops the wheel, and shows no result', async ({ page }) => {
+    await open(page)
+    await spin(page, 'Vermell', '6')
+
+    await expect(page.getByRole('alert')).toBeVisible()
+    await expect(wheel(page)).toHaveAttribute('data-wheel', 'idle')
+    await expect(page.locator('[data-result]')).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Gira' })).toBeEnabled()
+  })
+
+  test('REQ-113: a second spin works after the first', async ({ page }) => {
+    const calls = await open(page)
+    calls.spinResults.push('black', 'white')
+    await spin(page, 'Vermell', '1')
+    await expect(wheel(page)).toHaveAttribute('data-landed', 'black', { timeout: 10000 })
+
+    await page.getByRole('button', { name: 'Gira' }).click()
+    await expect(wheel(page)).toHaveAttribute('data-wheel', turning)
+    await expect(wheel(page)).toHaveAttribute('data-landed', 'white', { timeout: 10000 })
+  })
+
+  test('REQ-112: leaving mid-spin keeps the screen working', async ({ page }) => {
+    await open(page)
+    await spin(page, 'Vermell', '5')
+    await page.getByRole('link', { name: 'Auditoria' }).click()
+    await page.locator('[data-screen="auditoria"]').waitFor()
+    await page.getByRole('link', { name: 'Ruleta' }).click()
+
+    await expect(balance(page)).toHaveAttribute('data-value', '105')
+    await expect(wheel(page)).toHaveAttribute('data-wheel', 'idle')
+  })
+})
+
+test.describe('with reduced motion', () => {
+  test('REQ-114: the wheel stays still while it waits', async ({ page }) => {
+    await open(page)
+    const release = await holdSpin(page)
+    const before = await angle(page)
+    await spin(page, 'Vermell', '5')
+
+    await page.getByRole('button', { name: 'Girant…' }).waitFor()
+    await page.waitForTimeout(300)
+    expect(await angle(page)).toBe(before)
+    await expect(wheel(page)).toHaveAttribute('data-wheel', 'idle')
+    release()
+  })
+
+  for (const result of ['red', 'black', 'white'] as const) {
+    test(`REQ-112, REQ-114: ${result} shows at once, on the right pocket`, async ({ page }) => {
+      const calls = await open(page)
+      calls.spinResults.push(result)
+      await spin(page, 'Vermell', '5')
+
+      await expect(page.locator(`[data-result="${result}"]`)).toBeVisible({ timeout: 1000 })
+      await expect(wheel(page)).toHaveAttribute('data-landed', result)
+    })
+  }
 })
 
 test('REQ-023, REQ-024: a long result and a big balance still fit at 360px', async ({ page }) => {

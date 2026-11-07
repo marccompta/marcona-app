@@ -7,6 +7,7 @@ import { ChipStack, CountUp } from '../shell/Balance'
 import { Field, Outcome, plainInput, useAction } from '../shell/Form'
 import { EmptyChip } from '../shell/icons'
 import { Pending } from './Movements'
+import { Wheel, type WheelHandle } from './Wheel'
 
 const choices: Choice[] = ['red', 'black']
 
@@ -38,6 +39,7 @@ function Table({ loaded }: { loaded: RouletteTable }) {
   const { busy, outcome, run } = useAction()
   // A retry of the same attempt keeps its ID, so a lost reply can't spin twice.
   const requestId = useRef<string | null>(null)
+  const wheel = useRef<WheelHandle>(null)
 
   function edit<T>(setter: (value: T) => void, value: T) {
     requestId.current = null
@@ -48,11 +50,16 @@ function Table({ loaded }: { loaded: RouletteTable }) {
     requestId.current ??= crypto.randomUUID()
     const id = requestId.current
     setLast(null)
+    wheel.current?.start()
     const done = await run(async () => {
-      setLast(await spin({ requestId: id, choice, bet: Number(bet) }))
+      const outcome = await spin({ requestId: id, choice, bet: Number(bet) })
+      // REQ-112: the balance and the result wait for the wheel to stop.
+      await wheel.current?.land(outcome.result)
+      setLast(outcome)
       return ''
     })
     if (done) requestId.current = null
+    else wheel.current?.rest()
     // Quietly, so a failed read doesn't take the table away mid-retry.
     fetchRoulette().then(setTable, () => undefined)
   }
@@ -69,10 +76,12 @@ function Table({ loaded }: { loaded: RouletteTable }) {
         </strong>
       </div>
 
-      <p className="spin-line" role="status">
-        {last && <Result spin={last} />}
-      </p>
-      {outcome?.kind === 'failed' && <Outcome outcome={outcome} />}
+      <Wheel ref={wheel} />
+
+      <div className="spin-line">
+        <p role="status">{last && <Result spin={last} />}</p>
+        {outcome?.kind === 'failed' && <Outcome outcome={outcome} />}
+      </div>
 
       <form
         className="bet"
@@ -82,38 +91,37 @@ function Table({ loaded }: { loaded: RouletteTable }) {
           void play()
         }}
       >
-        <fieldset className="group">
-          <legend>{text.roulette.choice}</legend>
-          <div className="colours">
-            {choices.map((colour) => (
-              <button
-                key={colour}
-                type="button"
-                className={`colour colour--${colour}`}
-                aria-pressed={choice === colour}
-                disabled={busy}
-                onClick={() => edit(setChoice, colour)}
-              >
-                {text.roulette.colours[colour]}
-              </button>
-            ))}
-          </div>
-        </fieldset>
-        <Field label={text.roulette.bet}>
-          <input
-            inputMode="numeric"
-            value={bet}
-            disabled={busy}
-            onChange={(event) => edit(setBet, event.target.value)}
-            {...plainInput}
-          />
-        </Field>
+        <div className="colours" role="group" aria-label={text.roulette.choice}>
+          {choices.map((colour) => (
+            <button
+              key={colour}
+              type="button"
+              className={`colour colour--${colour}`}
+              aria-pressed={choice === colour}
+              disabled={busy}
+              onClick={() => edit(setChoice, colour)}
+            >
+              {text.roulette.colours[colour]}
+            </button>
+          ))}
+        </div>
+        <div className="bet-row">
+          <Field label={text.roulette.bet}>
+            <input
+              inputMode="numeric"
+              value={bet}
+              disabled={busy}
+              onChange={(event) => edit(setBet, event.target.value)}
+              {...plainInput}
+            />
+          </Field>
+          <button type="submit" className="primary" disabled={busy}>
+            {busy ? text.roulette.spinning : text.roulette.spin}
+          </button>
+        </div>
         <p className="hint" data-max-bet>
           {text.roulette.maxBet(formatMarcones(table.max_bet))}
         </p>
-        <button type="submit" className="primary" disabled={busy}>
-          {busy ? text.roulette.spinning : text.roulette.spin}
-        </button>
       </form>
     </>
   )

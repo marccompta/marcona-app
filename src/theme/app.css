@@ -952,6 +952,93 @@ select {
   color: var(--ivory);
 }
 
+/* The one showpiece on the screen. Only .wheel-disc turns, as a CSS rotation. */
+.wheel {
+  position: relative;
+  width: min(100%, 250px);
+  aspect-ratio: 1;
+  margin: 10px auto 0;
+}
+
+.wheel svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.wheel-disc {
+  will-change: transform;
+}
+
+.wheel-rim {
+  fill: var(--gold-dark);
+  stroke: var(--gold);
+  stroke-width: 1.5;
+}
+
+.wheel-track {
+  fill: var(--felt-950);
+}
+
+.pocket {
+  stroke: var(--gold);
+  stroke-width: 0.8;
+}
+
+.pocket--red {
+  fill: var(--pocket-red);
+}
+
+.pocket--black {
+  fill: var(--pocket-black);
+}
+
+.pocket--white {
+  fill: var(--ivory);
+}
+
+.wheel-ring {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 1.5;
+}
+
+.wheel-spoke {
+  stroke: var(--gold);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.wheel-hub {
+  fill: var(--gold);
+  stroke: var(--gold-light);
+  stroke-width: 1.5;
+}
+
+.wheel-hub-mark {
+  fill: var(--felt-900);
+}
+
+/* Gold, so it still shows in the ivory pocket. */
+.wheel-ball {
+  fill: var(--gold-light);
+  stroke: var(--felt-950);
+  stroke-width: 1.5;
+  transition: opacity 0.25s var(--ease);
+}
+
+.wheel[data-wheel='idle'] .wheel-ball {
+  opacity: 0;
+}
+
+.wheel-pointer {
+  fill: var(--gold);
+  stroke: var(--felt-950);
+  stroke-width: 1.5;
+}
+
 /* Keeps its height, so the controls don't jump when a result appears. */
 .spin-line {
   display: grid;
@@ -978,15 +1065,25 @@ select {
   margin-top: 6px;
 }
 
+.bet-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: end;
+  gap: 14px;
+}
+
 .bet .primary {
   margin-top: 0;
+}
+
+.bet .hint {
+  text-align: center;
 }
 
 .colours {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
-  margin-top: 4px;
 }
 
 .colour {

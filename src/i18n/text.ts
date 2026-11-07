@@ -91,6 +91,7 @@ export const text = {
   },
   roulette: {
     title: 'Ruleta',
+    wheel: 'Roda de la ruleta',
     balance: 'Saldo',
     choice: 'Aposta a',
     bet: 'Aposta',
