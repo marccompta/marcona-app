@@ -33,15 +33,16 @@ test('REQ-100, REQ-102, REQ-112: spins on the real server, and the wheel, balanc
   await logIn(page, player)
 
   await page.getByRole('link', { name: 'Ruleta', exact: true }).click()
-  await expect(page.locator('[data-max-bet]')).toHaveText('Aposta màxima: 5 marcones')
-  await page.getByLabel('Aposta', { exact: true }).fill('5')
+  // The admin can change the limit, and a bet of 1 is allowed at any setting.
+  await expect(page.locator('[data-max-bet]')).toHaveText(/^Aposta màxima: \d+ marcon/)
+  await page.getByLabel('Aposta', { exact: true }).fill('1')
   await page.getByRole('button', { name: 'Gira' }).click()
 
   const shown = page.locator('[data-result]')
   await expect(shown).toBeVisible({ timeout: 15000 })
   const result = (await shown.getAttribute('data-result'))!
   await expect(page.locator('[data-wheel]')).toHaveAttribute('data-landed', result)
-  await expect(page.locator('[data-balance] .count')).toHaveAttribute('data-value', result === 'red' ? '105' : '95')
+  await expect(page.locator('[data-balance] .count')).toHaveAttribute('data-value', result === 'red' ? '101' : '99')
 
   await page.getByRole('link', { name: 'Auditoria' }).click()
   const colour = { red: 'vermell', black: 'negre', white: 'blanc' }[result]

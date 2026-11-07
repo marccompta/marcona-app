@@ -319,6 +319,167 @@ test.describe('with reduced motion', () => {
   }
 })
 
+// How much of the confetti canvas has been painted on.
+const painted = (page: Page) =>
+  page.locator('[data-confetti]').evaluate((canvas) => {
+    const { width, height } = canvas as HTMLCanvasElement
+    const { data } = (canvas as HTMLCanvasElement).getContext('2d')!.getImageData(0, 0, width, height)
+    let pixels = 0
+    for (let index = 3; index < data.length; index += 4) if (data[index] > 0) pixels += 1
+    return pixels
+  })
+
+const winAmount = (page: Page) => page.locator('[data-win-amount]')
+const confetti = (page: Page) => page.locator('[data-confetti]')
+
+// Timed in the browser, as a test runner on a busy machine can notice things late.
+const timeOnScreen = (page: Page) =>
+  page.evaluate(
+    () =>
+      new Promise<number>((resolve) => {
+        let began = 0
+        new MutationObserver(() => {
+          const amount = document.querySelector('[data-win-amount]')
+          if (amount && !began) began = performance.now()
+          if (!amount && began) resolve(performance.now() - began)
+        }).observe(document.body, { childList: true, subtree: true })
+      }),
+  )
+
+// Right now, with no retrying: a celebration ends by itself, so a check that
+// retries would simply wait for a wrong one to go.
+const nothingCelebrating = async (page: Page) => {
+  expect(await winAmount(page).count()).toBe(0)
+  expect(await confetti(page).count()).toBe(0)
+}
+
+test.describe('a win', () => {
+  test.describe('with motion', () => {
+    test.use({ reducedMotion: 'no-preference' })
+
+    test('REQ-113: the marcones won show large over the wheel, with confetti', async ({ page }) => {
+      await openTable(page)
+      await spin(page, 'Vermell', '5')
+
+      await expect(winAmount(page)).toBeVisible({ timeout: 10000 })
+      await expect(winAmount(page)).toContainText('+5')
+      await expect(winAmount(page)).toContainText('marcones')
+      await expect.poll(() => painted(page)).toBeGreaterThan(200)
+
+      const size = await winAmount(page).locator('strong').evaluate((amount) => parseFloat(getComputedStyle(amount).fontSize))
+      expect(size).toBeGreaterThanOrEqual(56)
+    })
+
+    test('REQ-113: it waits for the wheel, as it gives the result away', async ({ page }) => {
+      await openTable(page)
+      const answered = page.waitForResponse('**/rest/v1/rpc/spin')
+      await spin(page, 'Vermell', '5')
+      await answered
+
+      await expect(wheel(page)).toHaveAttribute('data-wheel', turning)
+      await nothingCelebrating(page)
+    })
+
+    test('REQ-113: the amount lasts about a second, and the confetti then clears', async ({ page }) => {
+      await openTable(page)
+      const shown = timeOnScreen(page)
+      await spin(page, 'Vermell', '5')
+
+      const time = await shown
+      expect(time).toBeGreaterThanOrEqual(1000)
+      expect(time).toBeLessThan(2000)
+      await expect(confetti(page)).toHaveCount(0, { timeout: 3000 })
+
+      // The result stays, as only the celebration is brief.
+      await expect(page.locator('[data-result="red"]')).toContainText('Guanyes 5 marcones')
+    })
+
+    for (const [choice, result] of [
+      ['Vermell', 'black'],
+      ['Vermell', 'white'],
+      ['Negre', 'red'],
+    ] as const) {
+      test(`REQ-113: ${result} on a bet on ${choice} celebrates nothing`, async ({ page }) => {
+        const calls = await openTable(page)
+        calls.spinResults.push(result)
+        await spin(page, choice, '5')
+
+        await expect(page.locator(`[data-result="${result}"]`)).toBeVisible({ timeout: 10000 })
+        await page.waitForTimeout(100)
+        await nothingCelebrating(page)
+      })
+    }
+
+    test('REQ-113: a new spin clears the last celebration, and a second win gets its own', async ({ page }) => {
+      const calls = await openTable(page)
+      calls.spinResults.push('red', 'black', 'red')
+      await spin(page, 'Vermell', '2')
+      await winAmount(page).waitFor({ timeout: 10000 })
+
+      await page.getByRole('button', { name: 'Gira' }).click()
+      await expect(page.getByRole('button', { name: 'Girant…' })).toBeVisible()
+      await nothingCelebrating(page)
+      await expect(page.locator('[data-result="black"]')).toBeVisible({ timeout: 10000 })
+
+      await page.getByRole('button', { name: 'Gira' }).click()
+      await expect(winAmount(page)).toContainText('+2', { timeout: 10000 })
+    })
+
+    test('REQ-113: nothing covers the controls, so the next spin can be tapped at once', async ({ page }) => {
+      await openTable(page)
+      await spin(page, 'Vermell', '1')
+      await winAmount(page).waitFor({ timeout: 10000 })
+
+      await page.getByRole('button', { name: 'Negre' }).click({ timeout: 500 })
+      await expect(page.getByRole('button', { name: 'Negre' })).toHaveAttribute('aria-pressed', 'true')
+    })
+
+    test('REQ-113: leaving mid-celebration clears it', async ({ page }) => {
+      await openTable(page)
+      await spin(page, 'Vermell', '1')
+      await winAmount(page).waitFor({ timeout: 10000 })
+      await page.getByRole('link', { name: 'Auditoria' }).click()
+      await page.locator('[data-screen="auditoria"]').waitFor()
+
+      await nothingCelebrating(page)
+    })
+
+    test('REQ-023: one marcona reads right, and a big win fits at 360px', async ({ page }) => {
+      await openTable(page, 1234567890)
+      await spin(page, 'Vermell', '61728394')
+      await winAmount(page).waitFor({ timeout: 10000 })
+
+      const box = await winAmount(page).locator('strong').boundingBox()
+      expect(box!.x).toBeGreaterThanOrEqual(0)
+      expect(box!.x + box!.width).toBeLessThanOrEqual(360)
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+    })
+
+    test('REQ-017: a win of one says marcona', async ({ page }) => {
+      await openTable(page)
+      await spin(page, 'Vermell', '1')
+      await expect(winAmount(page)).toContainText('+1', { timeout: 10000 })
+      await expect(winAmount(page).locator('span')).toHaveText('marcona')
+    })
+  })
+
+  test.describe('with reduced motion', () => {
+    test('REQ-114: the amount still shows, for about a second, with no confetti', async ({ page }) => {
+      await openTable(page)
+      const shown = timeOnScreen(page)
+      await spin(page, 'Vermell', '5')
+
+      await expect(winAmount(page)).toContainText('+5', { timeout: 1000 })
+      expect(await confetti(page).count()).toBe(0)
+      expect(await winAmount(page).evaluate((amount) => getComputedStyle(amount).animationName)).toBe('none')
+
+      const time = await shown
+      expect(time).toBeGreaterThanOrEqual(1000)
+      expect(time).toBeLessThan(2000)
+    })
+  })
+})
+
 test.describe('the admin settings', () => {
   const settings = async (page: Page) => {
     const me = { ...admin, balance: 100 }

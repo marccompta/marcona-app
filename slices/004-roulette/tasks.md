@@ -13,5 +13,5 @@ Work through these in order. Each task leaves the tests passing.
 
 Added by `/slice-verdict`, one task per review item, e.g. **R1.1** for round 1, item 1.
 
-- [ ] **R1.1:** Burst confetti from the wheel when a spin wins, and never with reduced motion. (REQ-113, REQ-114)
-- [ ] **R1.2:** Show the marcones just won large over the wheel for about a second. (REQ-113)
+- [x] **R1.1:** Burst confetti from the wheel when a spin wins, and never with reduced motion. (REQ-113, REQ-114)
+- [x] **R1.2:** Show the marcones just won large over the wheel for about a second. (REQ-113)

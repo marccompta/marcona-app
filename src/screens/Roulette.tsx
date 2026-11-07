@@ -8,6 +8,7 @@ import { Field, Outcome, plainInput, useAction } from '../shell/Form'
 import { EmptyChip } from '../shell/icons'
 import { Pending } from './Movements'
 import { Wheel, type WheelHandle } from './Wheel'
+import { WinBurst } from './WinBurst'
 
 const choices: Choice[] = ['red', 'black']
 
@@ -76,7 +77,10 @@ function Table({ loaded }: { loaded: RouletteTable }) {
         </strong>
       </div>
 
-      <Wheel ref={wheel} />
+      <div className="wheel-stage">
+        <Wheel ref={wheel} />
+        {last?.won && <WinBurst delta={last.delta} />}
+      </div>
 
       <div className="spin-line">
         <p role="status">{last && <Result spin={last} />}</p>
