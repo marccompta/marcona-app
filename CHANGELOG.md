@@ -17,6 +17,10 @@ All notable user-facing changes are documented here. The format follows [Keep a 
 - The Esdeveniments screen, with invitations, open events and past events, and a screen for each event.
 - Forced participation for the admin, where every invitee joins and pays at once.
 - Buy-ins, refunds and payouts in the audit, each opening its event.
+- Roulette: pick red or black, bet up to your limit and watch the wheel land on a result decided by the server.
+- A win celebration, with the marcones won shown large and confetti across the screen.
+- Spins in the audit, with the choice and the result.
+- Roulette settings for the admin: the white chance, the maximum bet, and opening or closing the table.
 
 ### Changed
 

@@ -70,6 +70,7 @@ Slice: 001
 | Play the demo accounts during a review, from this machine only | `npm run demo -- fund 100`, which cancels every open event first, `status`, `accept [event] [player]`, `decline [event] [player]` or `invite <event> <buy-in>` |
 | Rules only the database owner can test, after any migration touching them | Run `tests/sql/constraints.sql` through the Supabase MCP server's `execute_sql` |
 | Payout maths and forced participation, after any migration touching them | Run `tests/sql/events.sql` through the Supabase MCP server's `execute_sql` |
+| Roulette odds and white, after any migration touching them | Run `tests/sql/roulette.sql` through the Supabase MCP server's `execute_sql` |
 
 Write long scripts as files, then run them. Long heredocs break in Git Bash here, especially with apostrophes.
 

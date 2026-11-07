@@ -109,25 +109,25 @@ Every requirement has a permanent ID. Raw input is kept in `docs/product/intake/
 | REQ-098 | When a user opens an event, the system shall show its buy-in, pot, payout rule, participants and status, with a crown on the creator and a pill status tag. | active | 003 | test |
 | REQ-099 | The system shall record every buy-in, refund and payout as a ledger movement linked to its event. | active | 003 | test |
 | REQ-100 | The project shall include a smoke test of the main flows on a phone-sized screen, extended by each later slice. | active | 003 | test |
-| REQ-101 | The system shall offer roulette from its own tab. | planned | 004 | test |
-| REQ-102 | When a user chooses red or black and a valid bet and spins, the system shall resolve the spin on the server. | planned | 004 | test |
-| REQ-103 | The system shall decide every spin with a secure random source on the server. | planned | 004 | test |
-| REQ-104 | The system shall default the odds to red 18 in 37, black 18 in 37 and white 1 in 37. | planned | 004 | test |
-| REQ-105 | When the result matches the chosen colour, the system shall double the bet, a net gain equal to the bet. | planned | 004 | test |
-| REQ-106 | When the result is the other colour or white, the system shall take the bet. | planned | 004 | test |
-| REQ-107 | If a bet isn't a whole number of at least 1, then the system shall reject it. | planned | 004 | test |
-| REQ-108 | The system shall set the maximum bet to the configured percentage of the player's current balance, 5% by default, rounded down and never below 1. | planned | 004 | test |
-| REQ-109 | The system shall show the player's current maximum bet on the roulette screen. | planned | 004 | test |
-| REQ-110 | If a bet exceeds the maximum or the player's balance, then the server shall reject it. | planned | 004 | test |
-| REQ-111 | When a spin resolves, the system shall record one ledger movement that shows the choice and the result in the audit. | planned | 004 | test |
-| REQ-112 | The system shall animate only the result it receives from the server. | planned | 004 | test |
-| REQ-113 | The system shall show a satisfying wheel or chip animation for each spin. | planned | 004 | manual |
-| REQ-114 | Where the device asks for reduced motion, the system shall show the result without the spin animation. | planned | 004 | test |
-| REQ-115 | When the admin changes the white chance, the system shall use it for later spins. | planned | 004 | test |
-| REQ-116 | When the admin changes the maximum bet percentage, the system shall use it for later spins. | planned | 004 | test |
-| REQ-117 | When the admin turns roulette off or on, the system shall apply it to later spins. | planned | 004 | test |
-| REQ-118 | While roulette is off, the system shall reject spins. | planned | 004 | test |
-| REQ-119 | If the admin enters invalid roulette settings, then the system shall reject them. | planned | 004 | test |
+| REQ-101 | The system shall offer roulette from its own tab. | active | 004 | test |
+| REQ-102 | When a user chooses red or black and a valid bet and spins, the system shall resolve the spin on the server. | active | 004 | test |
+| REQ-103 | The system shall decide every spin with a secure random source on the server. | active | 004 | test |
+| REQ-104 | The system shall default the odds to red 18 in 37, black 18 in 37 and white 1 in 37. | active | 004 | test |
+| REQ-105 | When the result matches the chosen colour, the system shall double the bet, a net gain equal to the bet. | active | 004 | test |
+| REQ-106 | When the result is the other colour or white, the system shall take the bet. | active | 004 | test |
+| REQ-107 | If a bet isn't a whole number of at least 1, then the system shall reject it. | active | 004 | test |
+| REQ-108 | The system shall set the maximum bet to the configured percentage of the player's current balance, 5% by default, rounded down and never below 1. | active | 004 | test |
+| REQ-109 | The system shall show the player's current maximum bet on the roulette screen. | active | 004 | test |
+| REQ-110 | If a bet exceeds the maximum or the player's balance, then the server shall reject it. | active | 004 | test |
+| REQ-111 | When a spin resolves, the system shall record one ledger movement that shows the choice and the result in the audit. | active | 004 | test |
+| REQ-112 | The system shall animate only the result it receives from the server. | active | 004 | test |
+| REQ-113 | The system shall show a satisfying wheel or chip animation for each spin. | active | 004 | manual |
+| REQ-114 | Where the device asks for reduced motion, the system shall show the result without the spin animation. | active | 004 | test |
+| REQ-115 | When the admin changes the white chance, the system shall use it for later spins. | active | 004 | test |
+| REQ-116 | When the admin changes the maximum bet percentage, the system shall use it for later spins. | active | 004 | test |
+| REQ-117 | When the admin turns roulette off or on, the system shall apply it to later spins. | active | 004 | test |
+| REQ-118 | While roulette is off, the system shall reject spins. | active | 004 | test |
+| REQ-119 | If the admin enters invalid roulette settings, then the system shall reject them. | active | 004 | test |
 | REQ-120 | When a user creates an event, the system shall let them choose classic or any game that's turned on. | superseded by REQ-175 | 005 | test |
 | REQ-121 | If a user creates an event for a game that's turned off, then the system shall reject it. | planned | 005 | test |
 | REQ-122 | When a game event is created, the system shall store a copy of that game's current settings with the event. | planned | 005 | test |
@@ -225,7 +225,7 @@ Every requirement has a permanent ID. Raw input is kept in `docs/product/intake/
 | 001 | Foundation: the stack and tools are in place, and the admin can log in on a phone at the public URL and see a styled, empty Catalan ranking. Includes the visual directions. | REQ-001 to REQ-033, REQ-206 | closed |
 | 002 | Users and marcones: the admin manages users and marcones, and everyone sees the ranking, user details and audit. | REQ-035 to REQ-070 | closed |
 | 003 | Classic events: the full event lifecycle, including payouts, refunds and rounding. | REQ-071 to REQ-100, REQ-186 to REQ-190 | closed |
-| 004 | Roulette: spin, payout, audit and admin settings. | REQ-101 to REQ-119 | planned |
+| 004 | Roulette: spin, payout, audit and admin settings. | REQ-101 to REQ-119 | closed |
 | 005 | Confia o traeix: the secret-choice engine, the first game, and admin game settings. | REQ-120 to REQ-149, REQ-175 to REQ-184, REQ-191, REQ-194 to REQ-196, REQ-198 to REQ-204 | planned |
 | 006 | Extras: live updates, QR code and home screen install, in that order. Each can be dropped on its own. | REQ-150 to REQ-154 | planned |
 | 007 | La minoria: the second game, on the same engine. | REQ-155 to REQ-163, REQ-185, REQ-192, REQ-193, REQ-197, REQ-205 | planned |
