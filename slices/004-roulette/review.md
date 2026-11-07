@@ -7,7 +7,7 @@ MarcOna now has roulette. In the **Ruleta** tab, a player picks red or black, be
 Two things need you in particular:
 
 - **Does the spin feel good?** Only you can judge this (REQ-113).
-- **Does it work in Safari on your iPhone?** Windows blocked the WebKit browser tests on this computer, so no test has run in Safari's engine for this slice. See section 6.
+- **Does it work in Safari on your iPhone?** WebKit, Safari's engine, now passes on GitHub's Linux servers, but that isn't an iPhone. See section 6.
 
 This should take about 7 minutes. You'll use your phone as the admin, who is also a player, and a terminal once. What was agreed is in [spec.md](spec.md), and the work is in [tasks.md](tasks.md).
 
@@ -75,17 +75,18 @@ Open https://marccompta.github.io/marcona-app/. This slice's branch is what's de
 | 11 | REQ-115, REQ-116 | Steps 7 and 8 | Later spins use the new values, and you see the new maximum |
 | 12 | REQ-117, REQ-118 | Steps 9 and 10. A spin sent to a closed table is automated | A closed table offers no spin, and it works again once reopened. Tests show a direct spin is refused |
 | 13 | REQ-119 | Step 6. That the stored settings stay the same is automated | Catalan errors. The form keeps what you typed, and tests show nothing was saved |
-| 14 | Not a requirement | All of it, on an iPhone | It works in real Safari, which no test has covered in this slice |
+| 14 | Not a requirement | All of it, on an iPhone | It works in real Safari. Tests cover WebKit on Linux, not an iPhone, and not against the real project |
 
 ## 5. Already checked automatically
 
 | Check | Command | Result |
 |---|---|---|
-| Unit tests | `npm test` | 106 passed |
+| Unit tests | `npm test` | 107 passed |
 | Hosted tests, on the real project, including balances of 39 and 1, direct calls above the limit, and direct spins on a closed table | `npm run test:hosted` | 166 passed, on the last full run. The only code change since is the wheel gradient, which they don't touch |
 | Browser tests, Chromium, local build | `npx playwright test --project=chromium` | 165 passed, including the phone-sized smoke test on the real project (REQ-100) |
 | Browser tests, Chromium, deployed site | `E2E_BASE_URL=https://marccompta.github.io/marcona-app/ npx playwright test --project=chromium` | 165 passed |
-| **Browser tests, WebKit** | `npx playwright test --project=webkit` | **Not run: every test fails at launch. See section 6** |
+| Browser tests, WebKit and Chromium, on Linux in GitHub Actions | The `browsers` job in `.github/workflows/ci.yml` | 316 passed: 158 in each engine, including all 47 roulette tests. 14 skipped: the 7 tests per engine that need the real project |
+| **Browser tests, WebKit, on this computer** | `npx playwright test --project=webkit` | **Not run: every test fails at launch. See section 6** |
 | Build, with the type check | `npm run build` | Passed |
 | Docs and traceability | `python scripts/check_docs.py` | Passed |
 | Roulette rules | `tests/sql/roulette.sql` through `execute_sql` | All 5 checks passed. 370,000 draws gave 179,201 red, 180,717 black and 10,082 white. At 1 in 2, 400 spins gave 107 red, 94 black and 199 white, and only red paid a bet on red |
@@ -95,11 +96,11 @@ Open https://marccompta.github.io/marcona-app/. This slice's branch is what's de
 | Wheel motion | A throwaway script sampled every frame of 3 spins in Chromium | About 60 frames a second, never backwards, with no jump in speed. A spin takes 3.3 to 5 seconds from the tap, depending on how far the wheel travels, and the auditor measured 3.8 to 4.9. A real phone may differ |
 | Supabase advisors | `get_advisors`, security | Nothing new that needs fixing. `app_settings` has no policies on purpose, and a hosted test shows the browser can't reach it. The new functions get the usual `SECURITY DEFINER` warning, as they follow [ADR 0004](../../docs/adr/0004-money-in-postgres-functions.md) |
 
-Instructions run as written: steps 1 to 10 were run on the deployed site by a script, in Chromium at iPhone 14 size, from a clean `fund 100`, and every expected result matched. Step 11 wasn't run on a phone, though the browser tests cover it. Nothing has been tried on a real phone or in Safari. Audit by `slice-auditor`: **failed on the wording of this file, not on the slice.** It ran the setup and all 11 steps on the deployed site in Chromium, with step 11 emulated, and every result on screen matched apart from step 4's "barely moves". Its main problem was that two spins often don't show both a win and a loss, so step 3 now says to keep spinning. Its other notes were fixed too: where the login is, rows 12 and 13, the spin time, the balance after a reset, a keyboard with no `.`, and unclear wording. No second audit ran after these edits, which change only this file. Its run left 6 more spins in the audit, and your balance at 92, which `fund 100` puts right.
+Instructions run as written: steps 1 to 10 were run on the deployed site by a script, in Chromium at iPhone 14 size, from a clean `fund 100`, and every expected result matched. Step 11 wasn't run on a phone, though the browser tests cover it. Nothing has been tried on a real phone or in real Safari. Audit by `slice-auditor`: **failed on the wording of this file, not on the slice.** It ran the setup and all 11 steps on the deployed site in Chromium, with step 11 emulated, and every result on screen matched apart from step 4's "barely moves". Its main problem was that two spins often don't show both a win and a loss, so step 3 now says to keep spinning. Its other notes were fixed too: where the login is, rows 12 and 13, the spin time, the balance after a reset, a keyboard with no `.`, and unclear wording. No second audit ran after these edits, which change only this file. Its run left 6 more spins in the audit, and your balance at 92, which `fund 100` puts right.
 
 ## 6. Known limitations
 
-- **WebKit didn't run.** Windows Smart App Control blocks the unsigned DLLs in Playwright's WebKit, so every test dies at launch with exit code `0xC0E90002`. It's logged in `Microsoft-Windows-CodeIntegrity/Operational`, on 6 November at 16:00 and 7 November at 14:00. Slice 003's WebKit runs fell between those, and why it changed is unknown. You chose to review on Chromium and check Safari yourself, so checklist row 14 is the only cover for Safari's engine in this slice. WebKit has caught real bugs before.
+- **WebKit can't run on this computer.** Windows Smart App Control blocks the unsigned DLLs in Playwright's WebKit, so every test dies at launch with exit code `0xC0E90002`. It's logged in `Microsoft-Windows-CodeIntegrity/Operational`, on 6 November at 16:00 and 7 November at 14:00. Slice 003's WebKit runs fell between those, and why it changed is unknown. So WebKit now runs in GitHub Actions instead, on Linux, against the fake Supabase. Two things stay untested in WebKit: the real project, including the smoke test, and an actual iPhone, which is what checklist row 14 is for.
 - **The wheel always draws one white pocket.** It's a picture, so when you change the odds, the drawing doesn't change. Players aren't told the current odds.
 - **A refused bet starts the wheel briefly.** It turns from the tap, as [design.md](design.md) asks, and the refusal stops it. Bets aren't checked in the browser first.
 - **With 0 marcones,** the screen shows a maximum of 1, as REQ-108 says, and tapping **GIRA** shows "El saldo no té prou marcones."
@@ -117,7 +118,8 @@ Instructions run as written: steps 1 to 10 were run on the deployed site by a sc
 - **The review uses your admin account,** not a demo player as [design.md](design.md) said. Demo passwords aren't kept, and the admin is also a player.
 - **Existing tests changed:** REQ-046 now looks for password inputs, as Ruleta rightly has a bet field. `tests/hosted/screens.test.ts` expects the new `details` field. `Placeholder.tsx` and its text are gone, as Ruleta was its last use.
 - **Test first:** the tests for tasks T1, T2, T4 and T6 failed before they passed, though T1 and T2 failed because the functions didn't exist. T3's tests never had a failing run, because the migration went in at the same step that a script of mine stopped. T5's unit tests failed first, but its browser tests failed at the strict build. The deliberate breaks stood in for those.
-- **Full suite per task:** after each task I ran the unit tests and that task's tests, not everything. The full suites ran at the end, on Chromium only.
+- **Full suite per task:** after each task I ran the unit tests and that task's tests, not everything. The full suites ran at the end, on Chromium here and in both engines on GitHub.
+- **CI, added at your request:** a `browsers` job runs the browser tests in both engines on each PR and on each push to `main` or a slice. It's tooling, added after the handover, and it changed no app code.
 - **Migrations:** of the three in this slice, `spin` contains a `drop constraint`, and all three applied the first time. I can't tell whether anyone was asked, and the same goes for `execute_sql`.
 - **The demo reset:** `fund 100` cancelled and refunded two open events during the rehearsal, "Un altre test" and "Otro".
 
