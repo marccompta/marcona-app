@@ -79,36 +79,36 @@ Every requirement has a permanent ID. Raw input is kept in `docs/product/intake/
 | REQ-068 | When a user picks a person in the audit filter, the system shall show only that person's movements. | active | 002 | test |
 | REQ-069 | The system shall show who, the amount, the concept or event, the balance after, and the timestamp on each audit row. | active | 002 | test |
 | REQ-070 | The system shall show balances as chip stacks with count-up numbers. | active | 002 | manual |
-| REQ-071 | When a user submits a valid classic event with a name, buy-in, invitees, and payout percentages for 1st, 2nd and 3rd, the system shall create it as open. | planned | 003 | test |
-| REQ-072 | When a classic event is created, the system shall make the creator an accepted participant and charge them the buy-in. | planned | 003 | test |
-| REQ-073 | The system shall default the payout percentages to 50, 30 and 20. | planned | 003 | test |
-| REQ-074 | If the payout percentages don't sum to 100, then the system shall reject the event. A place may be 0%. | planned | 003 | test |
-| REQ-075 | If a buy-in isn't a whole number of at least 1, then the system shall reject the event. | planned | 003 | test |
-| REQ-076 | If the creator's balance is below the buy-in, then the system shall reject the event. | planned | 003 | test |
-| REQ-077 | If an event has no invitees, then the system shall reject it. | planned | 003 | test |
-| REQ-078 | The system shall let the creator invite only other active users. | planned | 003 | test |
-| REQ-079 | When an invited user accepts, the system shall charge the buy-in immediately and make them an accepted participant. | planned | 003 | test |
-| REQ-080 | If an invited user's balance is below the buy-in when they accept, then the system shall reject the acceptance and leave them invited. | planned | 003 | test |
-| REQ-081 | When an invited user declines, the system shall record the decline without charging them. | planned | 003 | test |
-| REQ-082 | If a user answers an invitation that's no longer pending, then the system shall reject the answer. | planned | 003 | test |
-| REQ-083 | The system shall hold every event in one of three states, open, completed or cancelled, and shall allow only open to change. | planned | 003 | test |
-| REQ-084 | When the creator cancels an open event, the system shall cancel it and refund every accepted participant. | planned | 003 | test |
-| REQ-085 | When the admin cancels any open event, the system shall cancel it and refund every accepted participant. | planned | 003 | test |
-| REQ-086 | If anyone else tries to cancel an event, then the system shall reject it. | planned | 003 | test |
-| REQ-087 | If a participant who has paid tries to withdraw, then the system shall reject it. | planned | 003 | test |
-| REQ-088 | While a classic event is open with at least 2 accepted participants, counting the creator, the system shall let the creator complete it. | planned | 003 | test |
-| REQ-089 | If anyone else tries to complete an event, or fewer than 2 people have accepted, then the system shall reject it. | planned | 003 | test |
-| REQ-090 | The system shall calculate the pot as the buy-in times the number of accepted participants. | planned | 003 | test |
-| REQ-091 | When the creator completes a classic event with exactly 2 accepted participants, the system shall have them pick a winner and pay that person the whole pot. | planned | 003 | test |
-| REQ-092 | When the creator completes a classic event with 3 or more accepted participants, the system shall require a different participant for each place with a percentage above 0. | planned | 003 | test |
-| REQ-093 | When a classic event with 3 or more participants is paid out, the system shall round each share down and give the remainder to the first paid place, so the total equals the pot. | planned | 003 | test |
-| REQ-094 | When an event completes or is cancelled, the system shall lapse its pending invitations. | planned | 003 | test |
-| REQ-095 | When a user is removed, the system shall decline their pending invitations. | planned | 003 | test |
-| REQ-096 | If a user has accepted an open event, then the system shall block their removal. | planned | 003 | test |
-| REQ-097 | When a user opens Esdeveniments, the system shall group events into invitations for them, open events and past events. | planned | 003 | test |
-| REQ-098 | When a user opens an event, the system shall show its buy-in, pot, payout rule, participants and status, with a crown on the creator and a pill status tag. | planned | 003 | test |
-| REQ-099 | The system shall record every buy-in, refund and payout as a ledger movement linked to its event. | planned | 003 | test |
-| REQ-100 | The project shall include a smoke test of the main flows on a phone-sized screen, extended by each later slice. | planned | 003 | test |
+| REQ-071 | When a user submits a valid classic event with a name, buy-in, invitees, and payout percentages for 1st, 2nd and 3rd, the system shall create it as open. | active | 003 | test |
+| REQ-072 | When a classic event is created, the system shall make the creator an accepted participant and charge them the buy-in. | active | 003 | test |
+| REQ-073 | The system shall default the payout percentages to 50, 30 and 20. | active | 003 | test |
+| REQ-074 | If the payout percentages don't sum to 100, then the system shall reject the event. A place may be 0%. | active | 003 | test |
+| REQ-075 | If a buy-in isn't a whole number of at least 1, then the system shall reject the event. | active | 003 | test |
+| REQ-076 | If the creator's balance is below the buy-in, then the system shall reject the event. | active | 003 | test |
+| REQ-077 | If an event has no invitees, then the system shall reject it. | active | 003 | test |
+| REQ-078 | The system shall let the creator invite only other active users. | active | 003 | test |
+| REQ-079 | When an invited user accepts, the system shall charge the buy-in immediately and make them an accepted participant. | active | 003 | test |
+| REQ-080 | If an invited user's balance is below the buy-in when they accept, then the system shall reject the acceptance and leave them invited. | active | 003 | test |
+| REQ-081 | When an invited user declines, the system shall record the decline without charging them. | active | 003 | test |
+| REQ-082 | If a user answers an invitation that's no longer pending, then the system shall reject the answer. | active | 003 | test |
+| REQ-083 | The system shall hold every event in one of three states, open, completed or cancelled, and shall allow only open to change. | active | 003 | test |
+| REQ-084 | When the creator cancels an open event, the system shall cancel it and refund every accepted participant. | active | 003 | test |
+| REQ-085 | When the admin cancels any open event, the system shall cancel it and refund every accepted participant. | active | 003 | test |
+| REQ-086 | If anyone else tries to cancel an event, then the system shall reject it. | active | 003 | test |
+| REQ-087 | If a participant who has paid tries to withdraw, then the system shall reject it. | active | 003 | test |
+| REQ-088 | While a classic event is open with at least 2 accepted participants, counting the creator, the system shall let the creator complete it. | active | 003 | test |
+| REQ-089 | If anyone else tries to complete an event, or fewer than 2 people have accepted, then the system shall reject it. | active | 003 | test |
+| REQ-090 | The system shall calculate the pot as the buy-in times the number of accepted participants. | active | 003 | test |
+| REQ-091 | When the creator completes a classic event with exactly 2 accepted participants, the system shall have them pick a winner and pay that person the whole pot. | active | 003 | test |
+| REQ-092 | When the creator completes a classic event with 3 or more accepted participants, the system shall require a different participant for each place with a percentage above 0. | active | 003 | test |
+| REQ-093 | When a classic event with 3 or more participants is paid out, the system shall round each share down and give the remainder to the first paid place, so the total equals the pot. | active | 003 | test |
+| REQ-094 | When an event completes or is cancelled, the system shall lapse its pending invitations. | active | 003 | test |
+| REQ-095 | When a user is removed, the system shall decline their pending invitations. | active | 003 | test |
+| REQ-096 | If a user has accepted an open event, then the system shall block their removal. | active | 003 | test |
+| REQ-097 | When a user opens Esdeveniments, the system shall group events into invitations for them, open events and past events. | active | 003 | test |
+| REQ-098 | When a user opens an event, the system shall show its buy-in, pot, payout rule, participants and status, with a crown on the creator and a pill status tag. | active | 003 | test |
+| REQ-099 | The system shall record every buy-in, refund and payout as a ledger movement linked to its event. | active | 003 | test |
+| REQ-100 | The project shall include a smoke test of the main flows on a phone-sized screen, extended by each later slice. | active | 003 | test |
 | REQ-101 | The system shall offer roulette from its own tab. | planned | 004 | test |
 | REQ-102 | When a user chooses red or black and a valid bet and spins, the system shall resolve the spin on the server. | planned | 004 | test |
 | REQ-103 | The system shall decide every spin with a secure random source on the server. | planned | 004 | test |
@@ -194,11 +194,11 @@ Every requirement has a permanent ID. Raw input is kept in `docs/product/intake/
 | REQ-183 | When an invited player declines a duel, the system shall cancel the event and refund anyone who has paid. | planned | 005 | test |
 | REQ-184 | When an invited player of a duel is removed, the system shall cancel the event and refund anyone who has paid. | planned | 005 | test |
 | REQ-185 | The system shall count the admin towards La minoria's 3 players only if they're playing. | planned | 007 | test |
-| REQ-186 | The system shall offer the option to force participation to the admin on every new event, and to nobody else. | planned | 003 | test |
-| REQ-187 | If anyone other than the admin asks to force participation, then the system shall reject it. | planned | 003 | test |
-| REQ-188 | When the admin creates a classic event with forced participation, the system shall make every invitee an accepted participant and charge them the buy-in at once, without waiting for them to accept. | planned | 003 | test |
-| REQ-189 | If any forced player's balance is below the buy-in, then the system shall reject the event, name those players, and charge nobody. | planned | 003 | test |
-| REQ-190 | The system shall show each forced buy-in in the audit as made by the admin. | planned | 003 | test |
+| REQ-186 | The system shall offer the option to force participation to the admin on every new event, and to nobody else. | active | 003 | test |
+| REQ-187 | If anyone other than the admin asks to force participation, then the system shall reject it. | active | 003 | test |
+| REQ-188 | When the admin creates a classic event with forced participation, the system shall make every invitee an accepted participant and charge them the buy-in at once, without waiting for them to accept. | active | 003 | test |
+| REQ-189 | If any forced player's balance is below the buy-in, then the system shall reject the event, name those players, and charge nobody. | active | 003 | test |
+| REQ-190 | The system shall show each forced buy-in in the audit as made by the admin. | active | 003 | test |
 | REQ-191 | When the admin creates a duel with forced participation, the system shall charge every player and go straight to choosing. | planned | 005 | test |
 | REQ-192 | When the admin creates a La minoria event with forced participation, the system shall charge every player and start it at once. | planned | 007 | test |
 | REQ-193 | When La minoria has started, the system shall let each player secretly pick one of two options, labelled Blanc and Negre by default. | planned | 007 | test |
@@ -222,7 +222,7 @@ Every requirement has a permanent ID. Raw input is kept in `docs/product/intake/
 |---|---|---|---|
 | 001 | Foundation: the stack and tools are in place, and the admin can log in on a phone at the public URL and see a styled, empty Catalan ranking. Includes the visual directions. | REQ-001 to REQ-033, REQ-206 | closed |
 | 002 | Users and marcones: the admin manages users and marcones, and everyone sees the ranking, user details and audit. | REQ-035 to REQ-070 | closed |
-| 003 | Classic events: the full event lifecycle, including payouts, refunds and rounding. | REQ-071 to REQ-100, REQ-186 to REQ-190 | planned |
+| 003 | Classic events: the full event lifecycle, including payouts, refunds and rounding. | REQ-071 to REQ-100, REQ-186 to REQ-190 | closed |
 | 004 | Roulette: spin, payout, audit and admin settings. | REQ-101 to REQ-119 | planned |
 | 005 | Confia o traeix: the secret-choice engine, the first game, and admin game settings. | REQ-120 to REQ-149, REQ-175 to REQ-184, REQ-191, REQ-194 to REQ-196, REQ-198 to REQ-204 | planned |
 | 006 | Extras: live updates, QR code and home screen install, in that order. Each can be dropped on its own. | REQ-150 to REQ-154 | planned |
