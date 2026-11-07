@@ -171,12 +171,12 @@ export async function fakeSupabase(
     if (await preflight(route)) return
     const url = new URL(route.request().url())
     const id = url.searchParams.get('user_id')?.replace('eq.', '')
-    const offset = Number(url.searchParams.get('offset') ?? 0)
+    const before = Number(url.searchParams.get('id')?.replace('lt.', '') ?? Infinity)
     const limit = Number(url.searchParams.get('limit') ?? 1000)
     const rows = ledger
-      .filter((movement) => !id || movement.username === id)
+      .filter((movement) => (!id || movement.username === id) && movement.id < before)
       .sort((a, b) => b.id - a.id)
-      .slice(offset, offset + limit)
+      .slice(0, limit)
       .map(({ username, ...movement }) => ({
         event: null,
         actor: null,
