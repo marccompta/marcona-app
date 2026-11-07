@@ -931,10 +931,260 @@ select {
   outline-offset: 2px;
 }
 
+/* Ruleta. */
+.table-balance {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: -8px;
+  color: var(--sage);
+  font-size: 15px;
+}
+
+.table-balance .chips {
+  justify-self: auto;
+}
+
+.table-balance strong {
+  font: 700 23px/1 var(--font-display);
+  font-variant-numeric: lining-nums;
+  color: var(--ivory);
+}
+
+/* The one showpiece on the screen. Only .wheel-disc turns, as a CSS rotation. */
+.wheel-stage {
+  position: relative;
+  width: min(100%, 250px);
+  margin: 10px auto 0;
+}
+
+.wheel {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+}
+
+.wheel svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.wheel-disc {
+  will-change: transform;
+}
+
+.wheel-rim {
+  fill: var(--gold-dark);
+  stroke: var(--gold);
+  stroke-width: 1.5;
+}
+
+.wheel-track {
+  fill: var(--felt-950);
+}
+
+.pocket {
+  stroke: var(--gold);
+  stroke-width: 0.8;
+}
+
+.pocket--red {
+  fill: var(--pocket-red);
+}
+
+.pocket--black {
+  fill: var(--pocket-black);
+}
+
+.pocket--white {
+  fill: var(--ivory);
+}
+
+.wheel-ring {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 1.5;
+}
+
+.wheel-spoke {
+  stroke: var(--gold);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.wheel-hub {
+  fill: var(--gold);
+  stroke: var(--gold-light);
+  stroke-width: 1.5;
+}
+
+.wheel-hub-mark {
+  fill: var(--felt-900);
+}
+
+/* Gold, so it still shows in the ivory pocket. */
+.wheel-ball {
+  fill: var(--gold-light);
+  stroke: var(--felt-950);
+  stroke-width: 1.5;
+  transition: opacity 0.25s var(--ease);
+}
+
+.wheel[data-wheel='idle'] .wheel-ball {
+  opacity: 0;
+}
+
+.wheel-pointer {
+  fill: var(--gold);
+  stroke: var(--felt-950);
+  stroke-width: 1.5;
+}
+
+/* A win: the amount lands on the wheel, then goes. Nothing here takes a tap. */
+.win-burst {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.win-amount {
+  display: grid;
+  justify-items: center;
+  padding: 26px 34px;
+  background: radial-gradient(closest-side, #031a15f5 62%, #031a1500);
+  animation: win-pop 1.3s var(--ease) both;
+}
+
+.win-amount strong {
+  /* Shrinks for long amounts, so even the biggest fits across the wheel. */
+  font: 700 min(84px, calc(380px / var(--characters))) / 1 var(--font-display);
+  font-variant-numeric: lining-nums;
+  white-space: nowrap;
+  color: var(--gold);
+  background: var(--gold-foil);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 10px #f0c24b80);
+}
+
+.win-amount span {
+  color: var(--ivory);
+  font-size: 17px;
+  letter-spacing: 0.06em;
+}
+
+.confetti {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  width: 100vw;
+  height: 100dvh;
+  pointer-events: none;
+}
+
+/* Keeps its height, so the controls don't jump when a result appears. */
+.spin-line {
+  display: grid;
+  place-items: center;
+  min-height: 56px;
+  text-align: center;
+}
+
+.spin-result {
+  display: grid;
+  justify-items: center;
+  color: var(--sage);
+  font-size: 16px;
+}
+
+.spin-result strong {
+  font: italic 700 25px/1.15 var(--font-display);
+  color: var(--gold);
+}
+
+.bet {
+  display: grid;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.bet-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: end;
+  gap: 14px;
+}
+
+.bet .primary {
+  margin-top: 0;
+}
+
+.bet .hint {
+  text-align: center;
+}
+
+.colours {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.colour {
+  min-height: 48px;
+  border: 1px solid var(--gold-hairline);
+  border-radius: 2px;
+  color: var(--ivory);
+  font-size: 17px;
+  cursor: pointer;
+  opacity: 0.62;
+  transition: opacity 0.2s var(--ease), border-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+}
+
+.colour--red {
+  background: var(--pocket-red);
+}
+
+.colour--black {
+  background: var(--pocket-black);
+}
+
+.colour[aria-pressed='true'] {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px var(--gold);
+  opacity: 1;
+}
+
 @keyframes land {
   from {
     opacity: 0;
     transform: translateY(-7px);
+  }
+}
+
+@keyframes win-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  16% {
+    opacity: 1;
+    transform: scale(1.18);
+  }
+  28%,
+  82% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.06);
   }
 }
 
@@ -957,6 +1207,11 @@ select {
   *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
+  }
+
+  /* Otherwise it would jump straight to its faded end, and never be seen. */
+  .win-amount {
+    animation: none;
   }
 }
 

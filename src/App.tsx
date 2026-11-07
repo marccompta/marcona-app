@@ -7,8 +7,8 @@ import { EventDetail } from './screens/EventDetail'
 import { Events } from './screens/Events'
 import { Login } from './screens/Login'
 import { NewEvent } from './screens/NewEvent'
-import { Placeholder } from './screens/Placeholder'
 import { Ranking } from './screens/Ranking'
+import { Roulette } from './screens/Roulette'
 import { UserDetail } from './screens/UserDetail'
 import { Logo } from './shell/Logo'
 import { Shell } from './shell/Shell'
@@ -45,7 +45,7 @@ function Screens() {
         <Route path="/esdeveniments" element={<Events me={profile.username} />} />
         <Route path="/esdeveniments/nou" element={<NewEvent profile={profile} />} />
         <Route path="/esdeveniments/:id" element={<EventDetail profile={profile} />} />
-        <Route path="/ruleta" element={<Placeholder screen="ruleta" title={text.tabs.roulette} />} />
+        <Route path="/ruleta" element={<Roulette />} />
         <Route path="/auditoria" element={<Audit />} />
         {profile.role === 'admin' && <Route path="/administracio" element={<Admin />} />}
       </Route>

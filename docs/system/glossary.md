@@ -40,6 +40,9 @@ Domain terms, used the same way in specs, code and conversation. Specs, code and
 | La minoria | La minoria | The group game for 3 or more. Default choices: Blanc and Negre. |
 | Roulette | Ruleta | The red, black and white wheel in its own tab. |
 | Red, black, white | Vermell, Negre, Blanc | The roulette colours. White always loses. |
+| Spin | | One roulette bet and its result. One spin is one movement. |
+| Maximum bet | Aposta màxima | The most a player can bet now: a percentage of their balance, rounded down and never below 1. |
+| The table | La taula | Roulette as the admin opens or closes it. |
 | Feature freeze | | From 24 hours before the gathering, only fixes are made. |
 | Wipe | | The admin's confirmed deletion of test data before the gathering. |
 
