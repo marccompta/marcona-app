@@ -44,6 +44,9 @@ export const text = {
     balanceAfter: 'Saldo:',
     kinds: {
       admin_adjustment: 'Ajust de marcones',
+      event_buy_in: 'Entrada',
+      event_refund: "Devolució de l'entrada",
+      event_payout: 'Premi',
     },
   },
   audit: {
@@ -95,6 +98,13 @@ export const text = {
     weakPassword: 'La contrasenya és massa curta.',
     samePassword: "La contrasenya nova ha de ser diferent de l'anterior.",
     cannotRemoveSelf: 'No pots eliminar el teu propi compte.',
+    eventNameRequired: "Escriu un nom per a l'esdeveniment.",
+    eventNameTooLong: 'El nom pot tenir 40 caràcters com a màxim.',
+    invalidBuyIn: "L'entrada ha de ser un nombre enter d'1 o més.",
+    invalidPercentages: 'Els percentatges han de ser enters i sumar 100.',
+    noInvitees: 'Convida almenys una persona.',
+    invalidInvitee: 'Només pots convidar altres persones actives.',
+    eventNotOpen: 'Aquest esdeveniment ja està tancat.',
     unknown: 'Alguna cosa ha fallat. Torna-ho a provar.',
   },
 } as const
