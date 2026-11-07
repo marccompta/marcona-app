@@ -21,10 +21,15 @@ All notable user-facing changes are documented here. The format follows [Keep a 
 - A win celebration, with the marcones won shown large and confetti across the screen.
 - Spins in the audit, with the choice and the result.
 - Roulette settings for the admin: the white chance, the maximum bet, and opening or closing the table.
+- Confia o traeix: a secret duel the admin sets up, playing or not, where each player picks in a private panel and nobody can tell who has picked.
+- A dramatic reveal the moment the second player picks, with cards that turn one at a time, and payouts in the audit.
+- Forced participation for duels.
+- Game settings for the admin: on or off, the description and the numbers, with a worked example.
 
 ### Changed
 
 - A user can't be removed while they've accepted an open event, and removal declines their pending invitations.
+- Removing someone invited to a duel cancels it, and refunds anyone who paid.
 
 ### Fixed
 

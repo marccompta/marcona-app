@@ -15,7 +15,7 @@ function heldSend() {
 const settle = () => new Promise((resolve) => setTimeout(resolve))
 
 describe('duel payouts', () => {
-  it('REQ-140 to REQ-143: the spec table, rounded down', () => {
+  it('REQ-140, REQ-141, REQ-142, REQ-143: the spec table, rounded down', () => {
     const settings = { both_trust: 150, betrayer: 250, betrayed: 0, both_betray: 50 }
     expect(duelOutcomes(11, settings)).toEqual({ bothTrust: 16, betrayer: 27, betrayed: 0, bothBetray: 5 })
   })

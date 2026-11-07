@@ -12,8 +12,8 @@ A static React site on GitHub Pages talks directly to one hosted Supabase projec
 | `src/auth/` | Session, profile, and the username-to-email mapping |
 | `src/i18n/` | The one text module, `Intl` helpers, plurals and error mapping |
 | `src/shell/` | The framed layout, tab bar, logo, icons, chip stacks, count-up numbers and form helpers |
-| `src/screens/` | Login, the ranking, a person's detail, the audit, the admin screen, the events list, the new event form, the event screen, Ruleta, its wheel and the win celebration |
-| `src/lib/` | The Supabase client, the data reads, calls to `admin_adjust`, the event functions, the roulette functions and `admin-users`, and the wheel's geometry |
+| `src/screens/` | Login, the ranking, a person's detail, the audit, the admin screen, the events list, the new event form, the event screen and its shared actions, a game's screen, its payoffs and reveal, the game settings, Ruleta, its wheel and the win celebration |
+| `src/lib/` | The Supabase client, the data reads, calls to `admin_adjust`, the event functions, the game functions and tap queue, the roulette functions and `admin-users`, and the wheel's geometry |
 | `src/theme/`, `public/fonts/` | Design tokens, styles and self-hosted fonts |
 | `src/config.ts` | The Supabase URL and publishable key, which are safe to publish |
 | `supabase/migrations/` | Every schema change, applied to the hosted project through the Supabase MCP server |
@@ -35,7 +35,13 @@ The site is React, TypeScript and Vite, under the base path `/marcona-app/`. Sup
 
 **Moving marcones:** the browser calls `admin_adjust()` with a client request ID. It checks the caller and the input, claims the ID, and calls `private.apply_movement()`, which locks the user's row and writes the ledger. It's all one transaction. See [ADR 0004](../adr/0004-money-in-postgres-functions.md).
 
-**Running an event:** the browser calls `create_event()`, `answer_invitation()`, `cancel_event()` or `complete_event()`, each with a client request ID. Each one claims the ID, locks the event row and moves money through `private.apply_movement()`, in one transaction. Locks always go in the same order: the event, then users by ID, then participant rows. Payout maths lives in `private.split_pot()`.
+**Running an event:** the browser calls `create_event()`, `answer_invitation()`, `cancel_event()` or `complete_event()`, each with a client request ID. Each one claims the ID, locks the event row and moves money through `private.apply_movement()`, in one transaction. Locks always go in the same order: the event, then users by ID, then participant rows. `answer_invitation()` and `cancel_event()` lock the event before claiming, because a game's reveal pays players while holding it, and claiming takes a shared lock on the caller's row. Payout maths lives in `private.split_pot()`.
+
+**Running a game:** `create_game_event()` is admin-only. It copies the game's settings and description onto the event, which starts in the `inviting` phase, or `choosing` if forced. `answer_invitation()` moves it to `choosing` once nobody is left invited, and a decline cancels it through `private.cancel_open_event()`, as `remove_profile()` does for an invited player. See [ADR 0005](../adr/0005-server-decided-admin-run-games.md).
+
+**Picking:** the browser sends taps through `createTapQueue()`, one at a time, keeping only the newest waiting one, and resends a lost reply once with the same request ID. `lock_in()` locks the event, claims the ID and upserts into `private.choices`, touching no public table. When everyone has picked, it calls `private.resolve_game()` in the same transaction, which branches by game, pays out and completes the event. The creator is the actor, so nothing shows who tapped last.
+
+**Waiting for a reveal:** the event screen polls `game_state()` every 3 seconds until the reveal, and reloads the event when the status or phase changes. `game_state()` reads nothing about choices, so it can't differ by who asks or who has picked. The tap that completes the pair holds the reveal until its glow ends.
 
 **Spinning:** the wheel starts on the tap, and the browser calls `spin()` with a client request ID. It locks the player, claims the ID, checks the table and the limits, draws with `private.draw_roulette()`, and writes one movement, in one transaction. The player's row comes before the claim, because claiming takes a shared lock on it. The wheel then settles on a stopping point worked out only from the returned result, and the result, balance and win celebration wait until it has stopped. Screens read the settings and the maximum bet from `roulette_state()`, so the rule lives only in `private.max_bet()`.
 
@@ -53,7 +59,8 @@ The commands are in `AGENTS.md`. The human's one-off steps are in `docs/setup.md
 - Browser tests run at 360px in Chromium and WebKit, against a fake Supabase in `tests/e2e/fake-supabase.ts`.
 - `tests/hosted/` and `tests/e2e/hosted.spec.ts` use the real project, and need the gitignored `.env.test.local`, so they run only on the human's machine. The accounts they create have `is_test` set, and stay until the wipe.
 - `tests/e2e/smoke.spec.ts` is the phone-sized smoke test of the main flows, on the real project. Each later slice extends it.
-- `tests/sql/constraints.sql` tries what only the database owner can try, `tests/sql/events.sql` tests the payout maths and forced participation, playing the real admin, and `tests/sql/roulette.sql` tests the odds and white. They run through the Supabase MCP server, and always roll back.
+- `tests/sql/constraints.sql` tries what only the database owner can try, `tests/sql/events.sql` tests the payout maths and forced participation, playing the real admin, and `tests/sql/roulette.sql` tests the odds and white, and `tests/sql/games.sql` tests the game rules and payouts. They run through the Supabase MCP server, and always roll back.
+- A game needs the admin, who can't invite test accounts, so `tests/hosted/games.test.ts` and the smoke duel play `demo-nuria` and `demo-pau`, and their duels stay on the screens until the wipe.
 - `tests/hosted/roulette.test.ts` changes the real roulette settings and puts them back, so every test that spins lives there.
 - `tests/hosted/demo.ts`, run with `npm run demo`, plays the demo accounts during a review. It's for use before the wipe only: `fund` cancels every open event.
 - CI runs the browser tests in both engines, on Linux. Tests that need `.env.test.local` skip themselves there, and CI runs no hosted tests. This is the only WebKit cover when Windows Smart App Control blocks it on the human's machine.

@@ -269,7 +269,7 @@ begin
   results := results || pg_temp.verdict('REQ-062 a repeat of an old tap changes nothing',
     (select choice from private.choices where event_id = duel and user_id = anna) = 'traeix');
 
-  -- REQ-140 to REQ-143: the spec's table, with a buy-in of 11.
+  -- REQ-140, REQ-141, REQ-142, REQ-143: the spec's table, with a buy-in of 11.
   foreach scenario in array array[
     'confia,confia,16,16', 'traeix,confia,27,0', 'confia,traeix,0,27', 'traeix,traeix,5,5'
   ] loop

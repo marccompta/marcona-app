@@ -1,6 +1,6 @@
 # 0005. Games are decided on the server, and only the admin creates them
 
-- **Status:** proposed
+- **Status:** accepted
 - **Date:** 2026-11-06
 - **Slice:** 005
 
