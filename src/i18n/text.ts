@@ -246,6 +246,7 @@ export const text = {
     gameOff: 'Aquest joc està desactivat.',
     gameNotFound: 'No hem trobat aquest joc.',
     duelNeedsTwoPlayers: 'Un duel és entre exactament dues persones diferents.',
+    minoriaNeedsThreePlayers: 'La minoria necessita almenys 3 persones que hi juguin.',
     unknown: 'Alguna cosa ha fallat. Torna-ho a provar.',
   },
 } as const

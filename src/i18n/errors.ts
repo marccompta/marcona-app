@@ -44,6 +44,7 @@ export const byCode: Record<string, string> = {
   game_off: text.errors.gameOff,
   game_not_found: text.errors.gameNotFound,
   duel_needs_two_players: text.errors.duelNeedsTwoPlayers,
+  minoria_needs_three_players: text.errors.minoriaNeedsThreePlayers,
   invalid_game_options: text.errors.unknown,
   ledger_is_append_only: text.errors.unknown,
   invalid_username: text.errors.invalidUsername,

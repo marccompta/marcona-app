@@ -2,7 +2,7 @@
 
 Work through these in order. Each task leaves the tests passing.
 
-- [ ] **T1:** Seed La minoria, and accept it in `create_game_event()`, including forced participation. (REQ-155, REQ-185, REQ-192)
+- [x] **T1:** Seed La minoria, and accept it in `create_game_event()`, including forced participation. (REQ-155, REQ-185, REQ-192)
 - [ ] **T2:** Add `start_game()`, with the minimum and lapsing. (REQ-156, REQ-157, REQ-158, REQ-185)
 - [ ] **T3:** Add the resolution branch: split, remainder and refunds. (REQ-161, REQ-162, REQ-163)
 - [ ] **T4:** Add the start button, final side choice, lock-in status and reveal for several players. (REQ-193, REQ-197, REQ-205)
