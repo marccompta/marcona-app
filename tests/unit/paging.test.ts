@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { fetchMovements } from '../../src/lib/data'
+import { fetchMovements, fetchPeople } from '../../src/lib/data'
 
 vi.mock('../../src/lib/supabase', () => ({ supabase: {} }))
 
@@ -47,5 +47,41 @@ describe('reading the ledger', () => {
     expect(new Set(ids).size).toBe(ids.length)
     expect(ids).toEqual([...ids].sort((a, b) => b - a))
     expect(ids.at(-1)).toBe(1)
+  })
+})
+
+// Supabase caps a response at 1,000 rows, as this fake does.
+function manyProfiles(size: number) {
+  const rows = Array.from({ length: size }, (_, index) => ({ user_id: `u${String(index).padStart(5, '0')}` }))
+
+  const query = () => {
+    let filtered = [...rows]
+    const builder = {
+      select: () => builder,
+      order: () => builder,
+      gt: (_column: string, userId: string) => {
+        filtered = filtered.filter((row) => row.user_id > userId)
+        return builder
+      },
+      limit: (count: number) => {
+        filtered = filtered.slice(0, count)
+        return builder
+      },
+      then: (resolve: (result: { data: unknown[]; error: null }) => void) =>
+        resolve({ data: filtered.slice(0, 1000), error: null }),
+    }
+    return builder
+  }
+
+  return { from: query }
+}
+
+describe('reading people', () => {
+  it('REQ-216: reads everyone, beyond the 1,000 rows one response can hold', async () => {
+    const people = await fetchPeople(manyProfiles(2345) as never)
+    const ids = people.map((person) => person.user_id)
+
+    expect(ids).toHaveLength(2345)
+    expect(new Set(ids).size).toBe(2345)
   })
 })
