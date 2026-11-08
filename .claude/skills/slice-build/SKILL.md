@@ -12,9 +12,18 @@ The first argument is the slice number. If the input contains `--project <path>`
 
 ## Preconditions
 
-`spec.md` must have `status: approved`, or `changes-requested` when fixing review items. If it doesn't, stop and say why.
+`spec.md` must have `status: approved`, or `changes-requested` when fixing review items, or `building` when resuming a build an earlier session started. If it doesn't, stop and say why.
 
 Read the `Mode:` line under "Workflow settings" in the project's `AGENTS.md`. If there's no such line, the mode is `standard`.
+
+## Resuming an interrupted build
+
+If `status` is already `building`, or the branch `slice/NNN-short-slug` already exists, an earlier session started this build and may have stopped mid-task. Before writing anything:
+
+1. Switch to the branch and look at the working tree. Uncommitted changes belong to the task that was in progress: read them, then finish or undo them on purpose, with an edit, never `git checkout <file>`.
+2. Compare the ticked tasks in `tasks.md` with `git log --grep "Slice: NNN"`. Every ticked task should have its commit, and no unticked task should.
+3. If the project has `supabase/migrations/`, compare those files with the hosted list from the Supabase MCP server's `list_migrations`. Every file should be applied under the same version, and nothing applied should lack a file. A migration applied with no file means a task stopped between applying and saving it: recover its definition from the database before going on, and never apply it twice.
+4. Tell the human what state the build was in and what you'll do next, then carry on from the first unticked task. Departure notes from the earlier session are lost with it, so recover what you can from its commits for `record.md`, and say what couldn't be recovered.
 
 ## Steps
 
