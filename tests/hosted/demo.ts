@@ -8,13 +8,22 @@
 //   npm run demo -- accept [event] [player] Accepts pending invitations, optionally only these
 //   npm run demo -- decline [event] [player]
 //   npm run demo -- invite <event> <buy-in> The first demo player invites the admin to a new event
-//   npm run demo -- pick <event> <confia|traeix> [player]
-//                                           Demo players in that open duel lock in, optionally only this one
+//   npm run demo -- pick <event> <choice> [player]
+//                                           Demo players in that open game lock in, optionally only this one.
+//                                           A duel takes confia or traeix, and La minoria either of its labels
 //
 import { randomUUID } from 'node:crypto'
 import { adjustBalance, fetchPeople, type Person } from '../../src/lib/data'
-import { answerInvitation, cancelEvent, createEvent, fetchEvents, groupEvents } from '../../src/lib/events'
-import { lockIn, type DuelChoice } from '../../src/lib/games'
+import { answerInvitation, cancelEvent, createEvent, fetchEvents, groupEvents, type MarconaEvent } from '../../src/lib/events'
+import {
+  lockIn,
+  minoria,
+  minoriaChoices,
+  optionLabel,
+  type DuelChoice,
+  type MinoriaChoice,
+  type MinoriaSettings,
+} from '../../src/lib/games'
 import { adminClient, adminLogin, logInAsDemo, signOutAll } from './env'
 
 type Client = Awaited<ReturnType<typeof adminClient>>
@@ -106,12 +115,22 @@ async function answer(admin: Client, accept: boolean, eventName?: string, onlyPl
   if (answered === 0) console.log('No pending invitations matched.')
 }
 
-async function pick(admin: Client, eventName: string | undefined, choice: string | undefined, onlyPlayer?: string) {
-  if (!eventName || (choice !== 'confia' && choice !== 'traeix')) {
-    throw new Error('Say the duel and the choice, such as: pick Duel traeix')
-  }
+// A duel takes confia or traeix. La minoria takes either of the game's own labels,
+// in any case, or its fixed keys a and b.
+function choiceFor(event: MarconaEvent, choice: string): DuelChoice | MinoriaChoice | undefined {
+  if (event.game !== minoria) return choice === 'confia' || choice === 'traeix' ? choice : undefined
+  const settings = event.settings as MinoriaSettings
+  return minoriaChoices.find(
+    (key) => choice === key || choice.toLowerCase() === optionLabel(settings, key).toLowerCase(),
+  )
+}
+
+async function pick(admin: Client, eventName: string | undefined, said: string | undefined, onlyPlayer?: string) {
+  if (!eventName || !said) throw new Error('Say the game and the choice, such as: pick Duel traeix, or pick Minoria Blanc')
   const event = (await fetchEvents(admin)).find((candidate) => candidate.name === eventName && candidate.status === 'open')
   if (!event) throw new Error(`No open event is called ${eventName}`)
+  const choice = choiceFor(event, said)
+  if (!choice) throw new Error(`${said} is not a choice in ${eventName}`)
 
   const players = (await fetchPeople(admin)).filter(isDemoPlayer)
   const inDuel = players.filter(
@@ -123,8 +142,8 @@ async function pick(admin: Client, eventName: string | undefined, choice: string
 
   for (const player of inDuel) {
     const client = await logInAsDemo(admin, player)
-    const answer = await lockIn({ requestId: randomUUID(), eventId: event.id, choice: choice as DuelChoice }, client)
-    console.log(`${player.username} picked ${choice}${answer.revealed ? ', and the duel is revealed' : ''}`)
+    const answer = await lockIn({ requestId: randomUUID(), eventId: event.id, choice }, client)
+    console.log(`${player.username} picked ${said}${answer.revealed ? ', and the game is revealed' : ''}`)
   }
 }
 
