@@ -309,3 +309,70 @@ test.describe('the reveal', () => {
     await expect(page.locator('[data-reveal][data-stage="done"]')).toBeVisible({ timeout: 4000 })
   })
 })
+
+test.describe('La minoria settings', () => {
+  const form = (page: Page) => page.locator('[data-game-settings="la_minoria"]')
+  const label = (page: Page, name: string) => form(page).getByLabel(name, { exact: true })
+
+  const openSettings = async (page: Page) => {
+    const calls = await start(page, richAdmin)
+    await page.getByRole('link', { name: 'Administració' }).click()
+    await form(page).waitFor()
+    return calls
+  }
+
+  test('REQ-160: shows the current description and labels, next to the duel', async ({ page }) => {
+    await openSettings(page)
+
+    await expect(page.locator('[data-game-settings]')).toHaveCount(2)
+    await expect(form(page).getByRole('heading')).toHaveText('La minoria')
+    await expect(form(page).getByRole('checkbox', { name: 'Joc actiu' })).toBeChecked()
+    await expect(form(page).getByLabel('Descripció')).toHaveValue(/^Tothom tria en secret/)
+    await expect(label(page, 'Primera opció')).toHaveValue('Blanc')
+    await expect(label(page, 'Segona opció')).toHaveValue('Negre')
+    await expect(form(page)).toContainText('Els esdeveniments que ja estan en marxa mantenen les seves.')
+    // A duel's numbers have no place here.
+    expect(await form(page).locator('[data-worked-example], [inputmode="numeric"]').count()).toBe(0)
+  })
+
+  test('REQ-160: saves the new labels for new events', async ({ page }) => {
+    const calls = await openSettings(page)
+    await label(page, 'Primera opció').fill('Cara')
+    await label(page, 'Segona opció').fill(' Creu ')
+    await form(page).getByRole('button', { name: 'Desa el joc' }).click()
+
+    await expect(form(page).getByRole('status')).toHaveText("S'han desat els canvis del joc per als nous esdeveniments.")
+    expect(calls.games.find((game) => game.id === 'la_minoria')!.settings).toEqual({ option_a: 'Cara', option_b: 'Creu' })
+    // The duel was left alone.
+    expect(calls.games.find((game) => game.id === 'confia_o_traeix')!.settings.both_trust).toBe(150)
+  })
+
+  test('REQ-160: an empty or repeated label shows a Catalan error, and nothing changes', async ({ page }) => {
+    const calls = await openSettings(page)
+    const save = () => form(page).getByRole('button', { name: 'Desa el joc' }).click()
+
+    await label(page, 'Primera opció').fill('  ')
+    await save()
+    await expect(form(page).getByRole('alert')).toHaveText('Escriu el nom de totes dues opcions.')
+
+    await label(page, 'Primera opció').fill('negre')
+    await save()
+    await expect(form(page).getByRole('alert')).toHaveText('Les dues opcions han de tenir noms diferents.')
+    expect(calls.games.find((game) => game.id === 'la_minoria')!.settings).toEqual({ option_a: 'Blanc', option_b: 'Negre' })
+  })
+
+  // The server refuses a longer one too, in tests/sql/minoria.sql.
+  test('REQ-160: a label stops at 20 characters', async ({ page }) => {
+    await openSettings(page)
+    await label(page, 'Primera opció').fill('Una opció massa llarga')
+
+    await expect(label(page, 'Primera opció')).toHaveValue('Una opció massa llar')
+  })
+
+  test('REQ-160: the form fits the phone', async ({ page }) => {
+    await openSettings(page)
+    await form(page).scrollIntoViewIfNeeded()
+
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360)
+  })
+})

@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
+import { readFileSync } from 'node:fs'
 import { createTapQueue, duelOutcomes, type DuelChoice, type LockIn } from '../../src/lib/games'
 
 const saved: LockIn = { event_id: 'e', saved: true, revealed: false }
@@ -125,5 +126,18 @@ describe('the tap queue', () => {
     await settle()
     expect(sent).toHaveLength(1)
     expect(onFailed).toHaveBeenCalledWith(refused)
+  })
+})
+
+// The live labels can be renamed by the admin (REQ-160), so the seed is read here.
+describe('La minoria seed', () => {
+  it('REQ-193: the options start as Blanc and Negre', () => {
+    const seed = readFileSync('supabase/migrations/20261108010325_minoria_game.sql', 'utf8')
+    expect(seed).toContain(`'{"option_a": "Blanc", "option_b": "Negre"}'`)
+  })
+
+  it('REQ-155: the last migration turns it on, once its screens exist', () => {
+    const last = readFileSync('supabase/migrations/20261108094820_minoria_settings.sql', 'utf8')
+    expect(last).toMatch(/update public\.games set enabled = true[^;]*where id = 'la_minoria'/)
   })
 })

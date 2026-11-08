@@ -84,11 +84,9 @@ begin
 
   -- Never assume the live settings: the admin changes them during reviews.
   update public.games set enabled = true where id in ('la_minoria', 'confia_o_traeix');
+  -- The seed's labels, Blanc and Negre (REQ-193), are checked in tests/unit/games.test.ts,
+  -- because the admin can rename them here.
   select settings, games.description into defaults, game_description from public.games where id = 'la_minoria';
-
-  -- REQ-193: the seed's labels.
-  results := results || pg_temp.verdict('REQ-193 the labels start as Blanc and Negre',
-    defaults = '{"option_a": "Blanc", "option_b": "Negre"}'::jsonb);
 
   -- REQ-155: only the admin, as with every game.
   perform pg_temp.act_as(anna);
@@ -401,6 +399,54 @@ begin
   results := results || pg_temp.verdict('REQ-194 a duel choice cannot be read back', pg_temp.refusal(format(
     $s$select public.my_choice(%L)$s$, round
   )) = 'not_allowed');
+
+  -- REQ-160: the admin renames the options. Only the admin, and only two short
+  -- labels that differ.
+  perform pg_temp.act_as(admin_id);
+  round := pg_temp.new_game(10, false, array[anna, bea, cesc], true);
+  perform pg_temp.act_as(anna);
+  results := results || pg_temp.verdict('REQ-160 a player cannot rename the options', pg_temp.refusal(
+    $s$select public.set_game_settings('la_minoria', true, 'Prova', '{"option_a": "Cara", "option_b": "Creu"}')$s$
+  ) = 'not_allowed');
+  perform pg_temp.act_as(admin_id);
+
+  foreach scenario in array array[
+    'game_option_required|{"option_a": "   ", "option_b": "Creu"}',
+    'game_option_required|{"option_a": "Cara"}',
+    'game_option_required|{"option_a": "Cara", "option_b": 7}',
+    'game_option_too_long|{"option_a": "Cara", "option_b": "Una opció massa llarga"}',
+    'game_options_same|{"option_a": "Cara", "option_b": " cara "}'
+  ] loop
+    parts := string_to_array(scenario, '|');
+    results := results || pg_temp.verdict('REQ-160 refused ' || parts[2], pg_temp.refusal(format(
+      $s$select public.set_game_settings('la_minoria', true, 'Prova', %L)$s$, parts[2]
+    )) = parts[1]);
+  end loop;
+  results := results || pg_temp.verdict('REQ-160 a refused rename changes nothing',
+    (select settings from public.games where id = 'la_minoria') = defaults);
+
+  -- A duel's numbers are no use to La minoria, and its labels no use to a duel.
+  results := results || pg_temp.verdict('REQ-144 a duel takes no labels', pg_temp.refusal(
+    $s$select public.set_game_settings('confia_o_traeix', true, 'Prova', '{"option_a": "Cara", "option_b": "Creu"}')$s$
+  ) = 'invalid_game_percentage');
+
+  perform public.set_game_settings(
+    'la_minoria', true, '  Regles noves.  ', '{"option_a": "  Cara ", "option_b": "Una opció de vint ok", "extra": 1}'
+  );
+  results := results || pg_temp.verdict('REQ-160 the admin renames the options, trimmed, up to 20 characters',
+    (select settings from public.games where id = 'la_minoria') = '{"option_a": "Cara", "option_b": "Una opció de vint ok"}'::jsonb
+    and (select description from public.games where id = 'la_minoria') = 'Regles noves.');
+  request := pg_temp.new_game(10, false, array[anna, bea, cesc], false);
+  results := results || pg_temp.verdict('REQ-160 new events use the new labels',
+    (select settings from public.events where id = request)
+      = '{"option_a": "Cara", "option_b": "Una opció de vint ok", "description": "Regles noves."}'::jsonb);
+  results := results || pg_temp.verdict('REQ-160 running events keep theirs',
+    (select settings from public.events where id = round) = defaults || jsonb_build_object('description', game_description));
+  -- A choice is stored by key, so a running game still plays.
+  perform pg_temp.pick(round, anna, 'a');
+  perform pg_temp.pick(round, bea, 'a');
+  results := results || pg_temp.verdict('REQ-160 a running game plays on after a rename',
+    (pg_temp.pick(round, cesc, 'b') ->> 'revealed')::boolean);
 
   raise exception 'RESULTS %', results;
 end;

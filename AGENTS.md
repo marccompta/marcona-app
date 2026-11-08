@@ -73,6 +73,7 @@ Slice: 001
 | Payout maths and forced participation, after any migration touching them | Run `tests/sql/events.sql` through the Supabase MCP server's `execute_sql` |
 | Roulette odds and white, after any migration touching them | Run `tests/sql/roulette.sql` through the Supabase MCP server's `execute_sql` |
 | Game rules and duel payouts, after any migration touching them | Run `tests/sql/games.sql` through the Supabase MCP server's `execute_sql` |
+| La minoria's rules, payouts and labels, after any migration touching games | Run `tests/sql/minoria.sql` through the Supabase MCP server's `execute_sql` |
 
 Write long scripts as files, then run them. Long heredocs break in Git Bash here, especially with apostrophes.
 

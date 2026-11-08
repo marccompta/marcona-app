@@ -222,6 +222,8 @@ Every requirement has a permanent ID. Raw input is kept in `docs/product/intake/
 | REQ-211 | When a balance changes, the system shall refresh the balance on Ruleta and the admin's list of users without a reload. Seen in slice 006, whose live updates cover only the ranking, a person's page, the audit and events, as its spec asked. | proposed | - | test |
 | REQ-212 | The project shall build with Vite's native config loader. Seen in slice 006: `vite.config.ts` imports `./src/config` with no file extension, which Vite warns will stop working once that loader becomes its default. | proposed | - | test |
 | REQ-213 | When a user opens another screen, the system shall show it from the top. Seen in slice 006's review: after a duel's reveal, Administració opened 111px down, because every screen shares one scroll area that keeps its position. | proposed | - | test |
+| REQ-214 | The project's real-project smoke tests shall not depend on how much test data has built up. Seen in slice 007: in 5 full runs, with or without slice 007's new test, the Realtime smoke test's audit check failed every time in Chromium, and the roulette one's 3 times. Both passed when run alone. Test accounts see every test movement, about 8,500 by then, read 1,000 at a time. | proposed | - | test |
+| REQ-215 | While a duel's taps are slow to save, the system shall send each choice the queue keeps only once, in every browser engine. Seen in slice 007: the slow-connection test in `tests/e2e/games.spec.ts` fails in about half of WebKit runs, on `main` as well, with the first tap sent twice. It may be the lost-reply resend, which is safe, as it reuses the request ID. | proposed | - | test |
 
 ## Slice roadmap
 

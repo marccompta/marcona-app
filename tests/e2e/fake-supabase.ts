@@ -730,6 +730,20 @@ export async function fakeSupabase(
     const description = String(body.p_description ?? '').trim()
     if (!description) return refused('game_description_required')
     if (description.length > 1000) return refused('game_description_too_long')
+
+    // REQ-160: two trimmed labels, of 1 to 20 characters, that differ ignoring case.
+    if (body.p_game === 'la_minoria') {
+      const labels = [body.p_settings?.option_a, body.p_settings?.option_b].map((value) =>
+        typeof value === 'string' ? value.trim() : '',
+      )
+      if (labels.some((value) => !value)) return refused('game_option_required')
+      if (labels.some((value) => value.length > 20)) return refused('game_option_too_long')
+      if (labels[0].toLowerCase() === labels[1].toLowerCase()) return refused('game_options_same')
+      const minoria = calls.games.find((candidate) => candidate.id === 'la_minoria')!
+      Object.assign(minoria, { enabled: body.p_enabled, description, settings: { option_a: labels[0], option_b: labels[1] } })
+      return json(route, 200, minoria)
+    }
+
     const { both_trust, betrayer, betrayed, both_betray } = body.p_settings
     const numbers = [both_trust, betrayer, betrayed, both_betray]
     if (!numbers.every((value) => Number.isInteger(value) && value >= 0 && value <= 1000)) {
