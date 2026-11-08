@@ -33,6 +33,10 @@ All notable user-facing changes are documented here. The format follows [Keep a 
 - Forced participation for La minoria, which starts it at once.
 - La minoria's settings for the admin: on or off, the description and the two option names.
 
+### Fixed
+
+- Live screens, the audit above all, stopped updating while changes kept arriving faster than they could read. The ranking also left out anyone past the first 1,000 people.
+
 ### Changed
 
 - A user can't be removed while they've accepted an open event, and removal declines their pending invitations.

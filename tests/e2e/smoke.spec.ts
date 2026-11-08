@@ -49,8 +49,11 @@ test('REQ-100, REQ-102, REQ-112: spins on the real server, and the wheel, balanc
 
   await page.getByRole('link', { name: 'Auditoria' }).click()
   const colour = { red: 'vermell', black: 'negre', white: 'blanc' }[result]
+  // A test account's audit holds every test movement so far, read 1,000 at a time,
+  // which takes several seconds while other tests run. Slice 008's wipe clears them.
   await expect(page.locator('[data-movement]').filter({ hasText: player.username }).first()).toContainText(
     `Ruleta: aposta a vermell, ha sortit ${colour}`,
+    { timeout: 20000 },
   )
 })
 

@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { Link } from 'react-router'
 import { formatMarcones, formatMoment, formatSigned } from '../i18n/format'
 import { text } from '../i18n/text'
@@ -46,25 +47,40 @@ function MovementRow({ movement, showWho }: { movement: Movement; showWho: boole
   )
 }
 
-// REQ-069: who, the amount, the concept or event, the balance after and the time.
 // REQ-099: a movement on an event opens that event.
+//
+// REQ-216: a ledger row never changes, and nor do the names it shows, so a row
+// with the same ID is only rendered once. A live read of thousands of movements
+// then renders just the new ones. Re-rendering them all blocked the page for
+// seconds, mostly because every <Link> searches the whole page for a <base>
+// element each time it renders.
+const MovementItem = memo(
+  function MovementItem({ movement, showWho }: { movement: Movement; showWho: boolean }) {
+    return (
+      <li>
+        {movement.event ? (
+          <Link to={`/esdeveniments/${movement.event.id}`} className="movement" data-movement>
+            <MovementRow movement={movement} showWho={showWho} />
+          </Link>
+        ) : (
+          <div className="movement" data-movement>
+            <MovementRow movement={movement} showWho={showWho} />
+          </div>
+        )}
+      </li>
+    )
+  },
+  (before, after) => before.movement.id === after.movement.id && before.showWho === after.showWho,
+)
+
+// REQ-069: who, the amount, the concept or event, the balance after and the time.
 export function Movements({ movements, showWho = true }: { movements: Movement[]; showWho?: boolean }) {
   if (movements.length === 0) return <p className="quiet">{text.movements.empty}</p>
 
   return (
     <ol className="movements">
       {movements.map((movement) => (
-        <li key={movement.id}>
-          {movement.event ? (
-            <Link to={`/esdeveniments/${movement.event.id}`} className="movement" data-movement>
-              <MovementRow movement={movement} showWho={showWho} />
-            </Link>
-          ) : (
-            <div className="movement" data-movement>
-              <MovementRow movement={movement} showWho={showWho} />
-            </div>
-          )}
-        </li>
+        <MovementItem key={movement.id} movement={movement} showWho={showWho} />
       ))}
     </ol>
   )

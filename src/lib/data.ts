@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { errorMessage } from '../i18n/errors'
 import { supabase } from './supabase'
 
@@ -31,10 +31,21 @@ export type Adjustment = {
 const pageSize = 1000
 
 // Everyone this user may see, including removed people, whom the audit still names.
+// REQ-216: Supabase caps a response at 1,000 rows, so this reads page by page,
+// each starting after the last ID seen. Otherwise, past 1,000 people, some would
+// silently be missing from the ranking.
 export async function fetchPeople(client = supabase) {
-  const { data, error } = await client.from('profiles').select('user_id, username, balance, removed_at')
-  if (error) throw error
-  return data as Person[]
+  const people: Person[] = []
+  for (;;) {
+    let query = client.from('profiles').select('user_id, username, balance, removed_at')
+    const last = people.at(-1)
+    if (last) query = query.gt('user_id', last.user_id)
+
+    const { data, error } = await query.order('user_id').limit(pageSize)
+    if (error) throw error
+    people.push(...(data as Person[]))
+    if (data.length < pageSize) return people
+  }
 }
 
 // REQ-050, REQ-063, REQ-064: active people, highest first, then alphabetically.
@@ -80,22 +91,51 @@ export async function adjustBalance({ requestId, userId, action, amount, concept
 export type Loaded<T> = { status: 'loading' } | { status: 'failed'; message: string } | { status: 'ready'; data: T }
 
 // Loads data for a screen, again whenever key changes or reload() is called.
+//
+// REQ-216: a reload never throws away a read that's under way. That read shows
+// when it finishes, and then one more read picks up anything that changed
+// meanwhile, however many reloads came. Otherwise, with changes arriving faster
+// than a long read takes, such as a big audit while people play, no read would
+// ever finish. A new key does discard the old key's read.
 export function useLoad<T>(load: () => Promise<T>, key: unknown = null) {
   const [state, setState] = useState<Loaded<T>>({ status: 'loading' })
-  const [attempt, setAttempt] = useState(0)
+  const latest = useRef(load)
+  latest.current = load
+  const request = useRef(() => {})
 
   useEffect(() => {
     let current = true
-    load().then(
-      (data) => current && setState({ status: 'ready', data }),
-      (error) => current && setState({ status: 'failed', message: errorMessage(error) }),
-    )
+    let running = false
+    let again = false
+
+    const read = () => {
+      if (running) {
+        again = true
+        return
+      }
+      running = true
+      latest
+        .current()
+        .then(
+          (data) => current && setState({ status: 'ready', data }),
+          (error) => current && setState({ status: 'failed', message: errorMessage(error) }),
+        )
+        .finally(() => {
+          running = false
+          if (current && again) {
+            again = false
+            read()
+          }
+        })
+    }
+
+    request.current = read
+    read()
     return () => {
       current = false
     }
-    // load is a new function on every render, so key says when it really changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, attempt])
+  }, [key])
 
-  return { state, reload: () => setAttempt((count) => count + 1) }
+  const reload = useCallback(() => request.current(), [])
+  return { state, reload }
 }
