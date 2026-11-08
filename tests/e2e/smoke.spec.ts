@@ -3,8 +3,9 @@ import { existsSync } from 'node:fs'
 import { expect, test, type Page } from '@playwright/test'
 import { adjustBalance, fetchPeople } from '../../src/lib/data'
 import { answerInvitation, fetchEvents } from '../../src/lib/events'
-import { duelOutcomes, lockIn } from '../../src/lib/games'
+import { duelOutcomes, lockIn, type DuelSettings, type MinoriaSettings } from '../../src/lib/games'
 import { adminClient, adminLogin, createTestAccount, logInAsDemo, signOutAll, type TestAccount } from '../hosted/env'
+import { withDemoPlayers } from './demo-players'
 
 // REQ-100: the main flows on a phone-sized screen, on the real project, with no
 // fake. Each later slice extends this. It needs .env.test.local, so it only runs
@@ -107,8 +108,10 @@ test('REQ-100: logs in, creates an event, accepts it, completes it and checks th
 })
 
 // A game needs the admin, who can't invite test accounts, so this plays a demo
-// player. Each engine has its own, because logging in ends that player's session.
+// player. Each engine has its own, because logging in ends that player's session,
+// and it waits its turn while La minoria uses both.
 test('REQ-100, REQ-134: the admin plays a real duel on a phone, and sees the reveal with no reload', async ({ page }, info) => {
+  test.setTimeout(120000)
   const admin = await adminClient()
   const { username, password } = adminLogin()
   const people = await fetchPeople(admin)
@@ -130,22 +133,82 @@ test('REQ-100, REQ-134: the admin plays a real duel on a phone, and sees the rev
   await page.getByRole('button', { name: "Crea l'esdeveniment" }).click()
   await expect(page.locator('[data-game-rules]')).toBeVisible()
 
-  const client = await logInAsDemo(admin, opponent)
   const event = (await fetchEvents(admin)).find((candidate) => candidate.name === name)!
-  await answerInvitation({ requestId: randomUUID(), eventId: event.id, accept: true }, client)
+  await withDemoPlayers(async () => {
+    const client = await logInAsDemo(admin, opponent)
+    await answerInvitation({ requestId: randomUUID(), eventId: event.id, accept: true }, client)
 
-  // The polling shows the panel once the opponent has paid.
-  await page.getByRole('button', { name: 'Tria en privat' }).click({ timeout: 15000 })
-  await lockIn({ requestId: randomUUID(), eventId: event.id, choice: 'confia' }, client)
-  await page.getByRole('button', { name: 'Traeix' }).click()
+    // The polling shows the panel once the opponent has paid.
+    await page.getByRole('button', { name: 'Tria en privat' }).click({ timeout: 15000 })
+    await lockIn({ requestId: randomUUID(), eventId: event.id, choice: 'confia' }, client)
+    await page.getByRole('button', { name: 'Traeix' }).click()
+  })
 
   await expect(page.locator('[data-reveal][data-stage="done"]')).toBeVisible({ timeout: 15000 })
   // The admin can change the numbers, so these come from the duel's own copy.
-  const { betrayer, betrayed } = duelOutcomes(10, event.settings!)
+  const { betrayer, betrayed } = duelOutcomes(10, event.settings as DuelSettings)
   await expect(page.locator('[data-reveal-player]')).toHaveText([
     new RegExp(`${username}.*Traeix.*${betrayer} marcon`),
     new RegExp(`${opponent.username}.*Confia.*${betrayed} marcon`),
   ])
+})
+
+// La minoria needs 3 players: the admin and both demo players, who are invited and
+// accept, so the admin starts it by hand.
+test('REQ-100, REQ-156, REQ-161: the admin starts a real La minoria and the smaller side takes the pot', async ({ page }, info) => {
+  test.setTimeout(120000)
+  const admin = await adminClient()
+  const { username, password } = adminLogin()
+  const people = await fetchPeople(admin)
+  const [nuria, pau] = people.filter((person) => person.username.startsWith('demo-') && !person.removed_at)
+  const me = people.find((person) => person.username === username)!
+  const name = `Fum ${info.project.name.slice(0, 3)} ${randomUUID().slice(0, 8)}`
+  for (const userId of [me.user_id, nuria.user_id, pau.user_id]) {
+    await adjustBalance({ requestId: randomUUID(), userId, action: 'add', amount: 10, concept: 'Prova de fum' }, admin)
+  }
+
+  await logIn(page, { userId: me.user_id, username, password })
+  await page.getByRole('link', { name: 'Esdeveniments' }).click()
+  await page.getByRole('link', { name: 'Nou esdeveniment' }).click()
+  await page.getByLabel('Tipus').selectOption({ label: 'La minoria' })
+  await page.getByLabel('Nom').fill(name)
+  await page.getByLabel('Entrada').fill('10')
+  for (const player of [nuria, pau]) {
+    await page.getByRole('checkbox', { name: player.username, exact: true }).check({ force: true })
+  }
+  await page.getByRole('button', { name: "Crea l'esdeveniment" }).click()
+  await expect(page.locator('[data-minoria]')).toBeVisible()
+
+  // The admin can rename the options, so these come from the game's own copy.
+  const event = (await fetchEvents(admin)).find((candidate) => candidate.name === name)!
+  const { option_a, option_b } = event.settings as MinoriaSettings
+
+  await withDemoPlayers(async () => {
+    const [nuriaPhone, pauPhone] = [await logInAsDemo(admin, nuria), await logInAsDemo(admin, pau)]
+    for (const client of [nuriaPhone, pauPhone]) {
+      await answerInvitation({ requestId: randomUUID(), eventId: event.id, accept: true }, client)
+    }
+
+    // The start appears once 3 have paid.
+    await page.getByRole('button', { name: 'Comença el joc' }).click({ timeout: 15000 })
+    // The panel appears once the server has started it.
+    await expect(page.getByRole('button', { name: 'Tria en privat' })).toBeVisible({ timeout: 15000 })
+    await lockIn({ requestId: randomUUID(), eventId: event.id, choice: 'a' }, nuriaPhone)
+    await lockIn({ requestId: randomUUID(), eventId: event.id, choice: 'b' }, pauPhone)
+  })
+
+  // The admin joins the bigger side, so pau alone takes the pot of 30.
+  await page.getByRole('button', { name: 'Tria en privat' }).click({ timeout: 15000 })
+  const panel = page.locator('[data-choice-panel]')
+  await panel.getByRole('button', { name: option_a, exact: true }).click()
+  await panel.getByRole('button', { name: /^Confirma/ }).click()
+
+  await expect(page.locator('[data-reveal][data-stage="done"]')).toBeVisible({ timeout: 15000 })
+  const row = (player: string) => page.locator('[data-reveal-player]').filter({ hasText: player })
+  await expect(page.locator('[data-reveal-player]')).toHaveCount(3)
+  await expect(row(pau.username)).toContainText(`${option_b} 30 marcones`)
+  await expect(row(nuria.username)).toContainText(`${option_a} 0 marcones`)
+  await expect(row(username)).toContainText(`${option_a} 0 marcones`)
 })
 
 // REQ-150, REQ-151: real Realtime, through Row Level Security. Test accounts only

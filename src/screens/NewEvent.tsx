@@ -4,7 +4,7 @@ import type { Profile } from '../auth/AuthProvider'
 import { text } from '../i18n/text'
 import { fetchPeople, useLoad, type Person } from '../lib/data'
 import { createEvent } from '../lib/events'
-import { createGameEvent, fetchGames, gameName, type Game } from '../lib/games'
+import { createGameEvent, fetchGames, gameName, minoria, type Game } from '../lib/games'
 import { Field, Outcome, plainInput, useAction } from '../shell/Form'
 import { Pending } from './Movements'
 
@@ -108,7 +108,13 @@ function Form({ people, games, isAdmin }: { people: Person[]; games: Game[]; isA
         <legend>{text.events.form.invitees}</legend>
         {isGame && (
           <p className="hint" data-invite-hint>
-            {plays ? text.games.inviteOne : text.games.inviteTwo}
+            {type === minoria
+              ? plays
+                ? text.games.minoria.inviteWithMe
+                : text.games.minoria.inviteWithoutMe
+              : plays
+                ? text.games.inviteOne
+                : text.games.inviteTwo}
           </p>
         )}
         {people.map((person) => (

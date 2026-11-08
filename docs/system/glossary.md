@@ -34,7 +34,10 @@ Domain terms, used the same way in specs, code and conversation. Specs, code and
 | Lapse | Caducada | What happens to a pending invitation when its event moves on. No one is charged. |
 | Secret choice | | A player's hidden pick in a game. |
 | Lock in | | To submit a secret choice. In La minoria it can't then be changed. In a duel, each tap replaces it until both players have picked. |
-| Choice panel | | The private panel in a duel where a player chooses with one tap. It looks the same whether or not they've chosen. |
+| Choice panel | Tria en privat | The private panel in a game where a player chooses. In a duel, one tap saves, and it looks the same whether or not they've chosen. In La minoria, a player confirms a choice, after which it only shows that choice. |
+| Start | Comença el joc | The creator's step that moves La minoria from inviting to choosing, once at least 3 have paid. |
+| Smaller side | Bàndol més petit | In La minoria, the option fewer people picked, which splits the pot. |
+| Remainder | Residu | What's left of La minoria's pot after the equal split, for whoever on the smaller side locked in first. |
 | Phase | | Where a game is: inviting, choosing or revealed. An event's status says whether it's open, and its phase says how far a game has got. |
 | Organiser | Organitza | The admin, when they run a game without playing in it. |
 | Reveal | | The moment a game shows every choice and payout. |

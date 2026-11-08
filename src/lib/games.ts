@@ -6,13 +6,33 @@ export const duelChoices: DuelChoice[] = ['confia', 'traeix']
 
 export type DuelSettings = { both_trust: number; betrayer: number; betrayed: number; both_betray: number }
 
-export type Game = { id: string; enabled: boolean; description: string; settings: DuelSettings }
+// REQ-193: La minoria's options have fixed keys, and the labels are settings.
+export type MinoriaChoice = 'a' | 'b'
+export const minoriaChoices: MinoriaChoice[] = ['a', 'b']
+export type MinoriaSettings = { option_a: string; option_b: string }
+export const minoria = 'la_minoria'
+
+export type Game =
+  | { id: 'confia_o_traeix'; enabled: boolean; description: string; settings: DuelSettings }
+  | { id: typeof minoria; enabled: boolean; description: string; settings: MinoriaSettings }
 
 /** What an event keeps of its game's settings when it's created. */
-export type EventGameSettings = DuelSettings & { description: string }
+export type EventGameSettings = (DuelSettings | MinoriaSettings) & { description: string }
 
 export type RevealedPlayer = { user_id: string; choice: DuelChoice; percentage: number; payout: number }
-export type Reveal = { players: RevealedPlayer[] }
+export type MinoriaPlayer = { user_id: string; choice: MinoriaChoice; payout: number }
+export type MinoriaResult = {
+  verdict: 'split' | 'tie' | 'unanimous'
+  minority: MinoriaChoice | null
+  share: number | null
+  remainder_to: string | null
+  players: MinoriaPlayer[]
+}
+export type DuelResult = { players: RevealedPlayer[] }
+export type Reveal = DuelResult | MinoriaResult
+
+export const optionLabel = (settings: MinoriaSettings, choice: MinoriaChoice) =>
+  choice === 'a' ? settings.option_a : settings.option_b
 
 export type Phase = 'inviting' | 'choosing' | 'revealed'
 
@@ -23,6 +43,8 @@ export type GameState = {
   phase: Phase
   settings: EventGameSettings
   reveal: Reveal | null
+  /** La minoria only: who has locked in, never what they chose (REQ-197). */
+  locked_in?: string[]
 }
 
 export type LockIn = { event_id: string; saved: boolean; revealed: boolean }
@@ -85,7 +107,12 @@ export async function createGameEvent(
 }
 
 export async function saveGameSettings(
-  { game, enabled, description, settings }: { game: string; enabled: boolean; description: string; settings: DuelSettings },
+  {
+    game,
+    enabled,
+    description,
+    settings,
+  }: { game: string; enabled: boolean; description: string; settings: DuelSettings | MinoriaSettings },
   client = supabase,
 ) {
   const { error } = await client.rpc('set_game_settings', {
@@ -97,10 +124,23 @@ export async function saveGameSettings(
   if (error) throw error
 }
 
+// REQ-156: only the creator, once at least 3 have paid.
+export async function startGame({ requestId, eventId }: { requestId: string; eventId: string }, client = supabase) {
+  const { error } = await client.rpc('start_game', { p_request_id: requestId, p_event_id: eventId })
+  if (error) throw error
+}
+
+// A La minoria player's own choice, which is final. Null for anyone else.
+export async function fetchMyChoice(eventId: string, client = supabase) {
+  const { data, error } = await client.rpc('my_choice', { p_event_id: eventId })
+  if (error) throw error
+  return (data as { choice: MinoriaChoice | null }).choice
+}
+
 // The client gives a failed fetch no code, and a TypeError is what errorMessage()
 // words as a lost connection.
 export async function lockIn(
-  { requestId, eventId, choice }: { requestId: string; eventId: string; choice: DuelChoice },
+  { requestId, eventId, choice }: { requestId: string; eventId: string; choice: DuelChoice | MinoriaChoice },
   client = supabase,
 ) {
   const { data, error } = await client.rpc('lock_in', { p_request_id: requestId, p_event_id: eventId, p_choice: choice })

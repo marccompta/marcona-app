@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { formatMarcones } from '../i18n/format'
 import { text } from '../i18n/text'
 import type { MarconaEvent } from '../lib/events'
-import { duelVerdict, type RevealedPlayer } from '../lib/games'
+import { duelVerdict, type DuelResult, type RevealedPlayer } from '../lib/games'
 import { prefersStillness } from '../shell/Balance'
 import { WinBurst } from './WinBurst'
 
@@ -17,7 +17,7 @@ const stages: [Stage, number][] = [
 // Storage can be blocked or empty. Then the reveal simply plays again.
 const seenKey = (eventId: string) => `marcona-reveal-${eventId}`
 
-function alreadySeen(eventId: string) {
+export function alreadySeen(eventId: string) {
   try {
     return localStorage.getItem(seenKey(eventId)) !== null
   } catch {
@@ -25,7 +25,7 @@ function alreadySeen(eventId: string) {
   }
 }
 
-function rememberSeen(eventId: string) {
+export function rememberSeen(eventId: string) {
   try {
     localStorage.setItem(seenKey(eventId), '1')
   } catch {
@@ -78,7 +78,7 @@ export function DuelReveal({ event, me }: { event: MarconaEvent; me: string }) {
   }, [stage, event.id])
 
   const name = (userId: string) => event.participants.find((person) => person.user_id === userId)?.who.username ?? ''
-  const players = [...event.reveal!.players].sort(
+  const players = [...(event.reveal as DuelResult).players].sort(
     (a, b) => Number(name(b.user_id) === me) - Number(name(a.user_id) === me) || name(a.user_id).localeCompare(name(b.user_id), 'ca'),
   )
   const verdict = duelVerdict(players)

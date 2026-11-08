@@ -5,7 +5,16 @@ import { errorMessage } from '../i18n/errors'
 import { formatMarcones } from '../i18n/format'
 import { text } from '../i18n/text'
 import { liveEvent, type MarconaEvent } from '../lib/events'
-import { createTapQueue, duelChoices, fetchGameState, gameName, lockIn, type DuelChoice } from '../lib/games'
+import {
+  createTapQueue,
+  duelChoices,
+  fetchGameState,
+  gameName,
+  lockIn,
+  type DuelChoice,
+  type DuelSettings,
+  type GameState,
+} from '../lib/games'
 import { useLive } from '../lib/live'
 import { Crown } from '../shell/icons'
 import { DuelReveal } from './DuelReveal'
@@ -64,16 +73,25 @@ function useDuelTaps(eventId: string, showReveal: () => void) {
 }
 
 // REQ-134: works with or without live updates, from when the screen opens until
-// the reveal. A failed read just waits for the next one.
-function useGamePolling(event: MarconaEvent, onChange: () => void, holdingReveal: RefObject<boolean>) {
+// the reveal. A failed read just waits for the next one. REQ-197: La minoria also
+// reads who has locked in from each state.
+export function useGamePolling(
+  event: MarconaEvent,
+  onChange: () => void,
+  holdingReveal: RefObject<boolean>,
+  onState?: (state: GameState) => void,
+) {
   const changed = useRef(onChange)
   changed.current = onChange
+  const seen = useRef(onState)
+  seen.current = onState
 
   useEffect(() => {
     if (event.status !== 'open') return
     const timer = setInterval(() => {
       fetchGameState(event.id).then(
         (state) => {
+          seen.current?.(state)
           if (!holdingReveal.current && (state.status !== event.status || state.phase !== event.phase)) changed.current()
         },
         () => undefined,
@@ -136,7 +154,7 @@ export function GameEvent({ event, profile, onChange }: { event: MarconaEvent; p
   const open = event.status === 'open'
   const choosing = open && event.phase === 'choosing'
   const me = event.participants.find((person) => person.who.username === profile.username)
-  const settings = event.settings!
+  const settings = event.settings as DuelSettings & { description: string }
 
   function closePanel() {
     setPanelOpen(false)

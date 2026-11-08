@@ -34,11 +34,11 @@ export type FakeEvent = {
   /** By username. The creator is added as accepted if missing. */
   people?: Record<string, 'invited' | 'accepted' | 'declined' | 'lapsed'>
   results?: { place: number; user_id: string; percentage: number; amount: number }[] | null
-  /** Set for a game. Its settings default to the duel's. */
+  /** Set for a game. Its settings default to that game's. */
   game?: string
   phase?: 'inviting' | 'choosing' | 'revealed'
-  settings?: typeof duelDefaults & { description: string }
-  reveal?: FakeReveal | null
+  settings?: FakeGameSettings
+  reveal?: FakeReveal | FakeMinoriaResult | null
   creator_plays?: boolean
 }
 
@@ -46,6 +46,26 @@ export type FakeReveal = { players: { user_id: string; choice: string; percentag
 
 export const duelDefaults = { both_trust: 150, betrayer: 250, betrayed: 0, both_betray: 50 }
 export const duelDescription = 'Dues persones, una decisió secreta.'
+
+// La minoria, as the real seed has it. Tests that need it add it to calls.games.
+export const minoriaDefaults = { option_a: 'Blanc', option_b: 'Negre' }
+export const minoriaDescription = 'Tothom tria en secret. El bàndol més petit es reparteix el pot.'
+export const minoriaGame = () => ({
+  id: 'la_minoria',
+  enabled: true,
+  description: minoriaDescription,
+  settings: { ...minoriaDefaults } as FakeGameSettings,
+})
+
+type FakeGameSettings = Record<string, number | string>
+
+export type FakeMinoriaResult = {
+  verdict: 'split' | 'tie' | 'unanimous'
+  minority: 'a' | 'b' | null
+  share: number | null
+  remainder_to: string | null
+  players: { user_id: string; choice: string; payout: number }[]
+}
 
 export const admin: FakeUser = { username: 'marc', password: 'contrasenya-de-prova', role: 'admin' }
 export const player: FakeUser = { username: 'anna', password: 'una-altra-de-prova', role: 'player' }
@@ -118,8 +138,12 @@ export async function fakeSupabase(
     finished_at: null as string | null,
     game: null as string | null,
     phase: null as FakeEvent['phase'] | null,
-    settings: event.game ? { ...duelDefaults, description: duelDescription } : null,
-    reveal: null as FakeReveal | null,
+    settings: (event.game === 'la_minoria'
+      ? { ...minoriaDefaults, description: minoriaDescription }
+      : event.game
+        ? { ...duelDefaults, description: duelDescription }
+        : null) as FakeGameSettings | null,
+    reveal: null as FakeReveal | FakeMinoriaResult | null,
     creator_plays: true,
     ...event,
     people: {
@@ -141,7 +165,9 @@ export async function fakeSupabase(
     /** The colours the next spins land on, in order. Red once it's empty. */
     spinResults: [] as ('red' | 'black' | 'white')[],
     roulette: { enabled: true, white_one_in: 37, max_bet_percent: 5 },
-    games: [{ id: 'confia_o_traeix', enabled: true, description: duelDescription, settings: { ...duelDefaults } }],
+    games: [
+      { id: 'confia_o_traeix', enabled: true, description: duelDescription, settings: { ...duelDefaults } as FakeGameSettings },
+    ],
     /** Secret choices by event and username, which no fake read returns. */
     choices: {} as Record<string, Record<string, string>>,
     /** How many times game_state() has been read. */
@@ -478,10 +504,26 @@ export async function fakeSupabase(
       move(caller, -event.buy_in, 'event_buy_in', event, caller.username)
     }
     event.people[caller.username] = body.p_accept ? 'accepted' : 'declined'
-    if (event.game) {
+    // In La minoria a decline is only a decline, and the creator starts it.
+    if (event.game === 'confia_o_traeix') {
       if (!body.p_accept) cancel(event, caller.username)
       else if (!Object.values(event.people).includes('invited')) event.phase = 'choosing'
     }
+    return { event_id: event.id }
+  })
+
+  await eventFunction('start_game', (body, caller) => {
+    const event = findEvent(body.p_event_id)
+    if (!event?.game) return refuse('event_not_found')
+    if (event.creator !== caller.username) return refuse('not_allowed')
+    if (event.status !== 'open') return refuse('event_not_open')
+    if (event.game !== 'la_minoria') return refuse('game_has_no_start')
+    if (event.phase !== 'inviting') return refuse('game_not_inviting')
+    if (accepted(event).length < 3) return refuse('not_enough_players')
+    for (const [username, status] of Object.entries(event.people)) {
+      if (status === 'invited') event.people[username] = 'lapsed'
+    }
+    event.phase = 'choosing'
     return { event_id: event.id }
   })
 
@@ -563,7 +605,9 @@ export async function fakeSupabase(
     const game = calls.games.find((candidate) => candidate.id === body.p_game)
     if (!game) return refuse('game_not_found')
     if (!game.enabled) return refuse('game_off')
-    if (invitees.length + (plays ? 1 : 0) !== 2) return refuse('duel_needs_two_players')
+    if (game.id === 'la_minoria') {
+      if (new Set(invitees).size + (plays ? 1 : 0) < 3) return refuse('minoria_needs_three_players')
+    } else if (invitees.length + (plays ? 1 : 0) !== 2) return refuse('duel_needs_two_players')
 
     const players = invitees.map((id) => people.find((u) => u.username === id)!)
     const short = players.filter((user) => user.balance < buyIn).map((user) => user.username)
@@ -599,7 +643,7 @@ export async function fakeSupabase(
 
   const resolveDuel = (event: (typeof events)[number]) => {
     const choices = calls.choices[event.id]
-    const rules = event.settings!
+    const rules = event.settings as typeof duelDefaults
     const [one, other] = accepted(event)
     const percentage = (mine: string, theirs: string) =>
       mine === 'confia'
@@ -617,11 +661,44 @@ export async function fakeSupabase(
     Object.assign(event, { status: 'completed', phase: 'revealed', reveal: { players }, finished_at: new Date().toISOString() })
   }
 
+  // REQ-161 to REQ-163: the same rules as private.minoria_reveal(). The choices
+  // keep the order they were made in, which stands in for the stored sequence.
+  const resolveMinoria = (event: (typeof events)[number]) => {
+    const choices = calls.choices[event.id]
+    const order = Object.keys(choices)
+    const side = (choice: string) => order.filter((username) => choices[username] === choice)
+    const [a, b] = [side('a'), side('b')]
+    const pot = event.buy_in * order.length
+    const verdict = a.length === b.length ? 'tie' : a.length === 0 || b.length === 0 ? 'unanimous' : 'split'
+    const smaller = verdict === 'split' ? (a.length < b.length ? 'a' : 'b') : null
+    const winners = smaller === 'a' ? a : smaller === 'b' ? b : []
+    const share = smaller ? Math.floor(pot / winners.length) : null
+    const first = winners[0] ?? null
+    const players = [...order].sort().map((username) => ({
+      user_id: username,
+      choice: choices[username],
+      payout:
+        verdict !== 'split'
+          ? event.buy_in
+          : choices[username] !== smaller
+            ? 0
+            : username === first
+              ? pot - share! * (winners.length - 1)
+              : share!,
+    }))
+    const kind = verdict === 'split' ? 'event_payout' : 'event_refund'
+    for (const player of players) {
+      if (player.payout > 0) move(people.find((u) => u.username === player.user_id)!, player.payout, kind, event, event.creator)
+    }
+    const reveal = { verdict, minority: smaller, share, remainder_to: first, players } as FakeMinoriaResult
+    Object.assign(event, { status: 'completed', phase: 'revealed', reveal, finished_at: new Date().toISOString() })
+  }
+
   const saveChoice = (event: (typeof events)[number], username: string, choice: string) => {
     const choices = (calls.choices[event.id] ??= {})
     choices[username] = choice
     const revealed = accepted(event).every((player) => choices[player])
-    if (revealed) resolveDuel(event)
+    if (revealed) (event.game === 'la_minoria' ? resolveMinoria : resolveDuel)(event)
     return revealed
   }
 
@@ -636,7 +713,10 @@ export async function fakeSupabase(
     if (event.status === 'cancelled') return refuse('event_not_open')
     if (event.phase === 'revealed') return { event_id: event.id, saved: false, revealed: true }
     if (event.phase !== 'choosing') return refuse('game_not_choosing')
-    if (body.p_choice !== 'confia' && body.p_choice !== 'traeix') return refuse('invalid_game_choice')
+    const options = event.game === 'la_minoria' ? ['a', 'b'] : ['confia', 'traeix']
+    if (!options.includes(body.p_choice)) return refuse('invalid_game_choice')
+    // REQ-205
+    if (event.game === 'la_minoria' && calls.choices[event.id]?.[caller.username]) return refuse('choice_locked')
     return { event_id: event.id, saved: true, revealed: saveChoice(event, caller.username, body.p_choice) }
   })
 
@@ -650,6 +730,20 @@ export async function fakeSupabase(
     const description = String(body.p_description ?? '').trim()
     if (!description) return refused('game_description_required')
     if (description.length > 1000) return refused('game_description_too_long')
+
+    // REQ-160: two trimmed labels, of 1 to 20 characters, that differ ignoring case.
+    if (body.p_game === 'la_minoria') {
+      const labels = [body.p_settings?.option_a, body.p_settings?.option_b].map((value) =>
+        typeof value === 'string' ? value.trim() : '',
+      )
+      if (labels.some((value) => !value)) return refused('game_option_required')
+      if (labels.some((value) => value.length > 20)) return refused('game_option_too_long')
+      if (labels[0].toLowerCase() === labels[1].toLowerCase()) return refused('game_options_same')
+      const minoria = calls.games.find((candidate) => candidate.id === 'la_minoria')!
+      Object.assign(minoria, { enabled: body.p_enabled, description, settings: { option_a: labels[0], option_b: labels[1] } })
+      return json(route, 200, minoria)
+    }
+
     const { both_trust, betrayer, betrayed, both_betray } = body.p_settings
     const numbers = [both_trust, betrayer, betrayed, both_betray]
     if (!numbers.every((value) => Number.isInteger(value) && value >= 0 && value <= 1000)) {
@@ -668,7 +762,19 @@ export async function fakeSupabase(
     const event = findEvent(route.request().postDataJSON().p_event_id)
     if (!event?.game) return json(route, 400, { code: 'P0001', message: 'event_not_found', details: null, hint: null })
     const { id, game, status, phase, settings, reveal } = event
-    return json(route, 200, { event_id: id, game, status, phase, settings, reveal })
+    // REQ-197: who has locked in, for La minoria only, never what they chose.
+    const lockedIn = game === 'la_minoria' ? { locked_in: Object.keys(calls.choices[id] ?? {}).sort() } : {}
+    return json(route, 200, { event_id: id, game, status, phase, settings, reveal, ...lockedIn })
+  })
+
+  await page.route('**/rest/v1/rpc/my_choice', async (route) => {
+    if (await preflight(route)) return
+    const caller = people.find((u) => u.username === usernameFromToken(route))
+    const event = findEvent(route.request().postDataJSON().p_event_id)
+    if (!caller) return json(route, 403, { code: '42501', message: 'not_allowed' })
+    if (!event?.game) return json(route, 400, { code: 'P0001', message: 'event_not_found', details: null, hint: null })
+    if (event.game !== 'la_minoria') return json(route, 403, { code: '42501', message: 'not_allowed' })
+    return json(route, 200, { choice: calls.choices[event.id]?.[caller.username] ?? null })
   })
 
   const maxBet = (balance: number) => Math.max(1, Math.floor((balance * calls.roulette.max_bet_percent) / 100))

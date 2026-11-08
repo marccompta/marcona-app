@@ -18,7 +18,9 @@ import {
 import { Field, Outcome, useAction } from '../shell/Form'
 import { Answer, Cancel, People, useRequestId, type ActionProps } from './EventActions'
 import { StatusPill } from './Events'
+import { minoria } from '../lib/games'
 import { GameEvent } from './GameEvent'
+import { MinoriaEvent } from './MinoriaEvent'
 import { Pending } from './Movements'
 
 // REQ-091, REQ-092: one winner with 2 people, or someone for each paid place.
@@ -168,7 +170,9 @@ export function EventDetail({ profile }: { profile: Profile }) {
       {state.status === 'ready' && state.data && (
         <>
           <h1 className="detail-name">{state.data.name}</h1>
-          {state.data.type === 'game' ? (
+          {state.data.game === minoria ? (
+            <MinoriaEvent event={state.data} profile={profile} onChange={reload} />
+          ) : state.data.type === 'game' ? (
             <GameEvent event={state.data} profile={profile} onChange={reload} />
           ) : (
             <Body event={state.data} profile={profile} onChange={reload} />
