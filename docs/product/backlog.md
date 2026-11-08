@@ -163,15 +163,15 @@ Every requirement has a permanent ID. Raw input is kept in `docs/product/intake/
 | REQ-152 | When an event changes, the system shall refresh events on every logged-in phone without a reload. | active | 006 | test |
 | REQ-153 | The system shall show a QR code on an admin screen that links to the site. | active | 006 | test |
 | REQ-154 | When a user adds the site to their home screen, the system shall open full screen like an app. | active | 006 | manual |
-| REQ-155 | The system shall run La minoria as a group game for 3 or more players. | planned | 007 | test |
-| REQ-156 | While at least 3 people have accepted a La minoria event, the system shall let the creator start it. | planned | 007 | test |
-| REQ-157 | If anyone else tries to start La minoria, or fewer than 3 have accepted, then the system shall reject it. | planned | 007 | test |
-| REQ-158 | When the creator starts La minoria, the system shall lapse its pending invitations. | planned | 007 | test |
+| REQ-155 | The system shall run La minoria as a group game for 3 or more players. | active | 007 | test |
+| REQ-156 | While at least 3 people have accepted a La minoria event, the system shall let the creator start it. | active | 007 | test |
+| REQ-157 | If anyone else tries to start La minoria, or fewer than 3 have accepted, then the system shall reject it. | active | 007 | test |
+| REQ-158 | When the creator starts La minoria, the system shall lapse its pending invitations. | active | 007 | test |
 | REQ-159 | When La minoria has started, the system shall let each player secretly pick one of two options, labelled Cara and Creu by default. | superseded by REQ-193 | 007 | test |
-| REQ-160 | When the admin edits the option labels, the system shall use them for new events. | planned | 007 | test |
-| REQ-161 | When both options are chosen and one side is smaller, the system shall split the whole pot equally among that side, rounded down. | planned | 007 | test |
-| REQ-162 | When a La minoria split leaves a remainder, the system shall give it to whoever on the smaller side locked in first. | planned | 007 | test |
-| REQ-163 | If the sides tie, or everyone picks the same option, then the system shall refund everyone. | planned | 007 | test |
+| REQ-160 | When the admin edits the option labels, the system shall use them for new events. | active | 007 | test |
+| REQ-161 | When both options are chosen and one side is smaller, the system shall split the whole pot equally among that side, rounded down. | active | 007 | test |
+| REQ-162 | When a La minoria split leaves a remainder, the system shall give it to whoever on the smaller side locked in first. | active | 007 | test |
+| REQ-163 | If the sides tie, or everyone picks the same option, then the system shall refund everyone. | active | 007 | test |
 | REQ-164 | When the admin requests an export, the system shall download all users, events and ledger movements. | planned | 008 | test |
 | REQ-165 | When the admin confirms a wipe, the system shall delete the test data. This is the only operation allowed to delete ledger rows. | planned | 008 | test |
 | REQ-166 | If a wipe isn't explicitly confirmed, then the system shall change nothing. | planned | 008 | test |
@@ -193,19 +193,19 @@ Every requirement has a permanent ID. Raw input is kept in `docs/product/intake/
 | REQ-182 | The system shall run Confia o traeix as a duel between exactly two players: the admin and one invited opponent, or two invited players. | active | 005 | test |
 | REQ-183 | When an invited player declines a duel, the system shall cancel the event and refund anyone who has paid. | active | 005 | test |
 | REQ-184 | When an invited player of a duel is removed, the system shall cancel the event and refund anyone who has paid. | active | 005 | test |
-| REQ-185 | The system shall count the admin towards La minoria's 3 players only if they're playing. | planned | 007 | test |
+| REQ-185 | The system shall count the admin towards La minoria's 3 players only if they're playing. | active | 007 | test |
 | REQ-186 | The system shall offer the option to force participation to the admin on every new event, and to nobody else. | active | 003 | test |
 | REQ-187 | If anyone other than the admin asks to force participation, then the system shall reject it. | active | 003 | test |
 | REQ-188 | When the admin creates a classic event with forced participation, the system shall make every invitee an accepted participant and charge them the buy-in at once, without waiting for them to accept. | active | 003 | test |
 | REQ-189 | If any forced player's balance is below the buy-in, then the system shall reject the event, name those players, and charge nobody. | active | 003 | test |
 | REQ-190 | The system shall show each forced buy-in in the audit as made by the admin. | active | 003 | test |
 | REQ-191 | When the admin creates a duel with forced participation, the system shall charge every player and go straight to choosing. | active | 005 | test |
-| REQ-192 | When the admin creates a La minoria event with forced participation, the system shall charge every player and start it at once. | planned | 007 | test |
-| REQ-193 | When La minoria has started, the system shall let each player secretly pick one of two options, labelled Blanc and Negre by default. | planned | 007 | test |
+| REQ-192 | When the admin creates a La minoria event with forced participation, the system shall charge every player and start it at once. | active | 007 | test |
+| REQ-193 | When La minoria has started, the system shall let each player secretly pick one of two options, labelled Blanc and Negre by default. | active | 007 | test |
 | REQ-194 | While a duel is unrevealed, the system shall tell nobody whether another player has locked in, through any screen, the API or Realtime. | active | 005 | test |
 | REQ-195 | While a duel is unrevealed, the system shall show a player the same resting screen whether or not they've locked in, so a glance at their phone reveals nothing. | active | 005 | test |
 | REQ-196 | When a player opens the private choice panel in a duel, the system shall show the choice buttons, or their own choice if they've locked in. | superseded by REQ-198 | 005 | test |
-| REQ-197 | While a La minoria game is unrevealed, the system shall show who has locked in. | planned | 007 | test |
+| REQ-197 | While a La minoria game is unrevealed, the system shall show who has locked in. | active | 007 | test |
 | REQ-198 | When a player opens the private choice panel in a duel, the system shall show both choice buttons, looking the same whether or not they've locked in. | active | 005 | test |
 | REQ-199 | When a player who hasn't locked in taps a choice button in a duel, the system shall lock that choice in at once, with no confirmation step. | superseded by REQ-202 | 005 | test |
 | REQ-200 | When a duel choice is locked in, the system shall make that button glow clearly, once and briefly, and shall give no other feedback. | superseded by REQ-203 | 005 | test |
@@ -213,7 +213,7 @@ Every requirement has a permanent ID. Raw input is kept in `docs/product/intake/
 | REQ-202 | When a player taps a choice button in a duel, the system shall save that choice at once, with no confirmation step, replacing any earlier choice of theirs. | active | 005 | test |
 | REQ-203 | When a duel tap is saved, the system shall make that button glow clearly for two seconds, and shall give no other feedback. | superseded by REQ-210 | 005 | test |
 | REQ-204 | If a duel tap arrives after both players have picked, then the system shall leave the choices as they were and show the reveal. | active | 005 | test |
-| REQ-205 | If a player tries to change a locked-in choice in La minoria, then the system shall reject it. | planned | 007 | test |
+| REQ-205 | If a player tries to change a locked-in choice in La minoria, then the system shall reject it. | active | 007 | test |
 | REQ-206 | The project shall scope the Supabase MCP server to this one project. Auto mode may stay on, and migrations don't need the human's manual approval. The other Supabase tools that can change something keep their `ask` rules. | superseded by REQ-209 | 001 | test |
 | REQ-207 | If a call to a Postgres function fails because the connection was lost, then the system shall show the no-connection message, not the general one. Seen in slice 004: every function call shows the general one. | proposed | - | test |
 | REQ-208 | If two money actions for one user arrive together, then the system shall apply both with no deadlock error. Found reading the code in slice 004 and not reproduced: functions other than `spin()` claim a request before locking the user. No money is at risk, as one action would fail and roll back. | proposed | - | test |
@@ -235,7 +235,7 @@ Every requirement has a permanent ID. Raw input is kept in `docs/product/intake/
 | 004 | Roulette: spin, payout, audit and admin settings. | REQ-101 to REQ-119 | closed |
 | 005 | Confia o traeix: the secret-choice engine, the first game, and admin game settings. | REQ-120 to REQ-149, REQ-175 to REQ-184, REQ-191, REQ-194 to REQ-196, REQ-198 to REQ-204, REQ-210 | closed |
 | 006 | Extras: live updates, QR code and home screen install, in that order. Each can be dropped on its own. | REQ-150 to REQ-154 | closed |
-| 007 | La minoria: the second game, on the same engine. | REQ-155 to REQ-163, REQ-185, REQ-192, REQ-193, REQ-197, REQ-205 | planned |
+| 007 | La minoria: the second game, on the same engine. | REQ-155 to REQ-163, REQ-185, REQ-192, REQ-193, REQ-197, REQ-205 | closed |
 | 008 | Event readiness: export, data wipe, rehearsal and day-of guide. This slice can't be cut. | REQ-164 to REQ-174 | planned |
 
 ## Delivery plan

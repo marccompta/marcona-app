@@ -1,7 +1,7 @@
 ---
 slice: "007"
 title: La minoria
-status: accepted
+status: closed
 requirements: [REQ-155, REQ-156, REQ-157, REQ-158, REQ-160, REQ-161, REQ-162, REQ-163, REQ-185, REQ-192, REQ-193, REQ-197, REQ-205]
 ---
 

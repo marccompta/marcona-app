@@ -28,6 +28,10 @@ All notable user-facing changes are documented here. The format follows [Keep a 
 - Live updates: the ranking, a person's page, the audit and events change by themselves when someone else plays.
 - A QR code on the admin screen, for friends to scan and open the site.
 - Home screen install, opening full screen as MarcOna with its own icon.
+- La minoria: a secret group game for 3 or more, which the admin sets up and starts, where everyone confirms Blanc or Negre and sees who has picked, never what.
+- La minoria's reveal: each side's count, then the smaller side splitting the pot, or everyone's buy-in back on a tie or a unanimous choice.
+- Forced participation for La minoria, which starts it at once.
+- La minoria's settings for the admin: on or off, the description and the two option names.
 
 ### Changed
 
