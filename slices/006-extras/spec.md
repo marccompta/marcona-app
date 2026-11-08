@@ -1,7 +1,7 @@
 ---
 slice: "006"
 title: Extras
-status: in-review
+status: accepted
 requirements: [REQ-150, REQ-151, REQ-152, REQ-153, REQ-154]
 ---
 
