@@ -22,6 +22,10 @@ declare
   cesc_start bigint;
   request uuid;
   outcome jsonb;
+  anna_start bigint;
+  bea_start bigint;
+  scenario text;
+  parts text[];
 begin
   -- Says what a statement was refused with, or that it went through.
   create function pg_temp.refusal(statement text) returns text language plpgsql as $f$
@@ -52,6 +56,14 @@ begin
   -- A game of La minoria for the given players, created by the admin.
   create function pg_temp.new_game(buy_in integer, plays boolean, players uuid[], forced boolean) returns uuid language sql as $f$
     select (public.create_game_event(gen_random_uuid(), 'la_minoria', 'Prova', buy_in, plays, players, forced) ->> 'event_id')::uuid;
+  $f$;
+
+  -- One player's pick, as that player.
+  create function pg_temp.pick(event uuid, who uuid, choice text) returns jsonb language plpgsql as $f$
+  begin
+    perform pg_temp.act_as(who);
+    return public.lock_in(gen_random_uuid(), event, choice);
+  end;
   $f$;
 
   insert into auth.users (id, email)
@@ -222,6 +234,127 @@ begin
   results := results || pg_temp.verdict('A cancelled game cannot start', pg_temp.refusal(format(
     $s$select public.start_game(gen_random_uuid(), %L)$s$, round
   )) = 'event_not_open');
+
+  -- REQ-193: only the game's two options.
+  perform pg_temp.act_as(admin_id);
+  round := pg_temp.new_game(10, false, array[anna, bea, cesc], true);
+  perform pg_temp.act_as(anna);
+  results := results || pg_temp.verdict('REQ-193 a duel choice is not an option', pg_temp.refusal(format(
+    $s$select public.lock_in(gen_random_uuid(), %L, 'confia')$s$, round
+  )) = 'invalid_game_choice');
+  results := results || pg_temp.verdict('REQ-193 a label is not an option', pg_temp.refusal(format(
+    $s$select public.lock_in(gen_random_uuid(), %L, 'Blanc')$s$, round
+  )) = 'invalid_game_choice');
+
+  -- REQ-205: the first choice is final, and a repeat of it changes nothing.
+  request := gen_random_uuid();
+  outcome := public.lock_in(request, round, 'a');
+  results := results || pg_temp.verdict('REQ-193 a choice is locked in',
+    (outcome ->> 'saved')::boolean and not (outcome ->> 'revealed')::boolean
+    and (select choice from private.choices where event_id = round and user_id = anna) = 'a');
+  results := results || pg_temp.verdict('REQ-205 a locked-in choice cannot change', pg_temp.refusal(format(
+    $s$select public.lock_in(gen_random_uuid(), %L, 'b')$s$, round
+  )) = 'choice_locked'
+    and (select choice from private.choices where event_id = round and user_id = anna) = 'a');
+  results := results || pg_temp.verdict('REQ-205 nor be sent again', pg_temp.refusal(format(
+    $s$select public.lock_in(gen_random_uuid(), %L, 'a')$s$, round
+  )) = 'choice_locked');
+  results := results || pg_temp.verdict('REQ-062 a repeated lock-in returns the first answer',
+    public.lock_in(request, round, 'a') = outcome);
+  perform pg_temp.act_as(admin_id);
+  results := results || pg_temp.verdict('REQ-125 the admin who is not playing cannot pick', pg_temp.refusal(format(
+    $s$select public.lock_in(gen_random_uuid(), %L, 'a')$s$, round
+  )) = 'not_allowed');
+  results := results || pg_temp.verdict('REQ-194 no public row changes before the reveal',
+    (select phase from public.events where id = round) = 'choosing'
+    and not exists (select 1 from public.ledger where event_id = round and kind <> 'event_buy_in'));
+
+  -- REQ-161: 5 players with 10 each, 2 against 3. The admin plays here.
+  round := pg_temp.new_game(10, true, array[anna, bea, cesc, ester], true);
+  anna_start := pg_temp.balance(anna);
+  bea_start := pg_temp.balance(bea);
+  cesc_start := pg_temp.balance(cesc);
+  admin_start := pg_temp.balance(admin_id);
+  perform pg_temp.pick(round, anna, 'a');
+  perform pg_temp.pick(round, admin_id, 'b');
+  perform pg_temp.pick(round, bea, 'a');
+  perform pg_temp.pick(round, cesc, 'b');
+  outcome := pg_temp.pick(round, ester, 'b');
+  results := results || pg_temp.verdict('REQ-127 the last pick reveals',
+    (outcome ->> 'revealed')::boolean
+    and (select status = 'completed' and phase = 'revealed' from public.events where id = round));
+  results := results || pg_temp.verdict('REQ-161 the smaller side splits the pot',
+    pg_temp.balance(anna) = anna_start + 25 and pg_temp.balance(bea) = bea_start + 25
+    and pg_temp.balance(cesc) = cesc_start and pg_temp.balance(admin_id) = admin_start);
+  results := results || pg_temp.verdict('REQ-145 only winners get a movement, from the creator',
+    (select count(*) from public.ledger where event_id = round and kind = 'event_payout') = 2
+    and not exists (select 1 from public.ledger where event_id = round and kind = 'event_payout' and actor_id <> admin_id)
+    and not exists (select 1 from public.ledger where event_id = round and kind = 'event_refund'));
+  results := results || pg_temp.verdict('REQ-132 the reveal holds every choice and payout',
+    (select reveal ->> 'verdict' = 'split' and reveal ->> 'minority' = 'a' and (reveal ->> 'share')::bigint = 25
+      and reveal ->> 'remainder_to' = anna::text and jsonb_array_length(reveal -> 'players') = 5
+     from public.events where id = round)
+    and exists (
+      select 1 from jsonb_array_elements((select reveal -> 'players' from public.events where id = round)) as player
+      where player ->> 'user_id' = cesc::text and player ->> 'choice' = 'b' and (player ->> 'payout')::bigint = 0));
+
+  -- REQ-162: 7 players with 5 each, so 35 among 3 is 11 each and 2 left over.
+  -- Gina picks first, on the bigger side, so the remainder goes to the first of
+  -- the smaller side, not the first of all.
+  perform pg_temp.act_as(admin_id);
+  round :=pg_temp.new_game(5, true, array[anna, bea, cesc, ester, ferran, gina], true);
+  anna_start := pg_temp.balance(anna);
+  bea_start := pg_temp.balance(bea);
+  cesc_start := pg_temp.balance(cesc);
+  perform pg_temp.pick(round, gina, 'a');
+  perform pg_temp.pick(round, bea, 'b');
+  perform pg_temp.pick(round, anna, 'b');
+  perform pg_temp.pick(round, admin_id, 'a');
+  perform pg_temp.pick(round, ferran, 'a');
+  perform pg_temp.pick(round, cesc, 'b');
+  perform pg_temp.pick(round, ester, 'a');
+  results := results || pg_temp.verdict('REQ-162 the first of the smaller side gets the remainder',
+    pg_temp.balance(bea) = bea_start + 13 and pg_temp.balance(anna) = anna_start + 11 and pg_temp.balance(cesc) = cesc_start + 11
+    and (select sum(delta) from public.ledger where event_id = round and kind = 'event_payout') = 35
+    and (select reveal ->> 'remainder_to' from public.events where id = round) = bea::text);
+
+  -- REQ-163: a tie, and a unanimous choice, give everyone their buy-in back.
+  foreach scenario in array array['a,a,b,b', 'a,a,a,a', 'b,b,b,b'] loop
+    parts := string_to_array(scenario, ',');
+    perform pg_temp.act_as(admin_id);
+    round := pg_temp.new_game(10, false, array[anna, bea, cesc, ester], true);
+    anna_start := pg_temp.balance(anna);
+    cesc_start := pg_temp.balance(cesc);
+    perform pg_temp.pick(round, anna, parts[1]);
+    perform pg_temp.pick(round, bea, parts[2]);
+    perform pg_temp.pick(round, cesc, parts[3]);
+    outcome := pg_temp.pick(round, ester, parts[4]);
+    results := results || pg_temp.verdict('REQ-163 everyone is refunded on ' || scenario,
+      (outcome ->> 'revealed')::boolean
+      and pg_temp.balance(anna) = anna_start + 10 and pg_temp.balance(cesc) = cesc_start + 10
+      and (select count(*) from public.ledger where event_id = round and kind = 'event_refund' and delta = 10 and actor_id = admin_id) = 4
+      and not exists (select 1 from public.ledger where event_id = round and kind = 'event_payout')
+      and (select reveal ->> 'verdict' from public.events where id = round) = case when scenario = 'a,a,b,b' then 'tie' else 'unanimous' end
+      and (select status from public.events where id = round) = 'completed');
+  end loop;
+
+  -- REQ-204: a pick after the reveal changes nothing, and asks for the reveal.
+  perform pg_temp.act_as(anna);
+  outcome := public.lock_in(gen_random_uuid(), round, 'a');
+  results := results || pg_temp.verdict('REQ-204 a late pick changes nothing',
+    not (outcome ->> 'saved')::boolean and (outcome ->> 'revealed')::boolean);
+
+  -- REQ-135: a stuck game is cancelled and everyone is refunded.
+  perform pg_temp.act_as(admin_id);
+  round := pg_temp.new_game(10, false, array[anna, bea, cesc], true);
+  anna_start := pg_temp.balance(anna);
+  perform pg_temp.pick(round, anna, 'a');
+  perform pg_temp.act_as(admin_id);
+  perform public.cancel_event(gen_random_uuid(), round);
+  results := results || pg_temp.verdict('REQ-135 cancelling La minoria refunds everyone',
+    pg_temp.balance(anna) = anna_start + 10
+    and (select count(*) from public.ledger where event_id = round and kind = 'event_refund') = 3
+    and (select reveal from public.events where id = round) is null);
 
   raise exception 'RESULTS %', results;
 end;

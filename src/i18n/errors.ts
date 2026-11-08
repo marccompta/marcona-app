@@ -37,6 +37,7 @@ export const byCode: Record<string, string> = {
   game_decides_winners: text.errors.gameDecidesWinners,
   game_not_choosing: text.errors.gameNotChoosing,
   invalid_game_choice: text.errors.invalidGameChoice,
+  choice_locked: text.errors.choiceLocked,
   invalid_game_percentage: text.errors.invalidGamePercentage,
   invalid_duel_order: text.errors.invalidDuelOrder,
   game_description_required: text.errors.gameDescriptionRequired,
