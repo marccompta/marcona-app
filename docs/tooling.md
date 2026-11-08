@@ -31,7 +31,7 @@ Which mechanism to use for what, and what's installed in this repo. Project tool
 
 | Item | Type | Why it exists |
 |---|---|---|
-| `intake`, `slice-spec`, `slice-build`, `slice-review`, `slice-verdict`, `slice-close` | Skills | The workflow steps. They set `disable-model-invocation: true`, so only a human starts them. |
+| `intake`, `slice-spec`, `slice-build`, `slice-review`, `slice-verdict`, `slice-close` | Skills | The workflow steps. They set `disable-model-invocation: true`, so only a human starts them. `slice-build` also resumes a build an earlier session left: it checks the tree, the ticked tasks against the commits, and the hosted migrations against the files, before going on. Added after slice 007, whose build was interrupted. |
 | `slice-auditor` | Subagent | Follows review instructions with no prior context, and runs cold-start checks. |
 | `scripts/check_docs.py` | Script | Checks traceability and slice completeness, locally and in CI. A slice can't be `in-review`, `accepted` or `closed` with an unchecked task. |
 | `tests/hosted/demo.ts` | Script | Plays the demo accounts during a review, so one phone is enough. Uses `tsx` to run TypeScript, and the admin's login from `.env.test.local`. |
