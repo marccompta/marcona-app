@@ -7,6 +7,7 @@ What the system does **now**. Each slice updates this file when it closes. Requi
 - It's served from https://marccompta.github.io/marcona-app/, and a reload or a link opens the same screen.
 - It fits screens from 360px wide, respects safe areas, and stays usable as a centred column on a desktop.
 - All text is Catalan, and all fonts come from the site itself.
+- Added to a phone's home screen, it opens full screen as **MarcOna**, with a gold spade icon. An iPhone home screen app keeps its own login. There's no offline use.
 
 ## Accounts
 
@@ -72,12 +73,14 @@ What the system does **now**. Each slice updates this file when it closes. Requi
 - **The reveal:** the screen brings two face-down cards into view, which turn one at a time, yours first, then the verdict and every choice and payout. A winner also gets the amount and confetti from roulette. The tap that completes the pair glows first. It plays once on each device. With reduced motion, the result shows at once and still.
 - **Ruleta:** the balance, the wheel, red and black, the bet and the current maximum. The wheel starts on the tap and lands on the server's result, and only then do the result and balance show. On a win, the marcones won show large over the wheel for about a second, with confetti across the screen. With reduced motion, the wheel jumps to the result, the amount shows still, and there's no confetti. A closed table shows a message instead, and the tab stays.
 - Balances show as chip stacks, with numbers that count up. With reduced motion they appear at once.
+- **Live updates:** the ranking, a person's page, the audit, the events list and an event's screen change by themselves when someone else changes something, with no reload. A phone catches up when it wakes, comes back online or reconnects. Ruleta and Administració update when opened or used.
+- **Codi QR per entrar:** at the top of **Administració**, for the admin only. A black-on-white code for the site's address, which friends scan to open it.
 
 ## Security
 
 - Row Level Security is on for every table, and nothing is readable without a login.
 - The browser can't write to any table, and nobody can change a ledger row.
-- Secret choices are in a schema the API doesn't expose, and in no Realtime publication.
+- Secret choices are in a schema the API doesn't expose, and in no Realtime publication. Realtime publishes only `profiles`, `ledger`, `events` and `event_participants`, applies Row Level Security to each message, and a pick changes none of them.
 - Every policy and public function checks that the user is active, so a removal takes effect even on an unexpired token.
 - There can only be one admin.
 - Creating, removing and resetting users run in an Edge Function, and the secret key exists only in Supabase.

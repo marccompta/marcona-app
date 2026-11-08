@@ -25,6 +25,9 @@ All notable user-facing changes are documented here. The format follows [Keep a 
 - A dramatic reveal the moment the second player picks, with cards that turn one at a time, and payouts in the audit.
 - Forced participation for duels.
 - Game settings for the admin: on or off, the description and the numbers, with a worked example.
+- Live updates: the ranking, a person's page, the audit and events change by themselves when someone else plays.
+- A QR code on the admin screen, for friends to scan and open the site.
+- Home screen install, opening full screen as MarcOna with its own icon.
 
 ### Changed
 

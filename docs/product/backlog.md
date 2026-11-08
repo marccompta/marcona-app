@@ -158,11 +158,11 @@ Every requirement has a permanent ID. Raw input is kept in `docs/product/intake/
 | REQ-147 | When the admin edits a game's Catalan description or numbers, the system shall save them for new events. | active | 005 | test |
 | REQ-148 | While the admin edits a game's numbers, the system shall show a worked example that updates as they change. | active | 005 | test |
 | REQ-149 | When admin settings change, the system shall leave existing events unchanged. | active | 005 | test |
-| REQ-150 | When a balance changes, the system shall refresh the ranking on every logged-in phone without a reload. | planned | 006 | test |
-| REQ-151 | When a movement is recorded, the system shall refresh the audit on every logged-in phone without a reload. | planned | 006 | test |
-| REQ-152 | When an event changes, the system shall refresh events on every logged-in phone without a reload. | planned | 006 | test |
-| REQ-153 | The system shall show a QR code on an admin screen that links to the site. | planned | 006 | test |
-| REQ-154 | When a user adds the site to their home screen, the system shall open full screen like an app. | planned | 006 | manual |
+| REQ-150 | When a balance changes, the system shall refresh the ranking on every logged-in phone without a reload. | active | 006 | test |
+| REQ-151 | When a movement is recorded, the system shall refresh the audit on every logged-in phone without a reload. | active | 006 | test |
+| REQ-152 | When an event changes, the system shall refresh events on every logged-in phone without a reload. | active | 006 | test |
+| REQ-153 | The system shall show a QR code on an admin screen that links to the site. | active | 006 | test |
+| REQ-154 | When a user adds the site to their home screen, the system shall open full screen like an app. | active | 006 | manual |
 | REQ-155 | The system shall run La minoria as a group game for 3 or more players. | planned | 007 | test |
 | REQ-156 | While at least 3 people have accepted a La minoria event, the system shall let the creator start it. | planned | 007 | test |
 | REQ-157 | If anyone else tries to start La minoria, or fewer than 3 have accepted, then the system shall reject it. | planned | 007 | test |
@@ -232,7 +232,7 @@ Every requirement has a permanent ID. Raw input is kept in `docs/product/intake/
 | 003 | Classic events: the full event lifecycle, including payouts, refunds and rounding. | REQ-071 to REQ-100, REQ-186 to REQ-190 | closed |
 | 004 | Roulette: spin, payout, audit and admin settings. | REQ-101 to REQ-119 | closed |
 | 005 | Confia o traeix: the secret-choice engine, the first game, and admin game settings. | REQ-120 to REQ-149, REQ-175 to REQ-184, REQ-191, REQ-194 to REQ-196, REQ-198 to REQ-204, REQ-210 | closed |
-| 006 | Extras: live updates, QR code and home screen install, in that order. Each can be dropped on its own. | REQ-150 to REQ-154 | planned |
+| 006 | Extras: live updates, QR code and home screen install, in that order. Each can be dropped on its own. | REQ-150 to REQ-154 | closed |
 | 007 | La minoria: the second game, on the same engine. | REQ-155 to REQ-163, REQ-185, REQ-192, REQ-193, REQ-197, REQ-205 | planned |
 | 008 | Event readiness: export, data wipe, rehearsal and day-of guide. This slice can't be cut. | REQ-164 to REQ-174 | planned |
 

@@ -12,10 +12,12 @@ A static React site on GitHub Pages talks directly to one hosted Supabase projec
 | `src/auth/` | Session, profile, and the username-to-email mapping |
 | `src/i18n/` | The one text module, `Intl` helpers, plurals and error mapping |
 | `src/shell/` | The framed layout, tab bar, logo, icons, chip stacks, count-up numbers and form helpers |
-| `src/screens/` | Login, the ranking, a person's detail, the audit, the admin screen, the events list, the new event form, the event screen and its shared actions, a game's screen, its payoffs and reveal, the game settings, Ruleta, its wheel and the win celebration |
-| `src/lib/` | The Supabase client, the data reads, calls to `admin_adjust`, the event functions, the game functions and tap queue, the roulette functions and `admin-users`, and the wheel's geometry |
+| `src/screens/` | Login, the ranking, a person's detail, the audit, the admin screen, the QR code, the events list, the new event form, the event screen and its shared actions, a game's screen, its payoffs and reveal, the game settings, Ruleta, its wheel and the win celebration |
+| `src/lib/` | The Supabase client, the data reads, live updates, calls to `admin_adjust`, the event functions, the game functions and tap queue, the roulette functions and `admin-users`, and the wheel's geometry |
 | `src/theme/`, `public/fonts/` | Design tokens, styles and self-hosted fonts |
-| `src/config.ts` | The Supabase URL and publishable key, which are safe to publish |
+| `src/config.ts` | The Supabase URL and publishable key, which are safe to publish, and the site's address |
+| `vite.config.ts` | The base path, and the plugin that draws the QR code at build time |
+| `public/manifest.webmanifest`, `public/icons/`, `public/icon.svg` | Home screen install. `scripts/make-icons.ts` draws the icons |
 | `supabase/migrations/` | Every schema change, applied to the hosted project through the Supabase MCP server |
 | `supabase/functions/admin-users/` | The Edge Function that creates, resets and removes users, and the only use of the secret key |
 | `.github/workflows/deploy.yml` | Tests, builds and deploys `main` and `slice/**` to Pages. The last push wins |
@@ -49,6 +51,10 @@ The site is React, TypeScript and Vite, under the base path `/marcona-app/`. Sup
 
 **Removing a user:** `admin-users` calls `remove_profile()` first. It locks the user's row, refuses if they've accepted an open event, declines their pending invitations and sets `removed_at`, so every policy and function rejects them at once. The Edge Function then bans the Auth user and deletes their sessions. Every step is safe to repeat.
 
+**Live updates:** Realtime publishes `profiles`, `ledger`, `events` and `event_participants`, and checks Row Level Security before sending each message. A screen calls `useLive()` from `src/lib/live.ts`, which opens a channel for its tables and asks Realtime to confirm only once the database side is streaming. On any change, 150ms after the last one in a burst, it calls the screen's `reload()`, which reads through the normal API. It also reads again on each subscribe or reconnect, when the phone wakes, and when the browser comes back online. A message's content is never used. A game's screen watches its own event, but skips changes while the player's own tap is on its way or glowing, and keeps its 3-second polling as a fallback.
+
+**Showing the QR code:** a Vite plugin turns `config.siteUrl` into an SVG at build time, which `#/administracio/qr` shows on white.
+
 **Errors:** functions return codes, and `errorMessage()` turns any error into Catalan, never showing the original text. One refusal carries data: `forced_insufficient_balance` has the usernames in its detail.
 
 ## How to run and test
@@ -56,7 +62,7 @@ The site is React, TypeScript and Vite, under the base path `/marcona-app/`. Sup
 The commands are in `AGENTS.md`. The human's one-off steps are in `docs/setup.md`.
 
 - Unit tests run everywhere, including the secret scan.
-- Browser tests run at 360px in Chromium and WebKit, against a fake Supabase in `tests/e2e/fake-supabase.ts`.
+- Browser tests run at 360px in Chromium and WebKit, against a fake Supabase in `tests/e2e/fake-supabase.ts`. It also fakes the Realtime socket, and sends a message after every function that would change a published table. `calls.live = false` silences it. Routing a socket only works from the next page load, so it reloads a page that's already open.
 - `tests/hosted/` and `tests/e2e/hosted.spec.ts` use the real project, and need the gitignored `.env.test.local`, so they run only on the human's machine. The accounts they create have `is_test` set, and stay until the wipe.
 - `tests/e2e/smoke.spec.ts` is the phone-sized smoke test of the main flows, on the real project. Each later slice extends it.
 - `tests/sql/constraints.sql` tries what only the database owner can try, `tests/sql/events.sql` tests the payout maths and forced participation, playing the real admin, and `tests/sql/roulette.sql` tests the odds and white, and `tests/sql/games.sql` tests the game rules and payouts. They run through the Supabase MCP server, and always roll back.

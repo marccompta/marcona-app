@@ -17,6 +17,7 @@ Domain terms, used the same way in specs, code and conversation. Specs, code and
 | Client request ID | | The ID a phone sends with a money action, so a repeat applies only once. |
 | Ledger | | The append-only record of every change to a balance. Each row stores the balance after it. |
 | Movement | Moviment | One ledger row. |
+| Live update | | A screen reading its data again because Realtime said a published table changed, with no reload. |
 | Balance | Saldo | A user's current marcones. |
 | Concept | Concepte | The required reason on an admin adjustment. |
 | Ranking | Classificació | Active users by balance, highest first. |
