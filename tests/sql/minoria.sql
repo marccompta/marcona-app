@@ -19,6 +19,9 @@ declare
   round uuid;
   defaults jsonb;
   game_description text;
+  cesc_start bigint;
+  request uuid;
+  outcome jsonb;
 begin
   -- Says what a statement was refused with, or that it went through.
   create function pg_temp.refusal(statement text) returns text language plpgsql as $f$
@@ -64,7 +67,8 @@ begin
   from unnest(array[anna, bea, cesc, dani, ester, ferran, gina]) as person;
   perform private.apply_movement(pobre, 3, 'admin_adjustment');
 
-  update public.games set enabled = true where id = 'la_minoria';
+  -- Never assume the live settings: the admin changes them during reviews.
+  update public.games set enabled = true where id in ('la_minoria', 'confia_o_traeix');
   select settings, games.description into defaults, game_description from public.games where id = 'la_minoria';
 
   -- REQ-193: the seed's labels.
@@ -148,6 +152,76 @@ begin
   results := results || pg_temp.verdict('REQ-182 a duel still needs exactly two', pg_temp.refusal(format(
     $s$select public.create_game_event(gen_random_uuid(), 'confia_o_traeix', 'Prova', 10, false, array[%L::uuid, %L::uuid, %L::uuid])$s$, anna, bea, cesc
   )) = 'duel_needs_two_players');
+
+  -- REQ-156, REQ-185: the admin plays, and 2 others have paid.
+  perform pg_temp.act_as(admin_id);
+  round := pg_temp.new_game(10, true, array[anna, bea, cesc], false);
+  perform pg_temp.act_as(anna);
+  perform public.answer_invitation(gen_random_uuid(), round, true);
+  perform pg_temp.act_as(bea);
+  perform public.answer_invitation(gen_random_uuid(), round, true);
+  cesc_start := pg_temp.balance(cesc);
+
+  -- REQ-157: only the creator, even once there are enough.
+  perform pg_temp.act_as(anna);
+  results := results || pg_temp.verdict('REQ-157 a player cannot start it', pg_temp.refusal(format(
+    $s$select public.start_game(gen_random_uuid(), %L)$s$, round
+  )) = 'not_allowed' and (select phase from public.events where id = round) = 'inviting');
+
+  -- REQ-156, REQ-158: cesc hasn't answered, so their invitation lapses unpaid.
+  perform pg_temp.act_as(admin_id);
+  request := gen_random_uuid();
+  outcome := public.start_game(request, round);
+  results := results || pg_temp.verdict('REQ-156 the admin who plays and 2 others can start',
+    outcome ->> 'event_id' = round::text
+    and (select phase from public.events where id = round) = 'choosing'
+    and (select status from public.events where id = round) = 'open');
+  results := results || pg_temp.verdict('REQ-158 a pending invitation lapses at the start',
+    pg_temp.status(round, cesc) = 'lapsed' and pg_temp.balance(cesc) = cesc_start
+    and not exists (select 1 from public.ledger where event_id = round and user_id = cesc));
+  perform pg_temp.act_as(cesc);
+  results := results || pg_temp.verdict('REQ-158 a lapsed invitation cannot be accepted', pg_temp.refusal(format(
+    $s$select public.answer_invitation(gen_random_uuid(), %L, true)$s$, round
+  )) = 'invitation_not_pending');
+
+  -- REQ-062: a repeat returns the first answer, and a new request finds it started.
+  perform pg_temp.act_as(admin_id);
+  results := results || pg_temp.verdict('REQ-062 a repeated start returns the first answer',
+    public.start_game(request, round) = outcome);
+  results := results || pg_temp.verdict('A game starts only once', pg_temp.refusal(format(
+    $s$select public.start_game(gen_random_uuid(), %L)$s$, round
+  )) = 'game_not_inviting');
+
+  -- REQ-156, REQ-185: without the admin, 3 who have paid can start.
+  round := pg_temp.new_game(10, false, array[anna, bea, cesc, ester], false);
+  perform pg_temp.act_as(anna);
+  perform public.answer_invitation(gen_random_uuid(), round, true);
+  perform pg_temp.act_as(bea);
+  perform public.answer_invitation(gen_random_uuid(), round, true);
+
+  -- REQ-157, REQ-185: 2 who have paid, and an admin who isn't playing, are too few.
+  perform pg_temp.act_as(admin_id);
+  results := results || pg_temp.verdict('REQ-157 2 players and an admin who does not play cannot start', pg_temp.refusal(format(
+    $s$select public.start_game(gen_random_uuid(), %L)$s$, round
+  )) = 'not_enough_players' and (select phase from public.events where id = round) = 'inviting');
+  perform pg_temp.act_as(cesc);
+  perform public.answer_invitation(gen_random_uuid(), round, true);
+  perform pg_temp.act_as(admin_id);
+  perform public.start_game(gen_random_uuid(), round);
+  results := results || pg_temp.verdict('REQ-156 3 players without the admin can start',
+    (select phase from public.events where id = round) = 'choosing'
+    and pg_temp.status(round, ester) = 'lapsed');
+
+  -- Nothing else has a start.
+  round := (public.create_game_event(gen_random_uuid(), 'confia_o_traeix', 'Prova', 10, false, array[anna, bea]) ->> 'event_id')::uuid;
+  results := results || pg_temp.verdict('A duel has no start', pg_temp.refusal(format(
+    $s$select public.start_game(gen_random_uuid(), %L)$s$, round
+  )) = 'game_has_no_start');
+  round := pg_temp.new_game(10, true, array[anna, bea], false);
+  perform public.cancel_event(gen_random_uuid(), round);
+  results := results || pg_temp.verdict('A cancelled game cannot start', pg_temp.refusal(format(
+    $s$select public.start_game(gen_random_uuid(), %L)$s$, round
+  )) = 'event_not_open');
 
   raise exception 'RESULTS %', results;
 end;

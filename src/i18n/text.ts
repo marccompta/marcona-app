@@ -247,6 +247,8 @@ export const text = {
     gameNotFound: 'No hem trobat aquest joc.',
     duelNeedsTwoPlayers: 'Un duel és entre exactament dues persones diferents.',
     minoriaNeedsThreePlayers: 'La minoria necessita almenys 3 persones que hi juguin.',
+    notEnoughPlayers: "Calen almenys 3 persones que hagin pagat l'entrada per començar.",
+    gameNotInviting: 'Aquest joc ja ha començat.',
     unknown: 'Alguna cosa ha fallat. Torna-ho a provar.',
   },
 } as const
