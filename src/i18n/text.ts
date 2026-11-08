@@ -234,6 +234,25 @@ export const text = {
     gameExampleUnreadable: "Escriu nombres enters per veure l'exemple.",
     saveGame: 'Desa el joc',
     gameSaved: "S'han desat els canvis del joc per als nous esdeveniments.",
+    data: 'Dades',
+    exportIntro: 'Baixa una còpia de tots els usuaris, esdeveniments i moviments.',
+    prepareExport: "Prepara l'exportació",
+    exportReady: 'Ja pots baixar els fitxers.',
+    downloadJson: 'Baixa-ho tot (JSON)',
+    downloadCsv: 'Baixa els moviments (CSV)',
+    wipeTitle: 'Esborra les dades de prova',
+    wipeIntro:
+      'Esborra tots els usuaris menys tu, i tots els esdeveniments i moviments. El teu saldo queda a 0. Els ajustos de la ruleta i dels jocs es mantenen. No es pot desfer.',
+    wipeWord: 'ESBORRA',
+    wipeLabel: 'Escriu ESBORRA per confirmar',
+    wipe: 'Esborra-ho tot',
+    wiped: (users: string, events: string, movements: string) =>
+      `S'han esborrat ${users}, ${events} i ${movements}.`,
+    units: {
+      users: { one: 'usuari', other: 'usuaris' },
+      events: { one: 'esdeveniment', other: 'esdeveniments' },
+      movements: { one: 'moviment', other: 'moviments' },
+    },
   },
   errors: {
     invalidCredentials: "El nom d'usuari o la contrasenya no són correctes.",
@@ -270,6 +289,7 @@ export const text = {
     betTooHigh: "L'aposta supera el màxim que pots apostar ara.",
     rouletteClosed: 'La ruleta està tancada.',
     invalidWhiteChance: 'La probabilitat de blanc ha de ser 1 entre un nombre enter de 2 a 1.000.',
+    wipeNotConfirmed: 'Escriu ESBORRA exactament, en majúscules, per confirmar.',
     invalidMaxBetPercent: "L'aposta màxima ha de ser un percentatge enter de l'1 al 100.",
     gameDecidesWinners: "En un joc, el resultat el decideixen les tries.",
     gameNotChoosing: "Encara no es pot triar: falta que hi entrin tots dos.",

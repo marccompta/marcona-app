@@ -34,6 +34,7 @@ export const byCode: Record<string, string> = {
   invalid_white_chance: text.errors.invalidWhiteChance,
   invalid_max_bet_percent: text.errors.invalidMaxBetPercent,
   invalid_roulette_settings: text.errors.unknown,
+  wipe_not_confirmed: text.errors.wipeNotConfirmed,
   game_decides_winners: text.errors.gameDecidesWinners,
   game_not_choosing: text.errors.gameNotChoosing,
   invalid_game_choice: text.errors.invalidGameChoice,

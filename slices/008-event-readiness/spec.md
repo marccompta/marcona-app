@@ -1,7 +1,7 @@
 ---
 slice: "008"
 title: Event readiness
-status: approved
+status: building
 requirements: [REQ-164, REQ-165, REQ-166, REQ-167, REQ-168, REQ-169, REQ-170, REQ-171, REQ-172, REQ-173, REQ-174]
 ---
 

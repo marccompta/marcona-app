@@ -2,8 +2,8 @@
 
 Work through these in order. Each task leaves the tests passing.
 
-- [ ] **T1:** Add `admin_export()` and the download on the admin screen. (REQ-164, REQ-167)
-- [ ] **T2:** Add the wipe, its confirmation and the `admin-wipe` Edge Function. (REQ-165, REQ-166, REQ-167)
+- [x] **T1:** Add `admin_export()` and the download on the admin screen. (REQ-164, REQ-167)
+- [x] **T2:** Add the wipe, its confirmation and the `admin-wipe` Edge Function. (REQ-165, REQ-166, REQ-167)
 - [ ] **T3:** Add the wipe lock. (REQ-168)
 - [ ] **T4:** Write the rehearsal checklist, covering every money flow that shipped. (REQ-169)
 - [ ] **T5:** Write the one-page day-of guide, including the awake check and the freeze steps. (REQ-170, REQ-171, REQ-173)
