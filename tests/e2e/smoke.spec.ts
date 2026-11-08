@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs'
 import { expect, test, type Page } from '@playwright/test'
 import { adjustBalance, fetchPeople } from '../../src/lib/data'
 import { answerInvitation, fetchEvents } from '../../src/lib/events'
-import { duelOutcomes, lockIn } from '../../src/lib/games'
+import { duelOutcomes, lockIn, type DuelSettings } from '../../src/lib/games'
 import { adminClient, adminLogin, createTestAccount, logInAsDemo, signOutAll, type TestAccount } from '../hosted/env'
 
 // REQ-100: the main flows on a phone-sized screen, on the real project, with no
@@ -141,7 +141,7 @@ test('REQ-100, REQ-134: the admin plays a real duel on a phone, and sees the rev
 
   await expect(page.locator('[data-reveal][data-stage="done"]')).toBeVisible({ timeout: 15000 })
   // The admin can change the numbers, so these come from the duel's own copy.
-  const { betrayer, betrayed } = duelOutcomes(10, event.settings!)
+  const { betrayer, betrayed } = duelOutcomes(10, event.settings as DuelSettings)
   await expect(page.locator('[data-reveal-player]')).toHaveText([
     new RegExp(`${username}.*Traeix.*${betrayer} marcon`),
     new RegExp(`${opponent.username}.*Confia.*${betrayed} marcon`),

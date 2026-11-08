@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { adjustBalance, fetchPeople, type Person } from '../../src/lib/data'
 import { cancelEvent, fetchEvent } from '../../src/lib/events'
-import { createGameEvent, duelOutcomes, fetchGameState, lockIn, type DuelChoice } from '../../src/lib/games'
+import { createGameEvent, duelOutcomes, fetchGameState, lockIn, type DuelChoice, type DuelSettings } from '../../src/lib/games'
 import { adminClient, createTestUser, logInAsDemo, publicClient, signOutAll, type TestUser } from './env'
 import { listen, pause, until } from './live'
 
@@ -138,7 +138,7 @@ describe('secrecy', () => {
     await tap(pau.client, eventId, 'confia')
     // The admin can change the numbers, so these come from the duel's own copy.
     const { reveal, phase, settings } = await fetchGameState(eventId, admin)
-    const { betrayer, betrayed } = duelOutcomes(10, settings)
+    const { betrayer, betrayed } = duelOutcomes(10, settings as DuelSettings)
     expect(phase).toBe('revealed')
     expect(reveal?.players.find((player) => player.user_id === nuria.user_id)).toMatchObject({ choice: 'traeix', payout: betrayer })
     expect(reveal?.players.find((player) => player.user_id === pau.user_id)).toMatchObject({ choice: 'confia', payout: betrayed })
@@ -225,7 +225,7 @@ describe('at the same moment', () => {
       expect(answers.some((answer) => answer.revealed)).toBe(true)
 
       const payouts = await movements(eventId, 'event_payout')
-      const { bothTrust } = duelOutcomes(10, (await fetchGameState(eventId, admin)).settings)
+      const { bothTrust } = duelOutcomes(10, (await fetchGameState(eventId, admin)).settings as DuelSettings)
       expect(payouts.map((payout) => payout.delta)).toEqual([bothTrust, bothTrust])
       expect(new Set(payouts.map((payout) => payout.user_id)).size).toBe(2)
       expect((await fetchEvent(eventId, admin))?.status).toBe('completed')

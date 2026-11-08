@@ -15,6 +15,7 @@ declare
   ferran uuid := gen_random_uuid();
   gina uuid := gen_random_uuid();
   pobre uuid := gen_random_uuid();
+  tess uuid := gen_random_uuid();
   admin_start bigint;
   round uuid;
   defaults jsonb;
@@ -74,6 +75,8 @@ begin
   select id, 'minoria-' || name
   from unnest(array[anna, bea, cesc, dani, ester, ferran, gina, pobre],
     array['anna', 'bea', 'cesc', 'dani', 'ester', 'ferran', 'gina', 'pobre']) as person (id, name);
+  insert into auth.users (id, email) values (tess, 'minoria-tess@marcona.invalid');
+  insert into public.profiles (user_id, username, is_test) values (tess, 'minoria-tess', true);
   perform private.apply_movement(admin_id, 1000, 'admin_adjustment');
   perform private.apply_movement(person, 1000, 'admin_adjustment')
   from unnest(array[anna, bea, cesc, dani, ester, ferran, gina]) as person;
@@ -355,6 +358,49 @@ begin
     pg_temp.balance(anna) = anna_start + 10
     and (select count(*) from public.ledger where event_id = round and kind = 'event_refund') = 3
     and (select reveal from public.events where id = round) is null);
+
+  -- REQ-197: everyone sees who has locked in, and nobody sees a choice.
+  perform pg_temp.act_as(admin_id);
+  round := pg_temp.new_game(10, false, array[anna, bea, cesc], true);
+  perform pg_temp.act_as(bea);
+  results := results || pg_temp.verdict('REQ-197 nobody has locked in yet',
+    public.game_state(round) -> 'locked_in' = '[]'::jsonb);
+  perform pg_temp.pick(round, anna, 'b');
+  perform pg_temp.act_as(bea);
+  outcome := public.game_state(round);
+  results := results || pg_temp.verdict('REQ-197 a player sees who has locked in',
+    outcome -> 'locked_in' = jsonb_build_array(anna));
+  results := results || pg_temp.verdict('REQ-128 the state holds no choice',
+    outcome -> 'reveal' = 'null'::jsonb and outcome::text not like '%"choice"%');
+  perform pg_temp.act_as(anna);
+  results := results || pg_temp.verdict('REQ-197 the one who locked in reads the same', public.game_state(round) = outcome);
+  perform pg_temp.act_as(admin_id);
+  results := results || pg_temp.verdict('REQ-197 the admin reads the same', public.game_state(round) = outcome);
+
+  -- A player can read their own choice, and nobody else's.
+  perform pg_temp.act_as(anna);
+  results := results || pg_temp.verdict('A player reads their own choice', public.my_choice(round) = '{"choice": "b"}'::jsonb);
+  perform pg_temp.act_as(bea);
+  results := results || pg_temp.verdict('A player who has not picked reads nothing',
+    public.my_choice(round) = '{"choice": null}'::jsonb);
+  perform pg_temp.act_as(admin_id);
+  results := results || pg_temp.verdict('REQ-128 the admin who is not playing reads nothing',
+    public.my_choice(round) = '{"choice": null}'::jsonb);
+  perform pg_temp.act_as(tess);
+  results := results || pg_temp.verdict('A test account cannot read a real game', pg_temp.refusal(format(
+    $s$select public.my_choice(%L)$s$, round
+  )) = 'event_not_found' and pg_temp.refusal(format(
+    $s$select public.game_state(%L)$s$, round
+  )) = 'event_not_found');
+
+  -- REQ-194: a duel says nothing about who has picked, not even to the picker.
+  perform pg_temp.act_as(admin_id);
+  round := (public.create_game_event(gen_random_uuid(), 'confia_o_traeix', 'Prova', 10, false, array[anna, bea], true) ->> 'event_id')::uuid;
+  perform pg_temp.pick(round, anna, 'confia');
+  results := results || pg_temp.verdict('REQ-194 a duel shows no lock-ins', not (public.game_state(round) ? 'locked_in'));
+  results := results || pg_temp.verdict('REQ-194 a duel choice cannot be read back', pg_temp.refusal(format(
+    $s$select public.my_choice(%L)$s$, round
+  )) = 'not_allowed');
 
   raise exception 'RESULTS %', results;
 end;

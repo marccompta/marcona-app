@@ -17,7 +17,7 @@ function DuelForm({ loaded }: { loaded: Game }) {
   const [enabled, setEnabled] = useState(loaded.enabled)
   const [description, setDescription] = useState(loaded.description)
   const [numbers, setNumbers] = useState(() =>
-    Object.fromEntries(fields.map((field) => [field, String(loaded.settings[field])])) as Record<keyof DuelSettings, string>,
+    Object.fromEntries(fields.map((field) => [field, String((loaded.settings as DuelSettings)[field])])) as Record<keyof DuelSettings, string>,
   )
   const { busy, outcome, run } = useAction()
 

@@ -1029,6 +1029,42 @@ select {
   color: var(--ivory);
 }
 
+/* La minoria's options: ivory and ink, whatever their labels. */
+.duel-card-front[data-tone='a'],
+.choice-button[data-tone='a'] {
+  background: var(--ivory);
+  color: var(--felt-900);
+}
+
+.duel-card-front[data-tone='b'],
+.choice-button[data-tone='b'] {
+  background: var(--pocket-black);
+  color: var(--ivory);
+}
+
+/* REQ-193: a picked card waits for the confirmation, so it's marked, not glowing. */
+.choice-button[aria-pressed='true'] {
+  border-color: var(--gold-light);
+  box-shadow: 0 0 0 3px var(--gold);
+}
+
+.choice-final {
+  display: grid;
+  flex: 1;
+  place-items: center;
+  margin: 0;
+  font: italic 700 24px/1.3 var(--font-display);
+  text-align: center;
+}
+
+.minoria-rules {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: var(--sage);
+}
+
 .duel-card-front strong {
   font: italic 700 26px/1 var(--font-display);
 }

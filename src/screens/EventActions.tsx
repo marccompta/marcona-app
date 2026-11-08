@@ -92,7 +92,9 @@ export function Cancel({ event, onChange }: ActionProps) {
   )
 }
 
-export function People({ event }: { event: MarconaEvent }) {
+// REQ-197: with lockedIn, a La minoria player shows whether they've picked, and
+// never what.
+export function People({ event, lockedIn }: { event: MarconaEvent; lockedIn?: string[] }) {
   const creatorFirst = [...event.participants].sort(
     (a, b) =>
       Number(b.user_id === event.creator_id) - Number(a.user_id === event.creator_id) ||
@@ -104,13 +106,22 @@ export function People({ event }: { event: MarconaEvent }) {
       <h2 className="section-title">{text.events.participants}</h2>
       <ul className="event-people">
         {creatorFirst.map((person) => (
-          <li key={person.user_id} className="event-person" data-participant>
+          <li
+            key={person.user_id}
+            className="event-person"
+            data-participant
+            data-locked={lockedIn && person.status === 'accepted' ? lockedIn.includes(person.user_id) : undefined}
+          >
             <span className="rank-name">
               <span className="rank-username">{person.who.username}</span>
               {person.user_id === event.creator_id && <Crown label={text.events.creator} />}
             </span>
             <span className={person.status === 'accepted' ? 'event-status event-status--in' : 'event-status'}>
-              {text.events.people[person.status]}
+              {lockedIn && person.status === 'accepted'
+                ? lockedIn.includes(person.user_id)
+                  ? text.games.minoria.locked
+                  : text.games.minoria.picking
+                : text.events.people[person.status]}
             </span>
           </li>
         ))}

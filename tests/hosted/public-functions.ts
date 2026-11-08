@@ -38,6 +38,7 @@ export const publicFunctions = (userId: string): Record<string, Record<string, u
   },
   game_state: { p_event_id: crypto.randomUUID() },
   lock_in: { p_request_id: crypto.randomUUID(), p_event_id: crypto.randomUUID(), p_choice: 'confia' },
+  my_choice: { p_event_id: crypto.randomUUID() },
   remove_profile: { p_user_id: userId },
   revoke_sessions: { p_user_id: userId },
   rls_auto_enable: {},
