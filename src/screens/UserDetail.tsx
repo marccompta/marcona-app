@@ -1,6 +1,7 @@
 import { Link, useParams } from 'react-router'
 import { text } from '../i18n/text'
 import { fetchMovements, fetchPeople, useLoad } from '../lib/data'
+import { useLive, type LiveSource } from '../lib/live'
 import { ChipStack, CountUp } from '../shell/Balance'
 import { Movements, Pending } from './Movements'
 
@@ -9,10 +10,14 @@ async function loadUser(username: string | undefined) {
   return person ? { person, movements: await fetchMovements(person.user_id) } : null
 }
 
+const live: LiveSource[] = [{ table: 'profiles' }, { table: 'ledger' }]
+
 // REQ-066: one person's balance, and every movement on it.
 export function UserDetail() {
   const { username } = useParams()
-  const { state } = useLoad(() => loadUser(username), username)
+  const { state, reload } = useLoad(() => loadUser(username), username)
+  // REQ-150, REQ-151: the balance and movements follow along.
+  useLive(live, reload)
 
   return (
     <section className="screen" data-screen="usuari">

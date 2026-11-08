@@ -2,14 +2,18 @@ import { Link } from 'react-router'
 import { formatCount, formatMarcones } from '../i18n/format'
 import { text } from '../i18n/text'
 import { fetchPeople, rankPeople, useLoad } from '../lib/data'
+import { useLive } from '../lib/live'
 import { ChipStack, CountUp } from '../shell/Balance'
 import { EmptyChip } from '../shell/icons'
 import { Pending } from './Movements'
 
 const medals = ['gold', 'silver', 'bronze']
+const live = [{ table: 'profiles' as const }]
 
 export function Ranking({ me }: { me: string }) {
-  const { state } = useLoad(fetchPeople)
+  const { state, reload } = useLoad(fetchPeople)
+  // REQ-150: balances move on every phone as they change.
+  useLive(live, reload)
 
   return (
     <section className="screen" data-screen="classificacio">

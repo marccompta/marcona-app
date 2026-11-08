@@ -168,6 +168,16 @@ begin
     results := results || '{"REQ-127 rewrite a reveal as owner": "rejected"}';
   end;
 
+  -- REQ-128, REQ-150 to REQ-152: Realtime publishes exactly these four tables,
+  -- and never private.choices.
+  if (select array_agg(schemaname || '.' || tablename order by schemaname, tablename)
+      from pg_publication_tables where pubname = 'supabase_realtime')
+    = array['public.event_participants', 'public.events', 'public.ledger', 'public.profiles']::text[] then
+    results := results || '{"REQ-128 anything else published": "rejected"}';
+  else
+    results := results || '{"REQ-128 anything else published": "ACCEPTED"}';
+  end if;
+
   raise exception 'RESULTS %', results;
 end;
 $$;

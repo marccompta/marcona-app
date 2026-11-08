@@ -147,3 +147,25 @@ test('REQ-100, REQ-134: the admin plays a real duel on a phone, and sees the rev
     new RegExp(`${opponent.username}.*Confia.*${betrayed} marcon`),
   ])
 })
+
+// REQ-150, REQ-151: real Realtime, through Row Level Security. Test accounts only
+// see each other, so both people here are test accounts.
+test('REQ-100, REQ-150, REQ-151: the ranking and audit update by themselves', async ({ page }, info) => {
+  // A login can be slow to start.
+  test.setTimeout(60000)
+  const tag = info.project.name.slice(0, 3)
+  const [viewer, other] = await Promise.all([createTestAccount(`fum-v-${tag}`), createTestAccount(`fum-o-${tag}`)])
+  await logIn(page, viewer)
+  await page.evaluate(() => ((window as unknown as { stayed: boolean }).stayed = true))
+
+  await give(other, 7)
+  const row = page.locator('.rank-row').filter({ hasText: other.username })
+  await expect(row.locator('.rank-amount')).toHaveText('7', { timeout: 15000 })
+
+  await page.getByRole('link', { name: 'Auditoria' }).click()
+  // A test account's audit holds every test movement so far, read 1,000 at a time.
+  await expect(page.locator('[data-movement]').first()).toBeVisible({ timeout: 20000 })
+  await give(other, 5)
+  await expect(page.locator('[data-movement]').filter({ hasText: other.username })).toHaveCount(2, { timeout: 15000 })
+  expect(await page.evaluate(() => (window as unknown as { stayed?: boolean }).stayed)).toBe(true)
+})

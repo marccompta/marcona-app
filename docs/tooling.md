@@ -35,6 +35,7 @@ Which mechanism to use for what, and what's installed in this repo. Project tool
 | `slice-auditor` | Subagent | Follows review instructions with no prior context, and runs cold-start checks. |
 | `scripts/check_docs.py` | Script | Checks traceability and slice completeness, locally and in CI. A slice can't be `in-review`, `accepted` or `closed` with an unchecked task. |
 | `tests/hosted/demo.ts` | Script | Plays the demo accounts during a review, so one phone is enough. Uses `tsx` to run TypeScript, and the admin's login from `.env.test.local`. |
+| `scripts/make-icons.ts` | Script | Draws the home screen icons from the logo's spade with Playwright, into `public/`. Run it with `tsx` after changing the design. |
 | `scripts/protect_closed_slices.py` | `PreToolUse` hook | Blocks Claude's Edit and Write tools inside closed slices. It doesn't cover shell commands or non-Claude tools. |
 | `scripts/require_passing_tests.py` | `PreToolUse` hook | Blocks Claude's `git commit` while the unit tests fail. The tests run before the whole shell command, so edits made earlier in the same command aren't seen. It doesn't cover commits made outside Claude. |
 | `.github/workflows/ci.yml` | CI | Runs the docs check, the unit tests, the build, the demo's tests and the browser tests in Chromium and WebKit, on each PR and each push to `main` or a slice. |
@@ -44,6 +45,7 @@ Which mechanism to use for what, and what's installed in this repo. Project tool
 | `frontend-design` | Plugin, enabled in `.claude/settings.json` | Visual quality when building screens. From the official marketplace, `claude-plugins-official`. The install command in `docs/setup.md` ran successfully. |
 | `supabase`, `supabase-postgres-best-practices` | Skills, from the official `supabase/agent-skills` repo | Supabase and Postgres practice for migrations and Row Level Security. Markdown only, and pinned by hash in `skills-lock.json`. The install command matches the one Supabase's MCP server recommends, and ran successfully. |
 | Vitest, Testing Library, Playwright | npm packages | Unit tests, and browser tests at 360px in Chromium and WebKit. The commands are in `AGENTS.md`. Installed from `package.json` with `npm ci`, which has run successfully on a clean clone. |
+| `qrcode`, `jsqr`, `pngjs` | npm packages, dev only | `qrcode` draws the QR code at build time, so the site ships no QR library. `jsqr` and `pngjs` let a test read the code from a screenshot, as a camera would. |
 
 ## Not installed yet
 

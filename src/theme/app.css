@@ -1433,3 +1433,40 @@ select {
   position: static;
   color: var(--gold);
 }
+
+/* REQ-153: the QR code. Dark on white whatever the theme, because cameras read
+   that best, framed in gold like the rest of the table. */
+.qr {
+  width: min(100%, 320px);
+  margin: 4px auto 0;
+  padding: 10px;
+  background: #ffffff;
+  border: 1px solid var(--gold-line);
+  border-radius: 14px;
+  box-shadow: 0 10px 30px #0000004d;
+}
+
+.qr svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.qr-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 22px;
+  text-decoration: none;
+}
+
+.qr-hint {
+  text-align: center;
+}
+
+.qr-url {
+  margin-top: 14px;
+  text-align: center;
+  color: var(--sage);
+  overflow-wrap: anywhere;
+}

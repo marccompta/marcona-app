@@ -157,6 +157,10 @@ Remembers each successful money action, so a repeat returns the first result. It
 
 Functions raise codes, not sentences, and `src/i18n/errors.ts` turns them into Catalan.
 
+## Realtime
+
+The `supabase_realtime` publication holds exactly `public.profiles`, `public.ledger`, `public.events` and `public.event_participants`. Realtime checks each message against the table's Row Level Security before sending it. The app only uses a message as a signal to read again. Nothing in `private` is ever published.
+
 ## Outside the migrations
 
 - `public.rls_auto_enable()` and its `ensure_rls` event trigger turn on Row Level Security for new tables in `public`. They were on the project before the first migration, and a migration has since revoked API access to the function.

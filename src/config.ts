@@ -4,4 +4,6 @@ export const config = {
   supabaseUrl: 'https://ndkgmenntqhjojalqbdm.supabase.co',
   supabasePublishableKey: 'sb_publishable_7dOebgGKU2_CJ8-dfYVGDg_LkDRTQrh',
   emailDomain: 'marcona.invalid',
+  /** REQ-153: where the QR code sends a friend's phone. */
+  siteUrl: 'https://marccompta.github.io/marcona-app/',
 }
