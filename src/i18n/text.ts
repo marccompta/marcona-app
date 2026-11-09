@@ -160,6 +160,8 @@ export const text = {
     spin: 'Gira',
     spinning: 'Girant…',
     colours: { red: 'Vermell', black: 'Negre', white: 'Blanc' },
+    board: 'Últimes tirades',
+    boardEmpty: 'Encara res',
     won: (amount: string) => `Guanyes ${amount}`,
     lost: (amount: string) => `Perds ${amount}`,
     closedTitle: 'La taula està tancada',

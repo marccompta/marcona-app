@@ -1,8 +1,18 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { formatMarcones } from '../i18n/format'
 import { text } from '../i18n/text'
 import { useLoad } from '../lib/data'
-import { fetchRoulette, spin, type Choice, type RouletteTable, type Spin } from '../lib/roulette'
+import {
+  addToBoard,
+  boardPlaces,
+  fetchRecentResults,
+  fetchRoulette,
+  spin,
+  type BoardResult,
+  type Choice,
+  type RouletteTable,
+  type Spin,
+} from '../lib/roulette'
 import { ChipStack, CountUp } from '../shell/Balance'
 import { Field, Outcome, plainInput, useAction } from '../shell/Form'
 import { EmptyChip } from '../shell/icons'
@@ -32,6 +42,28 @@ function Result({ spin: { result, won, bet } }: { spin: Spin }) {
   )
 }
 
+// REQ-219 to REQ-221: the player's last 10 results, newest on the left, as a
+// casino's board shows them. Places not yet filled are faint outlines.
+function Board({ board, loaded }: { board: BoardResult[]; loaded: boolean }) {
+  return (
+    <div className="spin-board" data-board {...(loaded ? { 'data-loaded': '' } : {})}>
+      <span className="spin-board-label" id="spin-board-label">
+        {text.roulette.board}
+      </span>
+      <ol className="spin-board-places" aria-labelledby="spin-board-label">
+        {boardPlaces(board).map((colour, index) => (
+          <li
+            key={index}
+            className={`board-place board-place--${colour ?? 'empty'}`}
+            data-place={colour ?? 'empty'}
+            aria-label={colour ? text.roulette.colours[colour] : text.roulette.boardEmpty}
+          />
+        ))}
+      </ol>
+    </div>
+  )
+}
+
 function Table({ loaded }: { loaded: RouletteTable }) {
   const [table, setTable] = useState(loaded)
   const [choice, setChoice] = useState<Choice>('red')
@@ -41,6 +73,24 @@ function Table({ loaded }: { loaded: RouletteTable }) {
   // A retry of the same attempt keeps its ID, so a lost reply can't spin twice.
   const requestId = useRef<string | null>(null)
   const wheel = useRef<WheelHandle>(null)
+  const [board, setBoard] = useState<BoardResult[]>([])
+  const [boardLoaded, setBoardLoaded] = useState(false)
+
+  // Once, on opening. A spin made before this arrives is merged, not lost.
+  useEffect(() => {
+    let current = true
+    fetchRecentResults().then(
+      (results) => {
+        if (!current) return
+        setBoard((board) => addToBoard(board, ...results))
+        setBoardLoaded(true)
+      },
+      () => current && setBoardLoaded(true),
+    )
+    return () => {
+      current = false
+    }
+  }, [])
 
   function edit<T>(setter: (value: T) => void, value: T) {
     requestId.current = null
@@ -57,6 +107,7 @@ function Table({ loaded }: { loaded: RouletteTable }) {
       // REQ-112: the balance and the result wait for the wheel to stop.
       await wheel.current?.land(outcome.result)
       setLast(outcome)
+      setBoard((board) => addToBoard(board, { id: outcome.movement_id, result: outcome.result }))
       return ''
     })
     if (done) requestId.current = null
@@ -127,6 +178,8 @@ function Table({ loaded }: { loaded: RouletteTable }) {
           {text.roulette.maxBet(formatMarcones(table.max_bet))}
         </p>
       </form>
+
+      <Board board={board} loaded={boardLoaded} />
     </>
   )
 }

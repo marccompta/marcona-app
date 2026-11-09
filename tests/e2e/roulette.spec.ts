@@ -574,3 +574,93 @@ test('REQ-023, REQ-024: a long result and a big balance still fit at 360px', asy
 
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
 })
+
+// REQ-219 to REQ-221: the board of the player's last results, under the bet.
+test.describe('the board of last results', () => {
+  const spinMovement = (username: string, result: 'red' | 'black' | 'white') => ({
+    username,
+    delta: result === 'red' ? 1 : -1,
+    balance_after: 100,
+    concept: null,
+    kind: 'roulette_spin',
+    details: { choice: 'red', result },
+  })
+
+  const openWith = async (page: Page, movements: Parameters<typeof fakeSupabase>[2]) => {
+    const me = { ...player, balance: 100 }
+    const calls = await fakeSupabase(page, [me, { ...admin }], movements)
+    await page.goto('')
+    await logIn(page, me)
+    await page.getByRole('link', { name: 'Ruleta' }).click()
+    await page.locator('[data-board][data-loaded]').waitFor()
+    return calls
+  }
+
+  // Read once, with no retrying, as the board must already be right.
+  const board = (page: Page) =>
+    page.locator('[data-board] [data-place]').evaluateAll((places) => places.map((place) => (place as HTMLElement).dataset.place))
+
+  test('REQ-221: before any spin, the board has 10 empty places', async ({ page }) => {
+    await openWith(page, [])
+    await expect(page.getByText('Últimes tirades')).toBeVisible()
+    expect(await board(page)).toEqual(Array(10).fill('empty'))
+  })
+
+  test('REQ-219, REQ-221: it shows my results, newest first, then empty places', async ({ page }) => {
+    await openWith(page, [spinMovement('anna', 'red'), spinMovement('anna', 'white'), spinMovement('anna', 'black')])
+    expect(await board(page)).toEqual(['black', 'white', 'red', ...Array(7).fill('empty')])
+  })
+
+  test("REQ-219: only my 10 newest spins, and nobody else's, nor other movements", async ({ page }) => {
+    const mine = Array.from({ length: 12 }, (_, index) => spinMovement('anna', index < 2 ? 'white' : index % 2 ? 'black' : 'red'))
+    await openWith(page, [
+      ...mine,
+      spinMovement('marc', 'white'),
+      { username: 'anna', delta: 5, balance_after: 105, concept: 'Saldo', kind: 'admin_adjustment' },
+    ])
+    expect(await board(page)).toEqual(['black', 'red', 'black', 'red', 'black', 'red', 'black', 'red', 'black', 'red'])
+  })
+
+  test('REQ-220: a spin joins the front, and the oldest of 10 goes', async ({ page }) => {
+    const calls = await openWith(page, Array.from({ length: 10 }, () => spinMovement('anna', 'black')))
+    calls.spinResults.push('white')
+    await spin(page, 'Vermell', '5')
+    await page.locator('[data-result="white"]').waitFor()
+
+    expect(await board(page)).toEqual(['white', ...Array(9).fill('black')])
+  })
+
+  test('REQ-220: a refused spin adds nothing', async ({ page }) => {
+    await openWith(page, [spinMovement('anna', 'red')])
+    await spin(page, 'Vermell', '99')
+    await expect(page.getByRole('alert')).toBeVisible()
+
+    expect(await board(page)).toEqual(['red', ...Array(9).fill('empty')])
+  })
+
+  test.describe('with motion', () => {
+    test.use({ reducedMotion: 'no-preference' })
+
+    test('REQ-220: the result joins the board only once the wheel has stopped', async ({ page }) => {
+      const calls = await openWith(page, [])
+      calls.spinResults.push('red')
+      // Every change to the board, with the wheel's state at that moment.
+      await page.evaluate(() => {
+        const seen: { first: string | undefined; wheel: string | undefined }[] = []
+        ;(window as unknown as { seen: typeof seen }).seen = seen
+        new MutationObserver(() => {
+          const first = document.querySelector<HTMLElement>('[data-board] [data-place]')?.dataset.place
+          const wheel = document.querySelector<HTMLElement>('[data-wheel]')?.dataset.wheel
+          seen.push({ first, wheel })
+        }).observe(document.body, { attributes: true, subtree: true, attributeFilter: ['data-place', 'data-wheel'] })
+      })
+      await spin(page, 'Vermell', '5')
+      await expect(page.locator('[data-result="red"]')).toBeVisible({ timeout: 10000 })
+
+      const seen = await page.evaluate(() => (window as unknown as { seen: { first: string; wheel: string }[] }).seen)
+      expect(seen.some((moment) => moment.wheel === 'spinning')).toBe(true)
+      expect(seen.filter((moment) => moment.first === 'red').every((moment) => moment.wheel === 'landed')).toBe(true)
+      expect(await board(page)).toEqual(['red', ...Array(9).fill('empty')])
+    })
+  })
+})

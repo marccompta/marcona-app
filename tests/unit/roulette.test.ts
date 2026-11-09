@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { pocketAt, pockets, stopRotation, type Colour } from '../../src/lib/roulette'
+import { addToBoard, boardPlaces, pocketAt, pockets, stopRotation, type Colour } from '../../src/lib/roulette'
 
 const colours: Colour[] = ['red', 'black', 'white']
 
@@ -37,5 +37,31 @@ describe('the wheel', () => {
       expect(travel).toBeGreaterThanOrEqual(540)
       expect(travel).toBeLessThan(540 + 360)
     }
+  })
+})
+
+describe('the board of last results', () => {
+  const spins = (...results: Colour[]) => results.map((result, index) => ({ id: index + 1, result }))
+
+  it('REQ-221: shows 10 places, empty until filled', () => {
+    expect(boardPlaces([])).toEqual(Array(10).fill(null))
+    expect(boardPlaces(addToBoard([], ...spins('red', 'white', 'black')))).toEqual(['black', 'white', 'red', ...Array(7).fill(null)])
+  })
+
+  it('REQ-220: puts a new result first, and keeps only 10', () => {
+    const full = addToBoard([], ...spins('white', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black', 'black'))
+    const after = addToBoard(full, { id: 11, result: 'red' })
+    expect(boardPlaces(after)).toEqual(['red', ...Array(8).fill('black'), 'black'])
+    expect(after.map((entry) => entry.id)).toEqual([11, 10, 9, 8, 7, 6, 5, 4, 3, 2])
+  })
+
+  it('REQ-219: never shows more than 10', () => {
+    expect(boardPlaces(addToBoard([], ...spins(...Array<Colour>(12).fill('red'))))).toHaveLength(10)
+  })
+
+  it('REQ-219, REQ-220: a spin made while the first read was on its way is kept once, in order', () => {
+    const spun = addToBoard([], { id: 7, result: 'white' })
+    const read = spins('red', 'black', 'red', 'black', 'red', 'black', 'white')
+    expect(boardPlaces(addToBoard(spun, ...read))).toEqual(['white', 'black', 'red', 'black', 'red', 'black', 'red', null, null, null])
   })
 })

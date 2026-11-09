@@ -61,3 +61,37 @@ export async function spin(
   if (error) throw error
   return data as Spin
 }
+
+// REQ-219 to REQ-221: the board of the player's last results, newest first.
+// Each is keyed by its movement, so the first read and a spin made while it
+// was on its way merge without losing or repeating anything.
+export const boardSize = 10
+
+export type BoardResult = { id: number; result: Colour }
+
+export function addToBoard(board: BoardResult[], ...results: BoardResult[]) {
+  const byId = new Map([...board, ...results].map((entry) => [entry.id, entry]))
+  return [...byId.values()].sort((a, b) => b.id - a.id).slice(0, boardSize)
+}
+
+/** The board's places, with null for each one not yet filled. */
+export function boardPlaces(board: BoardResult[]): (Colour | null)[] {
+  return Array.from({ length: boardSize }, (_, index) => board[index]?.result ?? null)
+}
+
+// REQ-219: the player's own last spins, from the ledger, which already stores
+// each result. Nothing else is read or kept.
+export async function fetchRecentResults(client = supabase): Promise<BoardResult[]> {
+  const { data: session } = await client.auth.getSession()
+  const userId = session.session?.user.id
+  if (!userId) return []
+  const { data, error } = await client
+    .from('ledger')
+    .select('id, details')
+    .eq('user_id', userId)
+    .eq('kind', 'roulette_spin')
+    .order('id', { ascending: false })
+    .limit(boardSize)
+  if (error) throw error
+  return (data ?? []).map((movement) => ({ id: movement.id, result: (movement.details as { result: Colour }).result }))
+}

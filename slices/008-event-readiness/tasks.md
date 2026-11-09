@@ -14,8 +14,8 @@ Work through these in order. Each task leaves the tests passing.
 
 The human added the Ruleta board on 10 November, before giving a verdict.
 
-- [ ] **T8:** Show the last 10 results on Ruleta, from the player's own spins, with empty places until there are 10. (REQ-219, REQ-221)
-- [ ] **T9:** Add each new result to the board once the wheel stops. (REQ-220)
+- [x] **T8:** Show the last 10 results on Ruleta, from the player's own spins, with empty places until there are 10. (REQ-219, REQ-221)
+- [x] **T9:** Add each new result to the board once the wheel stops. (REQ-220)
 
 ## Review fixes
 
