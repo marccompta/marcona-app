@@ -3,7 +3,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
 import { errorMessage } from '../../src/i18n/errors'
 import { text } from '../../src/i18n/text'
 import { adjustBalance, fetchMovements } from '../../src/lib/data'
-import { fetchRoulette, saveRouletteSettings, spin, type RouletteSettings, type Spin } from '../../src/lib/roulette'
+import { fetchRecentResults, fetchRoulette, saveRouletteSettings, spin, type RouletteSettings, type Spin } from '../../src/lib/roulette'
 import { adminClient, createTestUser, publicClient, signOutAll, type TestUser } from './env'
 
 // The settings tests change the real table's settings, so every test that spins
@@ -141,6 +141,27 @@ describe('a spin', () => {
     }
     expect(await balance()).toBe(rows.at(-1)!.balance_after)
     expect(await balance()).toBeGreaterThanOrEqual(0)
+  })
+})
+
+describe('the board of last results', () => {
+  it('REQ-219: reads my own last 10 spins, newest first, with their results', async () => {
+    await setBalance(1000)
+    const made: Spin[] = []
+    for (let index = 0; index < 12; index += 1) {
+      made.push(await spin({ requestId: randomUUID(), choice: 'red', bet: 1 }, player.client))
+    }
+
+    const board = await fetchRecentResults(player.client)
+    const newest = made.slice(-10).reverse()
+    expect(board).toEqual(newest.map((one) => ({ id: one.movement_id, result: one.result })))
+  })
+
+  it("REQ-219: never shows another player's spins", async () => {
+    const other = await createTestUser('ruleta-b')
+    const mine = new Set((await fetchRecentResults(player.client)).map((entry) => entry.id))
+    expect(await fetchRecentResults(other.client)).toEqual([])
+    expect(mine.size).toBeGreaterThan(0)
   })
 })
 
