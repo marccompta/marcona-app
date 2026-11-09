@@ -227,6 +227,9 @@ Every requirement has a permanent ID. Raw input is kept in `docs/product/intake/
 | REQ-216 | While other phones keep changing what a live screen shows, the system shall still show its newest data, and everyone in it, however much data has built up. Found through REQ-214: each live read threw away the one under way, every audit row re-rendered with each read, and people past the first 1,000 were never read. | active | - | test |
 | REQ-217 | The project's test that a duel's resting screen looks the same before and after a pick shall wait until the event has loaded, in every browser engine. Seen in slice 008: in WebKit, `tests/e2e/games.spec.ts` reads the screen while it still says **Un moment…**, and fails in 3 of 3 runs, on `main` as well. | proposed | - | test |
 | REQ-218 | When the admin requests an export, the system shall finish it within the database's 8-second limit however much data there is. Seen in slice 008: with about 12,000 test movements, the export took 2 seconds alone, but timed out once while the hosted tests were loading the project. After the wipe the data is far smaller. | proposed | - | test |
+| REQ-219 | When a player opens Ruleta, the system shall show the results of their last 10 spins, newest first, each as red, black or white. | planned | 008 | test |
+| REQ-220 | When the wheel stops after a spin, the system shall add that result to the front of the board, and drop the oldest beyond 10, without leaving the screen. | planned | 008 | test |
+| REQ-221 | While a player has fewer than 10 spins, the system shall show the rest of the 10 places as empty. | planned | 008 | test |
 
 ## Slice roadmap
 
@@ -239,7 +242,7 @@ Every requirement has a permanent ID. Raw input is kept in `docs/product/intake/
 | 005 | Confia o traeix: the secret-choice engine, the first game, and admin game settings. | REQ-120 to REQ-149, REQ-175 to REQ-184, REQ-191, REQ-194 to REQ-196, REQ-198 to REQ-204, REQ-210 | closed |
 | 006 | Extras: live updates, QR code and home screen install, in that order. Each can be dropped on its own. | REQ-150 to REQ-154 | closed |
 | 007 | La minoria: the second game, on the same engine. | REQ-155 to REQ-163, REQ-185, REQ-192, REQ-193, REQ-197, REQ-205 | closed |
-| 008 | Event readiness: export, data wipe, rehearsal and day-of guide. This slice can't be cut. | REQ-164 to REQ-174 | planned |
+| 008 | Event readiness: export, data wipe, rehearsal and day-of guide, plus the Ruleta board of last results, added before the review. This slice can't be cut. | REQ-164 to REQ-174, REQ-219 to REQ-221 | planned |
 
 ## Delivery plan
 

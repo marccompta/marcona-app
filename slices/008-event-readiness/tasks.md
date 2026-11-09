@@ -10,6 +10,13 @@ Work through these in order. Each task leaves the tests passing.
 - [x] **T6:** Try `read_only=true` on the Supabase MCP server, and record how to switch it. (REQ-174)
 - [x] **T7:** Merge everything, and confirm the public site is built from `main`. (REQ-172)
 
+## Added before the review
+
+The human added the Ruleta board on 10 November, before giving a verdict.
+
+- [ ] **T8:** Show the last 10 results on Ruleta, from the player's own spins, with empty places until there are 10. (REQ-219, REQ-221)
+- [ ] **T9:** Add each new result to the board once the wheel stops. (REQ-220)
+
 ## Review fixes
 
 Added by `/slice-verdict`, one task per review item, e.g. **R1.1** for round 1, item 1.

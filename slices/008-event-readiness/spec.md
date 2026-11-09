@@ -1,8 +1,8 @@
 ---
 slice: "008"
 title: Event readiness
-status: in-review
-requirements: [REQ-164, REQ-165, REQ-166, REQ-167, REQ-168, REQ-169, REQ-170, REQ-171, REQ-172, REQ-173, REQ-174]
+status: building
+requirements: [REQ-164, REQ-165, REQ-166, REQ-167, REQ-168, REQ-169, REQ-170, REQ-171, REQ-172, REQ-173, REQ-174, REQ-219, REQ-220, REQ-221]
 ---
 
 # Slice 008: Event readiness
@@ -22,11 +22,12 @@ The site has been rehearsed on real phones and is clean of test data. The human 
 - A rehearsal checklist covering every money flow.
 - A one-page day-of guide, including the steps before the event.
 - A trial of the switch to `read_only=true`.
+- Added on 10 November, at the human's request, before the review: a board on Ruleta with the player's last 10 results, as casinos show. Front end only.
 
 ## Non-goals
 
 - Restoring from an export. It's a record, not a backup system.
-- New features. Anything the rehearsal suggests beyond a fix goes to the backlog.
+- New features, apart from the Ruleta board the human added before the review. Anything the rehearsal suggests beyond a fix goes to the backlog.
 
 ## Requirements
 
@@ -41,6 +42,9 @@ The site has been rehearsed on real phones and is clean of test data. The human 
 - **REQ-172:** Before the event, the project shall make `main` what's live on the public site.
 - **REQ-173:** From the feature freeze, the project shall accept only fixes.
 - **REQ-174:** From the feature freeze, the project shall switch the Supabase MCP server to `read_only=true`.
+- **REQ-219:** When a player opens Ruleta, the system shall show the results of their last 10 spins, newest first, each as red, black or white.
+- **REQ-220:** When the wheel stops after a spin, the system shall add that result to the front of the board, and drop the oldest beyond 10, without leaving the screen.
+- **REQ-221:** While a player has fewer than 10 spins, the system shall show the rest of the 10 places as empty.
 
 ## Acceptance criteria
 
@@ -97,6 +101,31 @@ Scenario: main is live
   When I open the public URL
   Then the site is built from main
 
+# REQ-219, REQ-221
+Scenario: The board shows my last results
+  Given I've spun 3 times, landing on red, then white, then black
+  When I open Ruleta
+  Then the board shows black, white and red, newest first
+  And the other 7 places are empty
+
+# REQ-221
+Scenario: A player who has never spun
+  When I open Ruleta for the first time
+  Then the board shows 10 empty places
+
+# REQ-219
+Scenario: Only my last 10
+  Given I've spun 12 times
+  When I open Ruleta
+  Then the board shows my 10 newest results
+
+# REQ-220
+Scenario: A spin joins the board when the wheel stops
+  Given the board is open
+  When I spin and the wheel lands on red
+  Then red joins the front of the board only once the wheel has stopped
+  And with 10 already there, the oldest goes
+
 # REQ-173, REQ-174
 Scenario: The feature freeze
   Given the freeze has started
@@ -107,7 +136,7 @@ Scenario: The feature freeze
 
 ## Impact on existing behaviour
 
-The wipe is the only exception to the append-only ledger (REQ-059). No requirements are superseded.
+The wipe is the only exception to the append-only ledger (REQ-059). The Ruleta board reads the player's own movements, which they can already read, and changes nothing in Supabase. No requirements are superseded.
 
 ## Open questions
 
