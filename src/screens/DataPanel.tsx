@@ -143,19 +143,21 @@ export function DataPanel({ onChange }: { onChange: () => void }) {
   return (
     <>
       <h2 className="section-title">{text.admin.data}</h2>
-      <Export />
-      {state.status !== 'ready' && <Pending state={state} />}
-      {state.status === 'ready' && state.data.locked && (
-        <p className="confirmed" data-wipe-locked="true">
-          {text.admin.locked}
-        </p>
-      )}
-      {state.status === 'ready' && !state.data.locked && (
-        <>
-          <Wipe onChange={onChange} onLocked={reload} />
-          <Lock onLocked={reload} />
-        </>
-      )}
+      <div className="admin-panels">
+        <Export />
+        {state.status !== 'ready' && <Pending state={state} />}
+        {state.status === 'ready' && state.data.locked && (
+          <p className="confirmed" data-wipe-locked="true">
+            {text.admin.locked}
+          </p>
+        )}
+        {state.status === 'ready' && !state.data.locked && (
+          <>
+            <Wipe onChange={onChange} onLocked={reload} />
+            <Lock onLocked={reload} />
+          </>
+        )}
+      </div>
     </>
   )
 }

@@ -248,7 +248,7 @@ export const text = {
     wipe: 'Esborra-ho tot',
     wiped: (users: string, events: string, movements: string) =>
       `S'han esborrat ${users}, ${events} i ${movements}.`,
-    lockTitle: "Bloqueja l'esborrat",
+    lockTitle: "Bloqueig per a l'esdeveniment",
     lockIntro: "Fes-ho quan les dades reals ja hi siguin. Després ja no es podrà esborrar res, ni des d'aquí ni des de cap altre lloc.",
     lock: "Bloqueja l'esborrat",
     lockQuestion: "Segur? No es podrà desbloquejar.",

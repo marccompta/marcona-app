@@ -41,7 +41,7 @@ describe('wipe', () => {
   })
 
   // Other hosted files run alongside and move real balances, so this checks that
-  // everyone is still there, and that the admin's own export still has history.
+  // everyone is still there, and that history is still there.
   it('REQ-166: the admin without the exact word changes nothing', async () => {
     const ids = async () => (await fetchPeople(admin)).map((person) => person.user_id)
     const before = await ids()
@@ -50,7 +50,8 @@ describe('wipe', () => {
     }
     expect(await ids()).toEqual(expect.arrayContaining(before))
     expect((await fetchPeople(player.client)).map((person) => person.username)).toContain(player.username)
-    expect((await fetchExport(admin)).ledger.length).toBeGreaterThan(0)
+    const { data: history } = await admin.from('ledger').select('id').limit(1)
+    expect(history).toHaveLength(1)
   })
 })
 

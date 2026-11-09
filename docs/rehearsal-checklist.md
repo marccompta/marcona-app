@@ -13,7 +13,7 @@ Do it on the real site, https://marccompta.github.io/marcona-app/, before the fi
   npm.cmd run demo -- fund 100
   ```
 
-  `fund` cancels every open event first, and gives each demo player 100 marcones. `npm.cmd run demo -- status` shows the open events, and the commands in `AGENTS.md` accept, decline or pick for a demo player.
+  `fund` cancels every open event first, and gives each demo player 100 marcones. `npm.cmd run demo -- status` shows each demo player's balance and pending invitations, and the commands in `AGENTS.md` accept, decline or pick for a demo player.
 - **Install:** on each phone, add the site to the home screen, and run the rehearsal from the home screen icon.
 - **Results:** tick each line on each phone. Write down anything that fails or looks wrong, with the phone and the step, and give the list in your verdict.
 
