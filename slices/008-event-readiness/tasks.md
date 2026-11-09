@@ -7,7 +7,7 @@ Work through these in order. Each task leaves the tests passing.
 - [x] **T3:** Add the wipe lock. (REQ-168)
 - [x] **T4:** Write the rehearsal checklist, covering every money flow that shipped. (REQ-169)
 - [x] **T5:** Write the one-page day-of guide, including the awake check and the freeze steps. (REQ-170, REQ-171, REQ-173)
-- [ ] **T6:** Try `read_only=true` on the Supabase MCP server, and record how to switch it. (REQ-174)
+- [x] **T6:** Try `read_only=true` on the Supabase MCP server, and record how to switch it. (REQ-174)
 - [x] **T7:** Merge everything, and confirm the public site is built from `main`. (REQ-172)
 
 ## Review fixes

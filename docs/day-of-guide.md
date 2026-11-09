@@ -34,7 +34,7 @@ The site: https://marccompta.github.io/marcona-app/
 
 1. In `.mcp.json`, add `&read_only=true` to the end of the Supabase `url`, so it ends in `?project_ref=ndkgmenntqhjojalqbdm&read_only=true`.
 2. Restart Claude Code, and run `/mcp` to check that `supabase` is connected.
-3. Claude can still read data and logs, but can't change the database or deploy a function.
+3. Claude can still read data and logs, but can't change the database or deploy a function. Tried on 9 November: the tools for migrations, deploys and branches disappear, and SQL runs as `supabase_read_only_user` in a read-only transaction, so a write is refused.
 
 A fix that needs a migration or a function deploy needs your approval for that one fix: remove `&read_only=true`, restart, let Claude apply the fix, then put it back and restart again.
 
