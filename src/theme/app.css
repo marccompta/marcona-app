@@ -1422,7 +1422,8 @@ select {
 }
 
 .board-place--empty {
-  opacity: 0.55;
+  border-color: var(--gold-line);
+  background: #f6f1dc0a;
 }
 
 /* The newest result, ringed in gold, as a casino board marks the last number. */
