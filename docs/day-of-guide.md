@@ -9,7 +9,7 @@ The site: https://marccompta.github.io/marcona-app/
 | When | What |
 |---|---|
 | Until 11 November | Review slice 008, rehearse on real phones with the [rehearsal checklist](rehearsal-checklist.md), and fix what it finds |
-| By the morning of 12 November | Steps 1 to 9 below |
+| By the morning of 12 November | Steps 1 to 10 below |
 | **12 November, 24 hours before the event** | **The feature freeze** starts. The awake check |
 | 13 November | The event |
 
@@ -17,8 +17,8 @@ The site: https://marccompta.github.io/marcona-app/
 
 1. **Rehearse** on real phones, and fix what fails. Nothing new gets built.
 2. **Make `main` live** (REQ-172): every slice is merged and pushed, and the newest run of **Deploy** in the repo's Actions tab is for `main` and succeeded. A push to a `slice/` branch also deploys, so check this again after the last merge.
-3. **Export** from **Administració**, **Dades**, if you want a record of the tests. Optional.
-4. **Wipe:** type `ESBORRA` and tap **Esborra-ho tot**. Only your admin account and the settings remain, at 0 marcones. The automated tests that need `.env.test.local` and the demo players stop here: the demo players are gone, and so are the test accounts.
+3. **Export** from **Administració**, **Dades**, if you want a record of the tests. Optional. With all the test data it's slow, so if it fails, try again a minute later.
+4. **Wipe:** type `ESBORRA` and tap **Esborra-ho tot**. Only your admin account and the settings remain, at 0 marcones. Check it: the user list in **Administració** shows only you, at 0, and **Classificació** shows its empty state until the next account exists. The automated tests that need `.env.test.local` and the demo players stop here: the demo players are gone, and so are the test accounts.
 5. **Change your admin password,** from **Administració**, on your own row. It logs you out everywhere, so log in again with the new one, in the home screen app too.
 6. **Delete `.env.test.local`** from the repo folder. It held the old password.
 7. **Create the real accounts** from **Administració**, and note each password to give out.

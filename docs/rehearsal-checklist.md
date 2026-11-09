@@ -6,100 +6,107 @@ Do it on the real site, https://marccompta.github.io/marcona-app/, before the fi
 
 ## Before you start
 
-- **Phones:** the admin's phone, plus a player's phone. Use an iPhone for at least one of them, and an Android for the other if you have one.
-- **Players:** create two rehearsal players from **Administració**, for example `assaig-1` and `assaig-2`, and log in as one of them on the second phone. The demo accounts can play from the computer, so you have enough people for La minoria:
+- **Two phones:**
+  - **Phone A** is yours, logged in as the admin.
+  - **Phone B** is a player's, logged in as `assaig`, a rehearsal player you create in step 1 below.
+  - Use an iPhone for one and an Android for the other if you have both. Write down which is which, as both count.
+- **The demo players,** `demo-nuria` and `demo-pau`, play from the computer, in a PowerShell terminal in `C:\Repos\marcona-app`. Each command below names the event and the player, and an event name is one word, so nothing needs quotes.
+- **Install:** on each phone, add the site to the home screen, and run the rehearsal from the home screen icon. On an iPhone, open the site in Safari, tap **Share**, then **Add to Home Screen**. On an Android, open it in Chrome, tap the **⋮** menu, then **Add to Home screen** or **Install app**.
+- **Results:** tick a row once it works on every phone it uses. Write down anything that fails or looks wrong, with the row number and the phone, and give the list in your verdict.
 
-  ```
-  npm.cmd run demo -- fund 100
-  ```
+1. On phone A, in **Administració**, create the user `assaig` with a password of your choice, and log in as `assaig` on phone B, from the home screen icon.
+2. On the computer, run this. It cancels every open event first, then sets **you**, `demo-nuria` and `demo-pau` to exactly 100 marcones, adding or removing what's needed, with the concept `Preparació de la revisió`:
 
-  `fund` cancels every open event first, and gives each demo player 100 marcones. `npm.cmd run demo -- status` shows each demo player's balance and pending invitations, and the commands in `AGENTS.md` accept, decline or pick for a demo player.
-- **Install:** on each phone, add the site to the home screen, and run the rehearsal from the home screen icon.
-- **Results:** tick each line on each phone. Write down anything that fails or looks wrong, with the phone and the step, and give the list in your verdict.
+   ```powershell
+   npm.cmd run demo -- fund 100
+   ```
+
+   It ends by listing those three accounts with `: 100`.
 
 ## 1. The site
 
-| # | Check | iPhone | Android |
-|---|---|---|---|
-| 1.1 | The QR code in **Administració** opens the site when scanned | ☐ | ☐ |
-| 1.2 | The home screen icon opens full screen, as **MarcOna** | ☐ | ☐ |
-| 1.3 | Logging in, closing the app and opening it again keeps you logged in | ☐ | ☐ |
-| 1.4 | A wrong password shows a Catalan message | ☐ | ☐ |
+| # | Check | Works |
+|---|---|---|
+| 1.1 | The QR code in **Administració**, scanned with phone B's camera, opens the site | ☐ |
+| 1.2 | On both phones, the home screen icon opens full screen, as **MarcOna** | ☐ |
+| 1.3 | On both phones, closing the app and opening it again keeps you logged in | ☐ |
+| 1.4 | Log out on phone B. A wrong password shows a Catalan message. Log in again as `assaig` | ☐ |
 
 ## 2. The admin's marcones
 
-| # | Check | iPhone | Android |
-|---|---|---|---|
-| 2.1 | Add 100 marcones to each rehearsal player, with a concept. The player's ranking updates by itself | ☐ | ☐ |
-| 2.2 | Remove 5 from one. The audit shows both movements, with the concept and the balance after | ☐ | ☐ |
-| 2.3 | Removing more than their balance is refused, and nothing changes | ☐ | ☐ |
+| # | Check | Works |
+|---|---|---|
+| 2.1 | Phone B has **Classificació** open. On phone A, add 100 marcones to `assaig`, with a concept. Phone B's ranking shows them by itself | ☐ |
+| 2.2 | On phone A, remove 5 from `assaig`. **Auditoria** shows both movements, with the concept and the balance after | ☐ |
+| 2.3 | Removing more than their balance is refused, and nothing changes | ☐ |
 
 ## 3. A classic event
 
-| # | Check | iPhone | Android |
-|---|---|---|---|
-| 3.1 | The player creates an event with a buy-in of 10, inviting the admin and a demo player. Their balance drops by 10 | ☐ | ☐ |
-| 3.2 | The admin accepts on their phone and pays 10. The demo player declines from the computer | ☐ | ☐ |
-| 3.3 | The creator completes it with 2 people, picking the admin. The admin gets the pot of 20 | ☐ | ☐ |
-| 3.4 | A second event with 3 people in it pays 50%, 30% and 20%, rounded down, with the remainder to 1st | ☐ | ☐ |
-| 3.5 | A third event, cancelled by its creator, refunds everyone, and pending invitations lapse | ☐ | ☐ |
-| 3.6 | The admin forces participation on an event, and every invitee pays at once | ☐ | ☐ |
-| 3.7 | Forcing someone who can't pay is refused, and names them | ☐ | ☐ |
+| # | Check | Works |
+|---|---|---|
+| 3.1 | On phone B, `assaig` creates an event named `Sopar` with a buy-in of 10, inviting you and `demo-nuria`. Their balance drops by 10 | ☐ |
+| 3.2 | On phone A, accept it, and you pay 10. Then run `npm.cmd run demo -- decline Sopar demo-nuria`. On both phones, `demo-nuria` shows as declined | ☐ |
+| 3.3 | On phone B, complete it, picking you. You get the pot of 20 | ☐ |
+| 3.4 | On phone B, create `Podi` with a buy-in of 10, inviting you, `demo-nuria` and `demo-pau`. Accept it on phone A, then run `npm.cmd run demo -- accept Podi`. Complete it on phone B, with three different places. The pot of 40 pays 20, 12 and 8, as 50%, 30% and 20% | ☐ |
+| 3.5 | On phone B, create `Cancel` with a buy-in of 10, inviting you. Without anyone answering, cancel it on phone B. `assaig` gets 10 back, and your invitation lapses | ☐ |
+| 3.6 | On phone A, create a new event named `Forcat` with a buy-in of 5, inviting `assaig` and `demo-pau`, and tick **Participació obligatòria**. Everyone pays at once. Then cancel it, which refunds everyone | ☐ |
+| 3.7 | Run `npm.cmd run demo -- status` to see `demo-pau`'s balance. On phone A, try the same with a buy-in above `demo-pau`'s balance but below yours. It's refused, and names everyone who can't pay, `demo-pau` among them | ☐ |
 
 ## 4. Ruleta
 
-| # | Check | iPhone | Android |
-|---|---|---|---|
-| 4.1 | A spin starts the wheel on the tap, and the result and balance show only when it stops | ☐ | ☐ |
-| 4.2 | A win shows the amount and confetti, and adds the bet. A loss takes it | ☐ | ☐ |
-| 4.3 | A bet over the maximum is refused | ☐ | ☐ |
-| 4.4 | The admin sets white to 1 in 2, and a white comes up within a few spins and loses. Put it back afterwards | ☐ | ☐ |
-| 4.5 | The admin closes the table, and the player sees it closed. Open it again afterwards | ☐ | ☐ |
+| # | Check | Works |
+|---|---|---|
+| 4.1 | On phone B, spin. The wheel starts on the tap, and the result and balance show only when it stops | ☐ |
+| 4.2 | Spin until you've seen both. A win shows the amount and confetti, and adds the bet. A loss takes it | ☐ |
+| 4.3 | A bet over the maximum shown is refused | ☐ |
+| 4.4 | On phone A, set white to 1 in 2. On phone B, white comes up within a few spins, and loses. Put it back to 37 on phone A | ☐ |
+| 4.5 | On phone A, close the table, and phone B sees it closed. Open it again | ☐ |
 
 ## 5. Confia o traeix
 
-| # | Check | iPhone | Android |
-|---|---|---|---|
-| 5.1 | The admin creates a duel between the two phones' players, or plays against the player. Both pay once both accept | ☐ | ☐ |
-| 5.2 | Each picks in the private panel. Before the second pick, nothing on either screen shows who has picked | ☐ | ☐ |
-| 5.3 | The second pick reveals on both phones, with the cards, the verdict and the payouts from the rules screen | ☐ | ☐ |
-| 5.4 | Play it again until you've seen both trusting, one betrayal and both betraying | ☐ | ☐ |
-| 5.5 | A decline cancels a duel and refunds whoever paid | ☐ | ☐ |
-| 5.6 | The admin cancels an unrevealed duel, and both are refunded | ☐ | ☐ |
+| # | Check | Works |
+|---|---|---|
+| 5.1 | On phone A, create a Confia o traeix duel named `Duel`, with **Hi jugo** ticked, inviting `assaig`. You pay at once. On phone B, `assaig` accepts and pays, and the duel starts | ☐ |
+| 5.2 | Each of you picks in the private panel. Before the second pick, nothing on either screen shows who has picked | ☐ |
+| 5.3 | The second pick reveals on both phones, with the cards, the verdict and the payouts the rules screen shows | ☐ |
+| 5.4 | Play more duels the same way until you've seen both trusting, one betrayal and both betraying | ☐ |
+| 5.5 | Create another duel, and decline it on phone B. It's cancelled, and you get your buy-in back | ☐ |
+| 5.6 | Create another duel, accept it on phone B, then cancel it on phone A before anyone picks. Both are refunded | ☐ |
 
 ## 6. La minoria
 
-| # | Check | iPhone | Android |
-|---|---|---|---|
-| 6.1 | The admin creates La minoria with the two phones' players and a demo player. **Comença el joc** stays dimmed until 3 have paid | ☐ | ☐ |
-| 6.2 | The creator starts it. Each person shows **Triant**, then **Ha triat**, and never what they chose | ☐ | ☐ |
-| 6.3 | A confirmed choice is final, and the panel then only shows your own | ☐ | ☐ |
-| 6.4 | The last pick reveals on every phone. The smaller side splits the pot, with the remainder to whoever locked in first | ☐ | ☐ |
-| 6.5 | A tie, or everyone picking the same, refunds everyone | ☐ | ☐ |
+| # | Check | Works |
+|---|---|---|
+| 6.1 | On phone A, create La minoria named `Minoria`, with **Hi jugo** ticked, inviting `assaig`, `demo-nuria` and `demo-pau`. On phone B, `assaig` accepts. Run `npm.cmd run demo -- accept Minoria demo-nuria`. **Comença el joc** stays dimmed until 3 are in, and lights up at 3 | ☐ |
+| 6.2 | Run `npm.cmd run demo -- accept Minoria demo-pau`, then start it on phone A. Each person shows **Triant** | ☐ |
+| 6.3 | Run `npm.cmd run demo -- pick Minoria Blanc demo-nuria`. Both phones show **Ha triat** for her, and never what she chose | ☐ |
+| 6.4 | On both phones, pick **Blanc** and confirm. A confirmed choice is final, and the panel then shows only your own | ☐ |
+| 6.5 | Run `npm.cmd run demo -- pick Minoria Negre demo-pau`. The last pick reveals on both phones: **Negre** wins, 1 against 3, and `demo-pau` takes the whole pot of 40 | ☐ |
+| 6.6 | Set up another as in rows 6.1 and 6.2, named `Minoria2`. Run `npm.cmd run demo -- pick Minoria2 Blanc demo-nuria` and `npm.cmd run demo -- pick Minoria2 Negre demo-pau`, then pick **Blanc** on phone A and **Negre** on phone B. It's a tie, 2 against 2, and everyone gets their buy-in back | ☐ |
 
 ## 7. Live updates and the room
 
-| # | Check | iPhone | Android |
-|---|---|---|---|
-| 7.1 | With the ranking open on the player's phone, an admin adjustment shows within a few seconds, with no reload | ☐ | ☐ |
-| 7.2 | Lock the phone for a minute, unlock it, and the screen catches up by itself | ☐ | ☐ |
-| 7.3 | Turn on airplane mode, then off. The screen catches up | ☐ | ☐ |
-| 7.4 | On mobile data instead of Wi-Fi, a spin and a pick still work | ☐ | ☐ |
+| # | Check | Works |
+|---|---|---|
+| 7.1 | With **Classificació** open on phone B, an adjustment on phone A shows within a few seconds, with no reload | ☐ |
+| 7.2 | Lock phone B for a minute. Make an adjustment on phone A, then unlock phone B. It catches up by itself | ☐ |
+| 7.3 | Turn airplane mode on and off on phone B. It catches up | ☐ |
+| 7.4 | On mobile data instead of Wi-Fi, a spin on phone B and an adjustment on phone A still work | ☐ |
 
 ## 8. Accounts
 
-| # | Check | iPhone | Android |
-|---|---|---|---|
-| 8.1 | The admin resets a player's password. Their phone returns to the login when it comes back to the app | ☐ | ☐ |
-| 8.2 | Removing a player in an open event is refused. Removing them afterwards sends their phone to the login, and keeps their history in the audit | ☐ | ☐ |
+| # | Check | Works |
+|---|---|---|
+| 8.1 | On phone A, reset `assaig`'s password. Phone B returns to the login when it comes back to the app. Log in with the new one | ☐ |
+| 8.2 | On phone B, create an event inviting you, and accept it on phone A. Removing `assaig` is refused while it's open. Cancel the event, then remove `assaig`. Phone B returns to the login for good, and the audit keeps their history | ☐ |
 
 ## 9. Data
 
-| # | Check | iPhone | Android |
-|---|---|---|---|
-| 9.1 | **Prepara l'exportació**, then each download link, saves a JSON file and a CSV file on the admin's phone. Note where the phone put them | ☐ | ☐ |
-| 9.2 | The CSV opens in a spreadsheet, with accents intact and one row per movement | ☐ | ☐ |
-| 9.3 | **Esborra-ho tot** stays dimmed until you type `ESBORRA` exactly. Don't press it here: the final wipe comes after the verdict | ☐ | ☐ |
+| # | Check | Works |
+|---|---|---|
+| 9.1 | On phone A, **Administració**, **Dades**: tap **Prepara l'exportació**, then each download button. The phone saves a JSON file and a CSV file. Note where it put them. If you have time, try it on the other phone too, logged in as the admin | ☐ |
+| 9.2 | The CSV opens in a spreadsheet, with accents intact and one row per movement | ☐ |
+| 9.3 | **Esborra-ho tot** stays dimmed until you type `ESBORRA` exactly. **Don't tap it**, and clear the field afterwards. The final wipe comes after your verdict | ☐ |
 
 ## Afterwards
 
