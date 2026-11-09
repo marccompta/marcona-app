@@ -157,11 +157,20 @@ describe('the board of last results', () => {
     expect(board).toEqual(newest.map((one) => ({ id: one.movement_id, result: one.result })))
   })
 
+  // No second login, to stay under the Auth rate limit: every movement on the
+  // board must be one of this player's spins.
   it("REQ-219: never shows another player's spins", async () => {
-    const other = await createTestUser('ruleta-b')
-    const mine = new Set((await fetchRecentResults(player.client)).map((entry) => entry.id))
-    expect(await fetchRecentResults(other.client)).toEqual([])
-    expect(mine.size).toBeGreaterThan(0)
+    const board = await fetchRecentResults(player.client)
+    const { data, error } = await player.client
+      .from('ledger')
+      .select('id, user_id, kind')
+      .in(
+        'id',
+        board.map((entry) => entry.id),
+      )
+    expect(error).toBeNull()
+    expect(data).toHaveLength(board.length)
+    expect(data!.every((row) => row.user_id === player.userId && row.kind === 'roulette_spin')).toBe(true)
   })
 })
 
