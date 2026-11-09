@@ -62,7 +62,7 @@ Do it on the real site, https://marccompta.github.io/marcona-app/, before the fi
 | 4.3 | A bet over the maximum shown is refused | ☐ |
 | 4.4 | On phone A, set white to 1 in 2. On phone B, white comes up within a few spins, and loses. Put it back to 37 on phone A | ☐ |
 | 4.5 | On phone A, close the table, and phone B sees it closed. Open it again | ☐ |
-| 4.6 | On phone B, once `assaig` has spun more than 10 times, **Últimes tirades** shows only the 10 newest, newest on the left with a gold ring. Leave **Ruleta** and come back: it's the same | ☐ |
+| 4.6 | On phone B, keep spinning until `assaig` has spun at least 11 times in all, counting the spins above. **Últimes tirades** shows only the 10 newest, newest on the left with a gold ring. Leave **Ruleta** and come back: it's the same | ☐ |
 
 ## 5. Confia o traeix
 
