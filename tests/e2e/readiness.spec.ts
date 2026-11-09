@@ -94,3 +94,43 @@ test.describe('wipe', () => {
     await expect(page.locator('.admin-row')).toHaveCount(2)
   })
 })
+
+test.describe('lock', () => {
+  test('REQ-168: the first tap only asks, and cancelling changes nothing', async ({ page }) => {
+    const calls = await startOnAdmin(page)
+    await page.getByRole('button', { name: "Bloqueja l'esborrat" }).click()
+    await expect(page.getByText('Segur? No es podrà desbloquejar.')).toBeVisible()
+    expect(calls.wipeLocked).toBe(false)
+    await page.getByRole('button', { name: 'No, cancel·la' }).click()
+    expect(calls.wipeLocked).toBe(false)
+    await expect(page.getByLabel('Escriu ESBORRA per confirmar')).toBeVisible()
+  })
+
+  test('REQ-168: once locked, the wipe is gone from the screen, even after a reload', async ({ page }) => {
+    const calls = await startOnAdmin(page)
+    await page.getByRole('button', { name: "Bloqueja l'esborrat" }).click()
+    await page.getByRole('button', { name: 'Sí, bloqueja' }).click()
+
+    await expect(page.locator('[data-wipe-locked]')).toHaveText("L'esborrat està bloquejat per a l'esdeveniment.")
+    expect(calls.wipeLocked).toBe(true)
+    expect(await page.getByLabel('Escriu ESBORRA per confirmar').count()).toBe(0)
+    expect(await page.getByRole('button', { name: "Bloqueja l'esborrat" }).count()).toBe(0)
+
+    await page.reload()
+    await expect(page.locator('[data-wipe-locked]')).toBeVisible()
+    expect(await page.getByLabel('Escriu ESBORRA per confirmar').count()).toBe(0)
+  })
+
+  test('REQ-168: a wipe locked from another phone is refused, and the screen catches up', async ({ page }) => {
+    const calls = await startOnAdmin(page)
+    // The panel has read the lock as open before another phone closes it.
+    await page.getByLabel('Escriu ESBORRA per confirmar').waitFor()
+    calls.wipeLocked = true
+    await page.getByLabel('Escriu ESBORRA per confirmar').fill('ESBORRA')
+    await page.getByRole('button', { name: 'Esborra-ho tot' }).click()
+
+    await expect(page.locator('[data-wipe-locked]')).toBeVisible()
+    expect(calls.wipes).toEqual(['ESBORRA'])
+    await expect(page.locator('.admin-row')).toHaveCount(2)
+  })
+})

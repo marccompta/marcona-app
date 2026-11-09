@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { fetchPeople } from '../../src/lib/data'
-import { fetchExport, wipeTestData } from '../../src/lib/readiness'
+import { fetchExport, fetchWipeState, lockWipe, wipeTestData } from '../../src/lib/readiness'
 import { adminClient, adminLogin, createTestUser, signOutAll, type TestUser } from './env'
 
 // The export, the wipe and its lock on the real project. Only refusals and reads
@@ -51,5 +51,17 @@ describe('wipe', () => {
     expect(await ids()).toEqual(expect.arrayContaining(before))
     expect((await fetchPeople(player.client)).map((person) => person.username)).toContain(player.username)
     expect((await fetchExport(admin)).ledger.length).toBeGreaterThan(0)
+  })
+})
+
+describe('lock', () => {
+  it('REQ-167, REQ-168: a player can neither lock the wipe nor read the lock', async () => {
+    await expect(lockWipe(player.client)).rejects.toMatchObject({ code: '42501' })
+    await expect(fetchWipeState(player.client)).rejects.toMatchObject({ code: '42501' })
+  })
+
+  // Locking is for good, so only the human does it, on the day. See the day-of guide.
+  it('REQ-168: the admin can read the lock', async () => {
+    expect(await fetchWipeState(admin)).toEqual({ locked: expect.any(Boolean) })
   })
 })

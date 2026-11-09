@@ -184,6 +184,8 @@ export async function fakeSupabase(
     notify: (_table: string, _record: Record<string, unknown> = {}) => {},
     /** Plays another phone: calls an event, game or roulette function as this person. */
     actAs: (_username: string, _fn: string, _body: Record<string, unknown>) => ({}) as object,
+    /** Whether the wipe is locked. Setting it plays the admin locking it on another phone. */
+    wipeLocked: false,
     /** The word sent with each call to admin_wipe(). */
     wipes: [] as (string | null)[],
     /** How many times admin_export() has been called. */
@@ -863,6 +865,7 @@ export async function fakeSupabase(
     calls.wipes.push(body.p_confirmation)
     if (caller?.role !== 'admin') return json(route, 403, { code: '42501', message: 'not_allowed' })
     const refuse = (code: string) => json(route, 400, { code: 'P0001', message: code, details: null, hint: null })
+    if (calls.wipeLocked) return refuse('wipe_locked')
     if (body.p_confirmation !== 'ESBORRA') return refuse('wipe_not_confirmed')
 
     const wiped = { users: people.length - 1, events: events.length, movements: ledger.length }
@@ -872,6 +875,17 @@ export async function fakeSupabase(
     await json(route, 200, wiped)
     for (const table of ['profiles', 'ledger', 'events', 'event_participants']) calls.notify(table)
   })
+
+  // REQ-168: the lock only ever closes.
+  for (const fn of ['wipe_state', 'lock_wipe']) {
+    await page.route(`**/rest/v1/rpc/${fn}`, async (route) => {
+      if (await preflight(route)) return
+      const caller = people.find((u) => u.username === usernameFromToken(route))
+      if (caller?.role !== 'admin') return json(route, 403, { code: '42501', message: 'not_allowed' })
+      if (fn === 'lock_wipe') calls.wipeLocked = true
+      return json(route, 200, { locked: calls.wipeLocked })
+    })
+  }
 
   await page.route('**/functions/v1/admin-users', async (route) => {
     if (await preflight(route)) return

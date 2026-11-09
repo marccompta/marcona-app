@@ -89,3 +89,19 @@ export async function wipeTestData(confirmation: string, client = supabase): Pro
   if (error) throw error
   return data as WipeResult
 }
+
+export type WipeState = { locked: boolean }
+
+// REQ-168: whether the wipe is locked. Only the admin can read it.
+export async function fetchWipeState(client = supabase): Promise<WipeState> {
+  const { data, error } = await client.rpc('wipe_state')
+  if (error) throw error
+  return data as WipeState
+}
+
+// REQ-168: locks the wipe for good. Nothing in the app opens it again.
+export async function lockWipe(client = supabase): Promise<WipeState> {
+  const { data, error } = await client.rpc('lock_wipe')
+  if (error) throw error
+  return data as WipeState
+}

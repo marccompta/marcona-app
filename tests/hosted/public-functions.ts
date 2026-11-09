@@ -39,6 +39,7 @@ export const publicFunctions = (userId: string): Record<string, Record<string, u
     p_force: false,
   },
   game_state: { p_event_id: crypto.randomUUID() },
+  lock_wipe: {},
   lock_in: { p_request_id: crypto.randomUUID(), p_event_id: crypto.randomUUID(), p_choice: 'confia' },
   my_choice: { p_event_id: crypto.randomUUID() },
   remove_profile: { p_user_id: userId },
@@ -53,6 +54,7 @@ export const publicFunctions = (userId: string): Record<string, Record<string, u
     p_settings: { both_trust: 150, betrayer: 250, betrayed: 0, both_betray: 50 },
   },
   set_roulette_settings: { p_enabled: true, p_white_one_in: 37, p_max_bet_percent: 5 },
+  wipe_state: {},
   start_game: { p_request_id: crypto.randomUUID(), p_event_id: crypto.randomUUID() },
   spin: { p_request_id: crypto.randomUUID(), p_choice: 'red', p_bet: 1 },
 })

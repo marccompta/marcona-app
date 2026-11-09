@@ -248,6 +248,13 @@ export const text = {
     wipe: 'Esborra-ho tot',
     wiped: (users: string, events: string, movements: string) =>
       `S'han esborrat ${users}, ${events} i ${movements}.`,
+    lockTitle: "Bloqueja l'esborrat",
+    lockIntro: "Fes-ho quan les dades reals ja hi siguin. Després ja no es podrà esborrar res, ni des d'aquí ni des de cap altre lloc.",
+    lock: "Bloqueja l'esborrat",
+    lockQuestion: "Segur? No es podrà desbloquejar.",
+    lockConfirm: 'Sí, bloqueja',
+    lockCancel: 'No, cancel·la',
+    locked: "L'esborrat està bloquejat per a l'esdeveniment.",
     units: {
       users: { one: 'usuari', other: 'usuaris' },
       events: { one: 'esdeveniment', other: 'esdeveniments' },
@@ -289,6 +296,7 @@ export const text = {
     betTooHigh: "L'aposta supera el màxim que pots apostar ara.",
     rouletteClosed: 'La ruleta està tancada.',
     invalidWhiteChance: 'La probabilitat de blanc ha de ser 1 entre un nombre enter de 2 a 1.000.',
+    wipeLocked: "L'esborrat està bloquejat. No es pot esborrar res.",
     wipeNotConfirmed: 'Escriu ESBORRA exactament, en majúscules, per confirmar.',
     invalidMaxBetPercent: "L'aposta màxima ha de ser un percentatge enter de l'1 al 100.",
     gameDecidesWinners: "En un joc, el resultat el decideixen les tries.",

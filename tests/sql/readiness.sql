@@ -159,10 +159,12 @@ begin
   -- REQ-168: once locked, every wipe is refused, even with the word, and nothing
   -- unlocks it.
   perform pg_temp.act_as(admin_id);
-  results := results || pg_temp.verdict('REQ-168 the admin locks the wipe',
-    public.lock_wipe() = '{"locked": true}'::jsonb
-    and public.lock_wipe() = '{"locked": true}'::jsonb
-    and public.wipe_state() = '{"locked": true}'::jsonb);
+  -- Separate statements, as wipe_state() is stable and would otherwise see the
+  -- snapshot from before the lock.
+  outcome := public.lock_wipe();
+  outcome := outcome || public.lock_wipe();
+  results := results || pg_temp.verdict('REQ-168 the admin locks the wipe, and locking again changes nothing',
+    outcome = '{"locked": true}'::jsonb and public.wipe_state() = '{"locked": true}'::jsonb);
   before := pg_temp.counts();
   results := results || pg_temp.verdict('REQ-168 a locked wipe is refused and changes nothing',
     pg_temp.refusal($s$select public.admin_wipe('ESBORRA')$s$) = 'wipe_locked'

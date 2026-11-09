@@ -1,8 +1,10 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { formatCount } from '../i18n/format'
 import { text } from '../i18n/text'
-import { exportFileNames, fetchExport, ledgerCsv, wipeTestData } from '../lib/readiness'
+import { useLoad } from '../lib/data'
+import { exportFileNames, fetchExport, fetchWipeState, ledgerCsv, lockWipe, wipeTestData } from '../lib/readiness'
 import { Field, Outcome, plainInput, useAction } from '../shell/Form'
+import { Pending } from './Movements'
 
 type Files = { json: { name: string; url: string }; csv: { name: string; url: string } }
 
@@ -57,7 +59,7 @@ function Export() {
 
 // REQ-165, REQ-166: nothing is sent until the word is typed exactly, and the
 // server checks it again.
-function Wipe({ onChange }: { onChange: () => void }) {
+function Wipe({ onChange, onLocked }: { onChange: () => void; onLocked: () => void }) {
   const [word, setWord] = useState('')
   const { busy, outcome, run } = useAction()
   const { units } = text.admin
@@ -66,7 +68,10 @@ function Wipe({ onChange }: { onChange: () => void }) {
     event.preventDefault()
     if (word !== text.admin.wipeWord) return
     const done = await run(async () => {
-      const wiped = await wipeTestData(word)
+      const wiped = await wipeTestData(word).catch((error) => {
+        if (error?.message === 'wipe_locked') onLocked()
+        throw error
+      })
       return text.admin.wiped(
         formatCount(wiped.users, units.users),
         formatCount(wiped.events, units.events),
@@ -92,12 +97,65 @@ function Wipe({ onChange }: { onChange: () => void }) {
   )
 }
 
+// REQ-168: the first tap only asks. Once locked, the wipe disappears for good.
+function Lock({ onLocked }: { onLocked: () => void }) {
+  const [asking, setAsking] = useState(false)
+  const { busy, outcome, run } = useAction()
+
+  async function confirm() {
+    const done = await run(async () => {
+      await lockWipe()
+      return text.admin.locked
+    })
+    setAsking(false)
+    if (done) onLocked()
+  }
+
+  return (
+    <div className="panel">
+      <h3>{text.admin.lockTitle}</h3>
+      <p>{text.admin.lockIntro}</p>
+      <Outcome outcome={outcome} />
+      {asking ? (
+        <>
+          <p className="ask">{text.admin.lockQuestion}</p>
+          <div className="actions">
+            <button type="button" className="secondary secondary--danger" disabled={busy} onClick={() => void confirm()}>
+              {text.admin.lockConfirm}
+            </button>
+            <button type="button" className="secondary" disabled={busy} onClick={() => setAsking(false)}>
+              {text.admin.lockCancel}
+            </button>
+          </div>
+        </>
+      ) : (
+        <button type="button" className="secondary secondary--danger" onClick={() => setAsking(true)}>
+          {text.admin.lock}
+        </button>
+      )}
+    </div>
+  )
+}
+
 export function DataPanel({ onChange }: { onChange: () => void }) {
+  const { state, reload } = useLoad(fetchWipeState)
+
   return (
     <>
       <h2 className="section-title">{text.admin.data}</h2>
       <Export />
-      <Wipe onChange={onChange} />
+      {state.status !== 'ready' && <Pending state={state} />}
+      {state.status === 'ready' && state.data.locked && (
+        <p className="confirmed" data-wipe-locked="true">
+          {text.admin.locked}
+        </p>
+      )}
+      {state.status === 'ready' && !state.data.locked && (
+        <>
+          <Wipe onChange={onChange} onLocked={reload} />
+          <Lock onLocked={reload} />
+        </>
+      )}
     </>
   )
 }
