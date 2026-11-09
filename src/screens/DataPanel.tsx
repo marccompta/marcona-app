@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useState } from 'react'
 import { formatCount } from '../i18n/format'
 import { text } from '../i18n/text'
 import { useLoad } from '../lib/data'
@@ -58,14 +58,14 @@ function Export() {
 }
 
 // REQ-165, REQ-166: nothing is sent until the word is typed exactly, and the
-// server checks it again.
+// server checks it again. It isn't a form, so a keyboard's Enter or Go key
+// never wipes: only a tap on the button does.
 function Wipe({ onChange, onLocked }: { onChange: () => void; onLocked: () => void }) {
   const [word, setWord] = useState('')
   const { busy, outcome, run } = useAction()
   const { units } = text.admin
 
-  async function submit(event: FormEvent) {
-    event.preventDefault()
+  async function wipe() {
     if (word !== text.admin.wipeWord) return
     const done = await run(async () => {
       const wiped = await wipeTestData(word).catch((error) => {
@@ -83,17 +83,22 @@ function Wipe({ onChange, onLocked }: { onChange: () => void; onLocked: () => vo
   }
 
   return (
-    <form className="panel" onSubmit={submit} noValidate>
+    <div className="panel">
       <h3>{text.admin.wipeTitle}</h3>
       <p>{text.admin.wipeIntro}</p>
       <Field label={text.admin.wipeLabel}>
         <input value={word} onChange={(event) => setWord(event.target.value)} {...plainInput} />
       </Field>
       <Outcome outcome={outcome} />
-      <button type="submit" className="secondary secondary--danger" disabled={busy || word !== text.admin.wipeWord}>
+      <button
+        type="button"
+        className="secondary secondary--danger"
+        disabled={busy || word !== text.admin.wipeWord}
+        onClick={() => void wipe()}
+      >
         {text.admin.wipe}
       </button>
-    </form>
+    </div>
   )
 }
 

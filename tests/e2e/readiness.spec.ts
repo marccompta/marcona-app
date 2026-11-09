@@ -79,6 +79,15 @@ test.describe('wipe', () => {
     await expect(page.locator('.admin-row')).toHaveCount(2)
   })
 
+  test("REQ-166: with the word typed, the keyboard's Enter key sends nothing", async ({ page }) => {
+    const calls = await startOnAdmin(page)
+    await page.getByLabel('Escriu ESBORRA per confirmar').fill('ESBORRA')
+    await page.getByLabel('Escriu ESBORRA per confirmar').press('Enter')
+    await page.waitForTimeout(500)
+    expect(calls.wipes).toEqual([])
+    expect(await page.locator('.admin-row').count()).toBe(2)
+  })
+
   test('REQ-166: a refusal from the server shows in Catalan', async ({ page }) => {
     await startOnAdmin(page)
     await page.route('**/rest/v1/rpc/admin_wipe', (route) =>
