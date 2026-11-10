@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { addToBoard, boardPlaces, pocketAt, pockets, stopRotation, type Colour } from '../../src/lib/roulette'
+import { addToBoard, boardPlaces, fitBet, pocketAt, pockets, stopRotation, type Colour } from '../../src/lib/roulette'
 
 const colours: Colour[] = ['red', 'black', 'white']
 
@@ -63,5 +63,23 @@ describe('the board of last results', () => {
     const spun = addToBoard([], { id: 7, result: 'white' })
     const read = spins('red', 'black', 'red', 'black', 'red', 'black', 'white')
     expect(boardPlaces(addToBoard(spun, ...read))).toEqual(['white', 'black', 'red', 'black', 'red', 'black', 'red', null, null, null])
+  })
+})
+
+describe('the bet after a spin', () => {
+  it('REQ-222: a bet above the new maximum drops to the maximum', () => {
+    expect(fitBet('5', 4)).toBe('4')
+    expect(fitBet('50', 1)).toBe('1')
+    expect(fitBet(' 9 ', 4)).toBe('4')
+  })
+
+  it('REQ-222: a bet at or below the maximum stays as typed', () => {
+    expect(fitBet('4', 4)).toBe('4')
+    expect(fitBet('2', 4)).toBe('2')
+    expect(fitBet('007', 9)).toBe('007')
+  })
+
+  it('REQ-222: something that is not a number is left for the server to refuse', () => {
+    for (const bet of ['', 'molt', '5.5', '-3', '1e3']) expect(fitBet(bet, 4)).toBe(bet)
   })
 })

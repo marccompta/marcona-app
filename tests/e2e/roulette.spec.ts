@@ -173,6 +173,51 @@ test.describe('a refused spin', () => {
   })
 })
 
+test.describe('the bet after a spin', () => {
+  const betBox = (page: Page) => page.getByLabel('Aposta', { exact: true })
+  const maxBet = (page: Page) => page.locator('[data-max-bet]')
+
+  test('REQ-222: after a loss lowers the maximum below the bet, the bet drops to it', async ({ page }) => {
+    const calls = await openTable(page)
+    calls.spinResults.push('black')
+    await spin(page, 'Vermell', '5')
+    await expect(maxBet(page)).toHaveText('Aposta màxima: 4 marcones')
+    // Read once: the box must already show it, with no typing.
+    expect(await betBox(page).inputValue()).toBe('4')
+
+    await page.getByRole('button', { name: 'Gira' }).click()
+    await expect(balance(page)).toHaveAttribute('data-value', '99')
+    expect(calls.eventCalls.map((call) => call.p_bet)).toEqual([5, 4])
+  })
+
+  test('REQ-222: a bet still within the new maximum stays as typed', async ({ page }) => {
+    const calls = await openTable(page)
+    calls.spinResults.push('black')
+    await spin(page, 'Vermell', '2')
+    await expect(maxBet(page)).toHaveText('Aposta màxima: 4 marcones')
+    expect(await betBox(page).inputValue()).toBe('2')
+  })
+
+  test('REQ-222: a win leaves the bet as typed', async ({ page }) => {
+    await openTable(page, 1000)
+    await spin(page, 'Vermell', '50')
+    await expect(maxBet(page)).toHaveText('Aposta màxima: 52 marcones')
+    expect(await betBox(page).inputValue()).toBe('50')
+  })
+
+  test('REQ-222, REQ-102: a refused spin leaves the bet as typed', async ({ page }) => {
+    await openTable(page)
+    const refreshed = page.waitForResponse(
+      (response) => response.url().includes('/rpc/roulette_state') && response.request().method() === 'POST',
+    )
+    await spin(page, 'Vermell', '6')
+    await expect(page.getByRole('alert')).toBeVisible()
+    await refreshed
+    await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve))))
+    expect(await betBox(page).inputValue()).toBe('6')
+  })
+})
+
 test.describe('a closed table', () => {
   test('REQ-118: the tab stays, with a Catalan message and no way to spin', async ({ page }) => {
     const me = { ...player, balance: 100 }

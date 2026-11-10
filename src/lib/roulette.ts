@@ -62,6 +62,13 @@ export async function spin(
   return data as Spin
 }
 
+// REQ-222: after a spin that lowered the maximum, a whole-number bet above it
+// drops to the maximum, so the next spin isn't refused. Anything else stays as
+// typed, for the server to refuse in Catalan.
+export function fitBet(bet: string, maxBet: number) {
+  return /^\s*\d+\s*$/.test(bet) && Number(bet) > maxBet ? String(maxBet) : bet
+}
+
 // REQ-219 to REQ-221: the board of the player's last results, newest first.
 // Each is keyed by its movement, so the first read and a spin made while it
 // was on its way merge without losing or repeating anything.
