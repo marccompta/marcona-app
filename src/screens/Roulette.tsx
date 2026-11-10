@@ -115,9 +115,10 @@ function Table({ loaded }: { loaded: RouletteTable }) {
     // Quietly, so a failed read doesn't take the table away mid-retry.
     fetchRoulette().then((table) => {
       setTable(table)
-      // REQ-222: only after a spin that went through. A failed one keeps its
-      // bet and its request, so a retry still can't spin twice.
-      if (done) setBet((bet) => fitBet(bet, table.max_bet))
+      // REQ-222: only after a spin that went through, and only while no newer
+      // attempt is waiting for a retry. A failed one keeps its bet and its
+      // request, so a retry still can't spin twice.
+      if (done && requestId.current === null) setBet((bet) => fitBet(bet, table.max_bet))
     }, () => undefined)
   }
 

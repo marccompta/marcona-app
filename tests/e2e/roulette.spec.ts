@@ -216,6 +216,32 @@ test.describe('the bet after a spin', () => {
     await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve))))
     expect(await betBox(page).inputValue()).toBe('6')
   })
+
+  test('REQ-222, REQ-102: a spin tapped before the new maximum arrives, then refused, keeps its bet', async ({ page }) => {
+    const calls = await openTable(page)
+    // Hold the read that follows the first spin, as on a slow phone.
+    let release = () => {}
+    const held = new Promise<void>((resolve) => (release = resolve))
+    let reads = 0
+    await page.route('**/rest/v1/rpc/roulette_state', async (route) => {
+      if (route.request().method() === 'POST' && ++reads === 1) await held
+      return route.fallback()
+    })
+    calls.spinResults.push('black')
+    await spin(page, 'Vermell', '5')
+    await expect(page.locator('[data-result="black"]')).toBeVisible()
+    // Tapped again at once, with the old bet: the server refuses it.
+    await page.getByRole('button', { name: 'Gira' }).click()
+    await expect(page.getByRole('alert')).toHaveText("L'aposta supera el màxim que pots apostar ara.")
+
+    const late = page.waitForResponse(
+      (response) => response.url().includes('/rpc/roulette_state') && response.request().method() === 'POST',
+    )
+    release()
+    await late
+    await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve))))
+    expect(await betBox(page).inputValue()).toBe('5')
+  })
 })
 
 test.describe('a closed table', () => {
