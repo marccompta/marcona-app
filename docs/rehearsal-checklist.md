@@ -63,6 +63,7 @@ Do it on the real site, https://marccompta.github.io/marcona-app/, before the fi
 | 4.4 | On phone A, set white to 1 in 2. On phone B, white comes up within a few spins, and loses. Put it back to 37 on phone A | ☐ |
 | 4.5 | On phone A, close the table, and phone B sees it closed. Open it again | ☐ |
 | 4.6 | On phone B, keep spinning until `assaig` has spun at least 11 times in all, counting the spins above. The board shows only the 10 newest, newest on the left with a gold ring. Leave **Ruleta** and come back: it's the same | ☐ |
+| 4.7 | On phone B, set **Aposta** to the **Aposta màxima** shown, and spin. If you lose and **Aposta màxima** goes down, **Aposta** shows the new maximum, without typing. If you win, or the maximum stays the same, **Aposta** keeps its number: spin again until a loss lowers the maximum | ☐ |
 
 ## 5. Confia o traeix
 

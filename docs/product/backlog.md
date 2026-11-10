@@ -230,6 +230,7 @@ Every requirement has a permanent ID. Raw input is kept in `docs/product/intake/
 | REQ-219 | When a player opens Ruleta, the system shall show the results of their last 10 spins, newest first, each as red, black or white. | planned | 008 | test |
 | REQ-220 | When the wheel stops after a spin, the system shall add that result to the front of the board, and drop the oldest beyond 10, without leaving the screen. | planned | 008 | test |
 | REQ-221 | While a player has fewer than 10 spins, the system shall show the rest of the 10 places as empty. | planned | 008 | test |
+| REQ-222 | When a spin goes through and lowers the player's maximum bet below the whole-number bet they typed, the system shall lower the bet to the new maximum, without the player typing. | planned | 008 | test |
 
 ## Slice roadmap
 
@@ -242,7 +243,7 @@ Every requirement has a permanent ID. Raw input is kept in `docs/product/intake/
 | 005 | Confia o traeix: the secret-choice engine, the first game, and admin game settings. | REQ-120 to REQ-149, REQ-175 to REQ-184, REQ-191, REQ-194 to REQ-196, REQ-198 to REQ-204, REQ-210 | closed |
 | 006 | Extras: live updates, QR code and home screen install, in that order. Each can be dropped on its own. | REQ-150 to REQ-154 | closed |
 | 007 | La minoria: the second game, on the same engine. | REQ-155 to REQ-163, REQ-185, REQ-192, REQ-193, REQ-197, REQ-205 | closed |
-| 008 | Event readiness: export, data wipe, rehearsal and day-of guide, plus the Ruleta board of last results, added before the review. This slice can't be cut. | REQ-164 to REQ-174, REQ-219 to REQ-221 | planned |
+| 008 | Event readiness: export, data wipe, rehearsal and day-of guide, plus the Ruleta board of last results and the bet drop, added before the verdict. This slice can't be cut. | REQ-164 to REQ-174, REQ-219 to REQ-222 | planned |
 
 ## Delivery plan
 
