@@ -1379,15 +1379,7 @@ select {
 .spin-board {
   display: grid;
   justify-items: center;
-  gap: 10px;
-  margin-top: 22px;
-}
-
-.spin-board-label {
-  color: var(--sage);
-  font-size: 13px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  margin-top: 14px;
 }
 
 .spin-board-places {

@@ -602,7 +602,8 @@ test.describe('the board of last results', () => {
 
   test('REQ-221: before any spin, the board has 10 empty places', async ({ page }) => {
     await openWith(page, [])
-    await expect(page.getByText('Últimes tirades')).toBeVisible()
+    await expect(page.getByRole('list', { name: 'Últimes tirades' })).toBeVisible()
+    expect(await page.getByText('Últimes tirades').count()).toBe(0)
     expect(await board(page)).toEqual(Array(10).fill('empty'))
   })
 
@@ -636,6 +637,18 @@ test.describe('the board of last results', () => {
     await expect(page.getByRole('alert')).toBeVisible()
 
     expect(await board(page)).toEqual(['red', ...Array(9).fill('empty')])
+  })
+
+  test('REQ-219: the whole board fits above the tabs on a 360 by 740 screen, with no scrolling', async ({ page }) => {
+    const calls = await openWith(page, [spinMovement('anna', 'red')])
+    calls.spinResults.push('black')
+    await spin(page, 'Vermell', '5')
+    await page.locator('[data-result="black"]').waitFor()
+    await page.evaluate(() => document.querySelectorAll('*').forEach((element) => (element.scrollTop = 0)))
+
+    const bottom = await page.locator('[data-board] [data-place]').last().evaluate((place) => place.getBoundingClientRect().bottom)
+    const tabs = await page.locator('nav.tabs').evaluate((nav) => nav.getBoundingClientRect().top)
+    expect(bottom).toBeLessThanOrEqual(tabs)
   })
 
   test.describe('with motion', () => {

@@ -56,13 +56,13 @@ Do it on the real site, https://marccompta.github.io/marcona-app/, before the fi
 
 | # | Check | Works |
 |---|---|---|
-| 4.0 | On phone B, open **Ruleta** before `assaig`'s first spin. Under **Últimes tirades** there are 10 empty circles | ☐ |
-| 4.1 | On phone B, spin. The wheel starts on the tap, and the result, the balance and the new circle at the left of **Últimes tirades** show only when it stops | ☐ |
+| 4.0 | On phone B, open **Ruleta** before `assaig`'s first spin. Below **Aposta màxima** there's a row of 10 empty circles, the board of last results | ☐ |
+| 4.1 | On phone B, spin. The wheel starts on the tap, and the result, the balance and the new circle at the left of the board show only when it stops | ☐ |
 | 4.2 | Spin until you've seen both. A win shows the amount and confetti, and adds the bet. A loss takes it | ☐ |
 | 4.3 | A bet over the maximum shown is refused | ☐ |
 | 4.4 | On phone A, set white to 1 in 2. On phone B, white comes up within a few spins, and loses. Put it back to 37 on phone A | ☐ |
 | 4.5 | On phone A, close the table, and phone B sees it closed. Open it again | ☐ |
-| 4.6 | On phone B, keep spinning until `assaig` has spun at least 11 times in all, counting the spins above. **Últimes tirades** shows only the 10 newest, newest on the left with a gold ring. Leave **Ruleta** and come back: it's the same | ☐ |
+| 4.6 | On phone B, keep spinning until `assaig` has spun at least 11 times in all, counting the spins above. The board shows only the 10 newest, newest on the left with a gold ring. Leave **Ruleta** and come back: it's the same | ☐ |
 
 ## 5. Confia o traeix
 

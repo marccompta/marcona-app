@@ -43,14 +43,13 @@ function Result({ spin: { result, won, bet } }: { spin: Spin }) {
 }
 
 // REQ-219 to REQ-221: the player's last 10 results, newest on the left, as a
-// casino's board shows them. Places not yet filled are faint outlines.
+// casino's board shows them. Places not yet filled are faint outlines. There's
+// no visible title, so it fits on a phone without scrolling, and screen readers
+// still announce it by name.
 function Board({ board, loaded }: { board: BoardResult[]; loaded: boolean }) {
   return (
     <div className="spin-board" data-board {...(loaded ? { 'data-loaded': '' } : {})}>
-      <span className="spin-board-label" id="spin-board-label">
-        {text.roulette.board}
-      </span>
-      <ol className="spin-board-places" aria-labelledby="spin-board-label">
+      <ol className="spin-board-places" aria-label={text.roulette.board}>
         {boardPlaces(board).map((colour, index) => (
           <li
             key={index}
