@@ -180,7 +180,7 @@ Every requirement has a permanent ID. Raw input is kept in `docs/product/intake/
 | REQ-169 | Before the feature freeze, the project shall complete a rehearsal on real phones, including iPhone and Android if available, with a checklist of every money flow. | planned | 008 | manual |
 | REQ-170 | The project shall provide a one-page day-of guide in `docs/` covering a locked-out player, a stuck game and the site going down. | active | 008 | manual |
 | REQ-171 | The day before the event, the project shall confirm that the Supabase project is awake. | planned | 008 | manual |
-| REQ-172 | Before the event, the project shall make `main` what's live on the public site. | planned | 008 | manual |
+| REQ-172 | Before the event, the project shall make `main` what's live on the public site. | active | 008 | manual |
 | REQ-173 | From the feature freeze, the project shall accept only fixes. | planned | 008 | manual |
 | REQ-174 | From the feature freeze, the project shall switch the Supabase MCP server to `read_only=true`. | planned | 008 | manual |
 | REQ-175 | When the admin creates an event, the system shall let them choose classic or any game that's turned on. | active | 005 | test |
