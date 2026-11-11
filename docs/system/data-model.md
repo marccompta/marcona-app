@@ -37,7 +37,7 @@ The append-only record of every change to a balance. One row is one movement.
 | `details` | `jsonb` | Anything else about the movement, `{}` by default. A classic payout holds its `place`, a game payout its `choice`, and a spin its `choice` and `result` |
 | `created_at` | `timestamptz` | Set on insert |
 
-Row Level Security is on. Active users can read the movements of every profile they can see. Triggers reject every update, delete and truncate, even from the owner.
+Row Level Security is on. Active users can read the movements of every profile they can see. Triggers reject every update, delete and truncate, even from the owner, except a delete while `marcona.wiping` is `on` in the same transaction, which only `admin_wipe()` sets.
 
 ## `public.events`
 
@@ -83,8 +83,8 @@ Settings the admin can change, one row per area.
 
 | Column | Type | Notes |
 |---|---|---|
-| `key` | `text` | Primary key. `roulette` is the only row so far |
-| `value` | `jsonb` | For `roulette`: `enabled`, `white_one_in` and `max_bet_percent`, starting at `true`, 37 and 5 |
+| `key` | `text` | Primary key. `roulette` or `wipe` |
+| `value` | `jsonb` | For `roulette`: `enabled`, `white_one_in` and `max_bet_percent`, starting at `true`, 37 and 5. For `wipe`: `locked`, starting at `false` |
 | `updated_at` | `timestamptz` | Set on insert and on each change |
 
 Row Level Security is on, with no policies, and no API role has access. Only public functions read and write it.
@@ -143,6 +143,9 @@ Remembers each successful money action, so a repeat returns the first result. It
 - **`public.roulette_state()`:** the roulette settings, plus the caller's balance and maximum bet.
 - **`public.set_roulette_settings(p_enabled, p_white_one_in, p_max_bet_percent)`:** only the admin can call it, and it refuses values out of range.
 - **`public.remove_profile(p_user_id)`:** marks a user as removed and declines their invitations, cancelling any duel they were invited to but not La minoria, or refuses if they've accepted an open event. Only the secret key can call it.
+- **`public.admin_export()`:** only the active admin can call it, not even the secret key. It returns `exported_at`, every user, every event with its participants, and every movement, and never reads `private.choices`.
+- **`public.admin_wipe(p_confirmation)`:** only the active admin can call it, not even the secret key. It refuses with `wipe_locked` once locked, and with `wipe_not_confirmed` unless the word is exactly `ESBORRA`. It locks the tables, sets `marcona.wiping`, deletes choices, request records, the ledger, participants and events, sets the admin's balance to 0 and deletes every other Auth user, whose profiles go with them, all in one transaction. It returns the counts of users, events and movements removed.
+- **`public.wipe_state()`, `public.lock_wipe()`:** only the active admin can call them. They read the lock, and set it for good. `private.wipe_locked()` reads it for `admin_wipe()`.
 - **`public.revoke_sessions(p_user_id)`:** deletes a user's rows in `auth.sessions`. Only the secret key can call it.
 - **`public.rls_report()`:** lists tables in the `public` and `private` schemas with Row Level Security off. Only the active admin can read it, and an empty result is the goal.
 - **`private.apply_movement(...)`:** the one place a balance changes. It locks the user's row, checks the balance, and writes the ledger row, inside the caller's transaction. It refuses removed users.

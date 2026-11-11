@@ -32,6 +32,10 @@ All notable user-facing changes are documented here. The format follows [Keep a 
 - La minoria's reveal: each side's count, then the smaller side splitting the pot, or everyone's buy-in back on a tie or a unanimous choice.
 - Forced participation for La minoria, which starts it at once.
 - La minoria's settings for the admin: on or off, the description and the two option names.
+- Data on the admin screen: export everything as JSON, and the movements as a CSV.
+- Wiping the test data, only after typing ESBORRA, and locking the wipe for good once the real data is in.
+- The Ruleta board: your last 10 results under the bet, newest on the left.
+- Ruleta lowers your bet to the new maximum when a losing spin brings the maximum below it.
 
 ### Fixed
 

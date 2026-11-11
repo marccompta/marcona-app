@@ -50,7 +50,10 @@ Domain terms, used the same way in specs, code and conversation. Specs, code and
 | Maximum bet | Aposta màxima | The most a player can bet now: a percentage of their balance, rounded down and never below 1. |
 | The table | La taula | Roulette as the admin opens or closes it. |
 | Feature freeze | | From 24 hours before the gathering, only fixes are made. |
-| Wipe | | The admin's confirmed deletion of test data before the gathering. |
+| Wipe | Esborrat | The admin's confirmed deletion of test data before the gathering: every account but the admin's, every event and every movement. Typing `ESBORRA` confirms it. |
+| Wipe lock | Bloqueig | Closes the wipe for good, once the real data is in. Only the database owner can undo it. |
+| Export | Exportació | Everything, downloaded by the admin as a JSON file, plus the movements as a CSV. A record, not a backup. |
+| Board | Últimes tirades | The row of a player's last 10 roulette results on Ruleta, newest on the left. |
 
 ## Wording to check
 
