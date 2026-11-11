@@ -85,6 +85,7 @@ Commands the human runs in PowerShell, such as those in `review.md`, say `npm.cm
 - **Retrying checks wait out anything that expires.** A glow, an animation or a celebration ends by itself, so a retrying `expect` can pass on broken code. This happened once in slice 004 and three times in slice 005. To prove something is absent or finished, read it once with `getAttribute` or `count()`. To prove it never happened, set up a `MutationObserver` before the action. Read a style mid-effect only after the fade, and time things in the browser.
 - **Prove a new test by breaking the code on purpose.** Check that the break compiled, because a break that fails at the build proves nothing. Commit first, and undo the break with an edit, never `git checkout <file>`, which also throws away uncommitted work. That happened once in slice 006.
 - **Never assume live settings in tests on the real project.** The admin changes them during reviews. Read the numbers from the duel's `settings` or from `roulette_state()`.
+- **Leave a few minutes between the browser tests and the hosted tests.** Both log in to the real project, and run back to back they hit the Auth rate limit, which fails logins that would otherwise pass. This happened twice in slice 008. If a hosted file fails on a login, wait a few minutes and rerun it alone before treating it as a real failure.
 
 ## Where things go
 
