@@ -184,6 +184,12 @@ export async function fakeSupabase(
     notify: (_table: string, _record: Record<string, unknown> = {}) => {},
     /** Plays another phone: calls an event, game or roulette function as this person. */
     actAs: (_username: string, _fn: string, _body: Record<string, unknown>) => ({}) as object,
+    /** Whether the wipe is locked. Setting it plays the admin locking it on another phone. */
+    wipeLocked: false,
+    /** The word sent with each call to admin_wipe(). */
+    wipes: [] as (string | null)[],
+    /** How many times admin_export() has been called. */
+    exports: 0,
     /** Plays the admin on another phone: adds or removes marcones. */
     adjustAs: (_username: string, _delta: number, _concept = 'Des d’un altre mòbil') => {},
   }
@@ -289,10 +295,11 @@ export async function fakeSupabase(
     if (await preflight(route)) return
     const url = new URL(route.request().url())
     const id = url.searchParams.get('user_id')?.replace('eq.', '')
+    const kind = url.searchParams.get('kind')?.replace('eq.', '')
     const before = Number(url.searchParams.get('id')?.replace('lt.', '') ?? Infinity)
     const limit = Number(url.searchParams.get('limit') ?? 1000)
     const rows = ledger
-      .filter((movement) => (!id || movement.username === id) && movement.id < before)
+      .filter((movement) => (!id || movement.username === id) && (!kind || movement.kind === kind) && movement.id < before)
       .sort((a, b) => b.id - a.id)
       .slice(0, limit)
       .map(({ username, ...movement }) => ({
@@ -830,6 +837,56 @@ export async function fakeSupabase(
     ledger.push(movement)
     return { movement_id: movement.id, choice: body.p_choice, result, won, bet, delta, balance_after: caller.balance }
   })
+
+  // REQ-164: the fake's own data, by username, in the shape admin_export() returns.
+  await page.route('**/rest/v1/rpc/admin_export', async (route) => {
+    if (await preflight(route)) return
+    const caller = people.find((u) => u.username === usernameFromToken(route))
+    calls.exports += 1
+    if (caller?.role !== 'admin') return json(route, 403, { code: '42501', message: 'not_allowed' })
+    return json(route, 200, {
+      exported_at: new Date().toISOString(),
+      users: people.map(({ password: _password, ...user }) => ({ user_id: user.username, ...user })),
+      events: events.map((event) => ({ ...event, participants: [] })),
+      ledger: ledger.map(({ username, event, actor, ...movement }) => ({
+        ...movement,
+        user_id: username,
+        event_id: event?.id ?? null,
+        actor_id: actor?.username ?? null,
+        details: movement.details ?? {},
+      })),
+    })
+  })
+
+  // REQ-165 to REQ-167: keeps only the admin, at 0, and every setting.
+  await page.route('**/rest/v1/rpc/admin_wipe', async (route) => {
+    if (await preflight(route)) return
+    const body = route.request().postDataJSON()
+    const caller = people.find((u) => u.username === usernameFromToken(route))
+    calls.wipes.push(body.p_confirmation)
+    if (caller?.role !== 'admin') return json(route, 403, { code: '42501', message: 'not_allowed' })
+    const refuse = (code: string) => json(route, 400, { code: 'P0001', message: code, details: null, hint: null })
+    if (calls.wipeLocked) return refuse('wipe_locked')
+    if (body.p_confirmation !== 'ESBORRA') return refuse('wipe_not_confirmed')
+
+    const wiped = { users: people.length - 1, events: events.length, movements: ledger.length }
+    people.splice(0, people.length, { ...caller, balance: 0 })
+    events.splice(0)
+    ledger.splice(0)
+    await json(route, 200, wiped)
+    for (const table of ['profiles', 'ledger', 'events', 'event_participants']) calls.notify(table)
+  })
+
+  // REQ-168: the lock only ever closes.
+  for (const fn of ['wipe_state', 'lock_wipe']) {
+    await page.route(`**/rest/v1/rpc/${fn}`, async (route) => {
+      if (await preflight(route)) return
+      const caller = people.find((u) => u.username === usernameFromToken(route))
+      if (caller?.role !== 'admin') return json(route, 403, { code: '42501', message: 'not_allowed' })
+      if (fn === 'lock_wipe') calls.wipeLocked = true
+      return json(route, 200, { locked: calls.wipeLocked })
+    })
+  }
 
   await page.route('**/functions/v1/admin-users', async (route) => {
     if (await preflight(route)) return

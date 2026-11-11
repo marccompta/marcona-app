@@ -173,6 +173,77 @@ test.describe('a refused spin', () => {
   })
 })
 
+test.describe('the bet after a spin', () => {
+  const betBox = (page: Page) => page.getByLabel('Aposta', { exact: true })
+  const maxBet = (page: Page) => page.locator('[data-max-bet]')
+
+  test('REQ-222: after a loss lowers the maximum below the bet, the bet drops to it', async ({ page }) => {
+    const calls = await openTable(page)
+    calls.spinResults.push('black')
+    await spin(page, 'Vermell', '5')
+    await expect(maxBet(page)).toHaveText('Aposta màxima: 4 marcones')
+    // Read once: the box must already show it, with no typing.
+    expect(await betBox(page).inputValue()).toBe('4')
+
+    await page.getByRole('button', { name: 'Gira' }).click()
+    await expect(balance(page)).toHaveAttribute('data-value', '99')
+    expect(calls.eventCalls.map((call) => call.p_bet)).toEqual([5, 4])
+  })
+
+  test('REQ-222: a bet still within the new maximum stays as typed', async ({ page }) => {
+    const calls = await openTable(page)
+    calls.spinResults.push('black')
+    await spin(page, 'Vermell', '2')
+    await expect(maxBet(page)).toHaveText('Aposta màxima: 4 marcones')
+    expect(await betBox(page).inputValue()).toBe('2')
+  })
+
+  test('REQ-222: a win leaves the bet as typed', async ({ page }) => {
+    await openTable(page, 1000)
+    await spin(page, 'Vermell', '50')
+    await expect(maxBet(page)).toHaveText('Aposta màxima: 52 marcones')
+    expect(await betBox(page).inputValue()).toBe('50')
+  })
+
+  test('REQ-222, REQ-102: a refused spin leaves the bet as typed', async ({ page }) => {
+    await openTable(page)
+    const refreshed = page.waitForResponse(
+      (response) => response.url().includes('/rpc/roulette_state') && response.request().method() === 'POST',
+    )
+    await spin(page, 'Vermell', '6')
+    await expect(page.getByRole('alert')).toBeVisible()
+    await refreshed
+    await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve))))
+    expect(await betBox(page).inputValue()).toBe('6')
+  })
+
+  test('REQ-222, REQ-102: a spin tapped before the new maximum arrives, then refused, keeps its bet', async ({ page }) => {
+    const calls = await openTable(page)
+    // Hold the read that follows the first spin, as on a slow phone.
+    let release = () => {}
+    const held = new Promise<void>((resolve) => (release = resolve))
+    let reads = 0
+    await page.route('**/rest/v1/rpc/roulette_state', async (route) => {
+      if (route.request().method() === 'POST' && ++reads === 1) await held
+      return route.fallback()
+    })
+    calls.spinResults.push('black')
+    await spin(page, 'Vermell', '5')
+    await expect(page.locator('[data-result="black"]')).toBeVisible()
+    // Tapped again at once, with the old bet: the server refuses it.
+    await page.getByRole('button', { name: 'Gira' }).click()
+    await expect(page.getByRole('alert')).toHaveText("L'aposta supera el màxim que pots apostar ara.")
+
+    const late = page.waitForResponse(
+      (response) => response.url().includes('/rpc/roulette_state') && response.request().method() === 'POST',
+    )
+    release()
+    await late
+    await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve))))
+    expect(await betBox(page).inputValue()).toBe('5')
+  })
+})
+
 test.describe('a closed table', () => {
   test('REQ-118: the tab stays, with a Catalan message and no way to spin', async ({ page }) => {
     const me = { ...player, balance: 100 }
@@ -573,4 +644,107 @@ test('REQ-023, REQ-024: a long result and a big balance still fit at 360px', asy
   await page.locator('[data-result]').first().waitFor()
 
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+})
+
+// REQ-219 to REQ-221: the board of the player's last results, under the bet.
+test.describe('the board of last results', () => {
+  const spinMovement = (username: string, result: 'red' | 'black' | 'white') => ({
+    username,
+    delta: result === 'red' ? 1 : -1,
+    balance_after: 100,
+    concept: null,
+    kind: 'roulette_spin',
+    details: { choice: 'red', result },
+  })
+
+  const openWith = async (page: Page, movements: Parameters<typeof fakeSupabase>[2]) => {
+    const me = { ...player, balance: 100 }
+    const calls = await fakeSupabase(page, [me, { ...admin }], movements)
+    await page.goto('')
+    await logIn(page, me)
+    await page.getByRole('link', { name: 'Ruleta' }).click()
+    await page.locator('[data-board][data-loaded]').waitFor()
+    return calls
+  }
+
+  // Read once, with no retrying, as the board must already be right.
+  const board = (page: Page) =>
+    page.locator('[data-board] [data-place]').evaluateAll((places) => places.map((place) => (place as HTMLElement).dataset.place))
+
+  test('REQ-221: before any spin, the board has 10 empty places', async ({ page }) => {
+    await openWith(page, [])
+    await expect(page.getByRole('list', { name: 'Últimes tirades' })).toBeVisible()
+    expect(await page.getByText('Últimes tirades').count()).toBe(0)
+    expect(await board(page)).toEqual(Array(10).fill('empty'))
+  })
+
+  test('REQ-219, REQ-221: it shows my results, newest first, then empty places', async ({ page }) => {
+    await openWith(page, [spinMovement('anna', 'red'), spinMovement('anna', 'white'), spinMovement('anna', 'black')])
+    expect(await board(page)).toEqual(['black', 'white', 'red', ...Array(7).fill('empty')])
+  })
+
+  test("REQ-219: only my 10 newest spins, and nobody else's, nor other movements", async ({ page }) => {
+    const mine = Array.from({ length: 12 }, (_, index) => spinMovement('anna', index < 2 ? 'white' : index % 2 ? 'black' : 'red'))
+    await openWith(page, [
+      ...mine,
+      spinMovement('marc', 'white'),
+      { username: 'anna', delta: 5, balance_after: 105, concept: 'Saldo', kind: 'admin_adjustment' },
+    ])
+    expect(await board(page)).toEqual(['black', 'red', 'black', 'red', 'black', 'red', 'black', 'red', 'black', 'red'])
+  })
+
+  test('REQ-220: a spin joins the front, and the oldest of 10 goes', async ({ page }) => {
+    const calls = await openWith(page, Array.from({ length: 10 }, () => spinMovement('anna', 'black')))
+    calls.spinResults.push('white')
+    await spin(page, 'Vermell', '5')
+    await page.locator('[data-result="white"]').waitFor()
+
+    expect(await board(page)).toEqual(['white', ...Array(9).fill('black')])
+  })
+
+  test('REQ-220: a refused spin adds nothing', async ({ page }) => {
+    await openWith(page, [spinMovement('anna', 'red')])
+    await spin(page, 'Vermell', '99')
+    await expect(page.getByRole('alert')).toBeVisible()
+
+    expect(await board(page)).toEqual(['red', ...Array(9).fill('empty')])
+  })
+
+  test('REQ-219: the whole board fits above the tabs on a 360 by 740 screen, with no scrolling', async ({ page }) => {
+    const calls = await openWith(page, [spinMovement('anna', 'red')])
+    calls.spinResults.push('black')
+    await spin(page, 'Vermell', '5')
+    await page.locator('[data-result="black"]').waitFor()
+    await page.evaluate(() => document.querySelectorAll('*').forEach((element) => (element.scrollTop = 0)))
+
+    const bottom = await page.locator('[data-board] [data-place]').last().evaluate((place) => place.getBoundingClientRect().bottom)
+    const tabs = await page.locator('nav.tabs').evaluate((nav) => nav.getBoundingClientRect().top)
+    expect(bottom).toBeLessThanOrEqual(tabs)
+  })
+
+  test.describe('with motion', () => {
+    test.use({ reducedMotion: 'no-preference' })
+
+    test('REQ-220: the result joins the board only once the wheel has stopped', async ({ page }) => {
+      const calls = await openWith(page, [])
+      calls.spinResults.push('red')
+      // Every change to the board, with the wheel's state at that moment.
+      await page.evaluate(() => {
+        const seen: { first: string | undefined; wheel: string | undefined }[] = []
+        ;(window as unknown as { seen: typeof seen }).seen = seen
+        new MutationObserver(() => {
+          const first = document.querySelector<HTMLElement>('[data-board] [data-place]')?.dataset.place
+          const wheel = document.querySelector<HTMLElement>('[data-wheel]')?.dataset.wheel
+          seen.push({ first, wheel })
+        }).observe(document.body, { attributes: true, subtree: true, attributeFilter: ['data-place', 'data-wheel'] })
+      })
+      await spin(page, 'Vermell', '5')
+      await expect(page.locator('[data-result="red"]')).toBeVisible({ timeout: 10000 })
+
+      const seen = await page.evaluate(() => (window as unknown as { seen: { first: string; wheel: string }[] }).seen)
+      expect(seen.some((moment) => moment.wheel === 'spinning')).toBe(true)
+      expect(seen.filter((moment) => moment.first === 'red').every((moment) => moment.wheel === 'landed')).toBe(true)
+      expect(await board(page)).toEqual(['red', ...Array(9).fill('empty')])
+    })
+  })
 })

@@ -6,6 +6,16 @@
 
 The wipe runs in an `admin-wipe` Edge Function, because deleting Auth users needs the secret key. It checks the admin, the confirmation word and the lock, then calls a private function that deletes the data, and finally deletes the Auth users. The append-only trigger allows deletes only while that function runs, using a transaction-local flag that clients can't set.
 
+### The Ruleta board
+
+Added before the review. When Ruleta opens, it reads the player's own last 10 `roulette_spin` movements, newest first, and takes each result from the movement's `details`. That's a normal read of the ledger, which Row Level Security already allows, so nothing in Supabase changes, and the board is the same on any phone. After a spin, the app adds the result that `spin()` returned to the front of the board once the wheel stops, as it already does for the result and the balance, so the board never gives a result away early. Ruleta has no live updates, so a spin made on another phone at the same moment shows the next time Ruleta opens.
+
+The board sits under the bet, so the controls never move. It's a row of 10 places, newest on the left, with the newest marked. An empty place is a faint outline.
+
+### The bet after a spin
+
+Added before the verdict, for REQ-222. After every spin, Ruleta already reads `roulette_state()` again for the new maximum. When the spin went through and the bet typed is a whole number above that maximum, the bet field is set to the maximum. Anything else stays as typed: a lower bet, a win, and text the server will refuse anyway. After a failed spin nothing changes, because the app keeps that attempt's request ID for a retry, and a retry must send the same bet so a lost reply can't spin twice (REQ-102). The rule is `fitBet()` in `src/lib/roulette.ts`.
+
 ## Affected components
 
 | Component | Change |
@@ -15,6 +25,7 @@ The wipe runs in an `admin-wipe` Edge Function, because deleting Auth users need
 | `src/` | Export, wipe and lock on the admin screen |
 | `docs/rehearsal-checklist.md`, `docs/day-of-guide.md` | New |
 | `.mcp.json` | Trial of `read_only=true` |
+| `src/screens/Roulette.tsx`, `src/lib/roulette.ts` | The board of the last 10 results, and the bet drop after a spin |
 
 ## Data changes
 

@@ -74,6 +74,7 @@ Slice: 001
 | Roulette odds and white, after any migration touching them | Run `tests/sql/roulette.sql` through the Supabase MCP server's `execute_sql` |
 | Game rules and duel payouts, after any migration touching them | Run `tests/sql/games.sql` through the Supabase MCP server's `execute_sql` |
 | La minoria's rules, payouts and labels, after any migration touching games | Run `tests/sql/minoria.sql` through the Supabase MCP server's `execute_sql` |
+| The export, the wipe and its lock, after any migration touching them or adding a table with user data | Run `tests/sql/readiness.sql` through the Supabase MCP server's `execute_sql`. It wipes inside a transaction and always rolls back. Once the real wipe is locked, its first check, that the wipe starts unlocked, fails as expected |
 
 Write long scripts as files, then run them. Long heredocs break in Git Bash here, especially with apostrophes.
 

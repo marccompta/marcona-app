@@ -172,13 +172,13 @@ Every requirement has a permanent ID. Raw input is kept in `docs/product/intake/
 | REQ-161 | When both options are chosen and one side is smaller, the system shall split the whole pot equally among that side, rounded down. | active | 007 | test |
 | REQ-162 | When a La minoria split leaves a remainder, the system shall give it to whoever on the smaller side locked in first. | active | 007 | test |
 | REQ-163 | If the sides tie, or everyone picks the same option, then the system shall refund everyone. | active | 007 | test |
-| REQ-164 | When the admin requests an export, the system shall download all users, events and ledger movements. | planned | 008 | test |
-| REQ-165 | When the admin confirms a wipe, the system shall delete the test data. This is the only operation allowed to delete ledger rows. | planned | 008 | test |
-| REQ-166 | If a wipe isn't explicitly confirmed, then the system shall change nothing. | planned | 008 | test |
-| REQ-167 | If anyone other than the admin requests an export or a wipe, then the system shall reject it. | planned | 008 | test |
-| REQ-168 | When the admin locks the wipe for the live event, the system shall reject every later wipe. | planned | 008 | test |
+| REQ-164 | When the admin requests an export, the system shall download all users, events and ledger movements. | active | 008 | test |
+| REQ-165 | When the admin confirms a wipe, the system shall delete the test data. This is the only operation allowed to delete ledger rows. | active | 008 | test |
+| REQ-166 | If a wipe isn't explicitly confirmed, then the system shall change nothing. | active | 008 | test |
+| REQ-167 | If anyone other than the admin requests an export or a wipe, then the system shall reject it. | active | 008 | test |
+| REQ-168 | When the admin locks the wipe for the live event, the system shall reject every later wipe. | active | 008 | test |
 | REQ-169 | Before the feature freeze, the project shall complete a rehearsal on real phones, including iPhone and Android if available, with a checklist of every money flow. | planned | 008 | manual |
-| REQ-170 | The project shall provide a one-page day-of guide in `docs/` covering a locked-out player, a stuck game and the site going down. | planned | 008 | manual |
+| REQ-170 | The project shall provide a one-page day-of guide in `docs/` covering a locked-out player, a stuck game and the site going down. | active | 008 | manual |
 | REQ-171 | The day before the event, the project shall confirm that the Supabase project is awake. | planned | 008 | manual |
 | REQ-172 | Before the event, the project shall make `main` what's live on the public site. | planned | 008 | manual |
 | REQ-173 | From the feature freeze, the project shall accept only fixes. | planned | 008 | manual |
@@ -225,6 +225,12 @@ Every requirement has a permanent ID. Raw input is kept in `docs/product/intake/
 | REQ-214 | The project's real-project smoke tests shall not depend on how much test data has built up. Seen in slice 007: in 5 full runs, with or without slice 007's new test, the Realtime smoke test's audit check failed every time in Chromium, and the roulette one's 3 times. Both passed when run alone. Test accounts see every test movement, about 8,500 by then, read 1,000 at a time. | superseded by REQ-216 | - | test |
 | REQ-215 | While a duel's taps are slow to save, the system shall send each choice the queue keeps only once, in every browser engine. Seen in slice 007: the slow-connection test in `tests/e2e/games.spec.ts` fails in about half of WebKit runs, on `main` as well, with the first tap sent twice. It may be the lost-reply resend, which is safe, as it reuses the request ID. | proposed | - | test |
 | REQ-216 | While other phones keep changing what a live screen shows, the system shall still show its newest data, and everyone in it, however much data has built up. Found through REQ-214: each live read threw away the one under way, every audit row re-rendered with each read, and people past the first 1,000 were never read. | active | - | test |
+| REQ-217 | The project's test that a duel's resting screen looks the same before and after a pick shall wait until the event has loaded, in every browser engine. Seen in slice 008: in WebKit, `tests/e2e/games.spec.ts` reads the screen while it still says **Un moment…**, and fails in 3 of 3 runs, on `main` as well. | proposed | - | test |
+| REQ-218 | When the admin requests an export, the system shall finish it within the database's 8-second limit however much data there is. Seen in slice 008: with about 12,000 test movements, the export took 2 seconds alone, but timed out once while the hosted tests were loading the project. After the wipe the data is far smaller. | proposed | - | test |
+| REQ-219 | When a player opens Ruleta, the system shall show the results of their last 10 spins, newest first, each as red, black or white. | active | 008 | test |
+| REQ-220 | When the wheel stops after a spin, the system shall add that result to the front of the board, and drop the oldest beyond 10, without leaving the screen. | active | 008 | test |
+| REQ-221 | While a player has fewer than 10 spins, the system shall show the rest of the 10 places as empty. | active | 008 | test |
+| REQ-222 | When a spin goes through and lowers the player's maximum bet below the whole-number bet they typed, the system shall lower the bet to the new maximum, without the player typing. | active | 008 | test |
 
 ## Slice roadmap
 
@@ -237,7 +243,7 @@ Every requirement has a permanent ID. Raw input is kept in `docs/product/intake/
 | 005 | Confia o traeix: the secret-choice engine, the first game, and admin game settings. | REQ-120 to REQ-149, REQ-175 to REQ-184, REQ-191, REQ-194 to REQ-196, REQ-198 to REQ-204, REQ-210 | closed |
 | 006 | Extras: live updates, QR code and home screen install, in that order. Each can be dropped on its own. | REQ-150 to REQ-154 | closed |
 | 007 | La minoria: the second game, on the same engine. | REQ-155 to REQ-163, REQ-185, REQ-192, REQ-193, REQ-197, REQ-205 | closed |
-| 008 | Event readiness: export, data wipe, rehearsal and day-of guide. This slice can't be cut. | REQ-164 to REQ-174 | planned |
+| 008 | Event readiness: export, data wipe, rehearsal and day-of guide, plus the Ruleta board of last results and the bet drop, added before the verdict. This slice can't be cut. | REQ-164 to REQ-174, REQ-219 to REQ-222 | closed |
 
 ## Delivery plan
 

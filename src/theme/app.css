@@ -1375,6 +1375,54 @@ select {
   text-align: center;
 }
 
+/* REQ-219 to REQ-221: like the board beside a casino's wheel, newest on the left. */
+.spin-board {
+  display: grid;
+  justify-items: center;
+  margin-top: 14px;
+}
+
+.spin-board-places {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 6px;
+  width: min(100%, 300px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.board-place {
+  aspect-ratio: 1;
+  border: 1px solid var(--gold-hairline);
+  border-radius: 50%;
+}
+
+.board-place--red {
+  border-color: var(--gold);
+  background: var(--pocket-red);
+}
+
+.board-place--black {
+  border-color: var(--gold);
+  background: var(--pocket-black);
+}
+
+.board-place--white {
+  border-color: var(--gold);
+  background: var(--ivory);
+}
+
+.board-place--empty {
+  border-color: var(--gold-line);
+  background: #f6f1dc0a;
+}
+
+/* The newest result, ringed in gold, as a casino board marks the last number. */
+.board-place:first-child:not(.board-place--empty) {
+  box-shadow: 0 0 0 2px var(--felt-950), 0 0 0 3.5px var(--gold-light);
+}
+
 .colours {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1486,6 +1534,14 @@ select {
   display: block;
   width: 100%;
   height: auto;
+}
+
+.download {
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
 }
 
 .qr-link {

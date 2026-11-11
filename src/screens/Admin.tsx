@@ -8,6 +8,7 @@ import { fetchRoulette, saveRouletteSettings, type RouletteSettings } from '../l
 import { supabase } from '../lib/supabase'
 import { ChipStack } from '../shell/Balance'
 import { Field, Outcome, plainInput, useAction } from '../shell/Form'
+import { DataPanel } from './DataPanel'
 import { GameSettingsPanel } from './GameSettings'
 import { Pending } from './Movements'
 
@@ -266,6 +267,7 @@ export function Admin() {
             ))}
         </ul>
       )}
+      <DataPanel onChange={reload} />
     </section>
   )
 }

@@ -51,6 +51,12 @@ What the system does **now**. Each slice updates this file when it closes. Requi
 - Sending the same spin twice can't apply it twice, and a retry after a lost reply gets the first result.
 - The admin can set white from 1 in 2 to 1 in 1,000, set the maximum bet from 1% to 100%, and open or close the table. Changes apply to later spins.
 
+## Data
+
+- The admin can export everything: every user, event with its participants, and movement as one JSON file, and the movements as a CSV that opens in a spreadsheet with accents intact. Secret choices are never in it. Nobody else can export.
+- The admin can wipe the test data: every account but theirs, every event, choice, request record and movement, leaving them at 0 marcones with the settings kept. It needs `ESBORRA` typed exactly, which the server checks again, and it happens all at once or not at all. It's the only thing that can delete a movement. Nobody else can wipe.
+- The admin can lock the wipe for good, after a second confirmation. Every later wipe is refused, and only the database owner can undo the lock.
+
 ## Confia o traeix
 
 - Only the admin can create a game, and only while it's turned on. Nobody else is offered one, and the server refuses them.
@@ -77,12 +83,12 @@ What the system does **now**. Each slice updates this file when it closes. Requi
 
 - **Classificació:** active users by balance, then alphabetically, with medals on the top three and a "tu" pill. A styled empty state shows until a second active user exists. Tapping someone opens their balance and every movement on it.
 - **Auditoria:** every movement, newest first, with who, the amount, the concept or event, the balance after and the time. A movement on an event opens it. A filter shows one person, including removed people.
-- **Administració:** create users, adjust marcones, reset passwords, remove users, and change the roulette and game settings: a duel's numbers, with a worked example for a buy-in of 10 that follows them, and La minoria's two option names. Only the admin has this tab.
+- **Administració:** create users, adjust marcones, reset passwords, remove users, and change the roulette and game settings: a duel's numbers, with a worked example for a buy-in of 10 that follows them, and La minoria's two option names. At the bottom, **Dades** has the export, with a button that prepares it and two download links, the wipe, whose button stays dimmed until `ESBORRA` is typed and which only a tap sets off, and the lock. Once locked, only a note that it's locked remains. Only the admin has this tab.
 - **Esdeveniments:** my invitations, open events and past events, with each one's buy-in, pot and status pill. **Nou esdeveniment** opens the form, where the admin also chooses the type and whether to play. A game shows its name in the list instead of a pot. An event shows its buy-in, pot, payout rule, results and participants, with a crown on the creator, and the actions open to this person.
 - **A duel:** the same resting screen for everyone in it, whether or not they've picked: the rules, each payoff for this buy-in, the people, and **Tria en privat**, which opens the private panel. It checks for changes every 3 seconds until the reveal. The panel covers the screen, with two cards side by side, ivory Confia and red Traeix, and looks the same whether or not you've picked. A saved tap lights the card's outer border for 0.7 seconds, and nothing else changes. If the connection fails after one retry, it says so.
 - **The reveal:** the screen brings two face-down cards into view, which turn one at a time, yours first, then the verdict and every choice and payout. A winner also gets the amount and confetti from roulette. The tap that completes the pair glows first. It plays once on each device. With reduced motion, the result shows at once and still.
 - **La minoria:** the rules, ending with the two option names, and the people. Before the start, the creator sees how many are in and a **Comença el joc** button, which stays dimmed until there are 3. Once started, each person shows **Triant** or **Ha triat**, and **Tria en privat** opens the private panel: two cards, ivory and black, and a button to confirm the one picked. After confirming, the panel only says which you chose. The reveal shows each side's count, the verdict, every choice and payout, and who got the remainder.
-- **Ruleta:** the balance, the wheel, red and black, the bet and the current maximum. The wheel starts on the tap and lands on the server's result, and only then do the result and balance show. On a win, the marcones won show large over the wheel for about a second, with confetti across the screen. With reduced motion, the wheel jumps to the result, the amount shows still, and there's no confetti. A closed table shows a message instead, and the tab stays.
+- **Ruleta:** the balance, the wheel, red and black, the bet and the current maximum. The wheel starts on the tap and lands on the server's result, and only then do the result and balance show. On a win, the marcones won show large over the wheel for about a second, with confetti across the screen. With reduced motion, the wheel jumps to the result, the amount shows still, and there's no confetti. Under the bet, the board shows the player's own last 10 results, read from their spins so it's the same on any phone, newest on the left with a gold ring, and faint outlines for places not yet filled. It has no visible title, and fits a 360 by 740 screen without scrolling. A new result joins it when the wheel stops. When a spin that went through lowers the maximum below the whole-number bet typed, the bet becomes the new maximum. After a refused or dropped spin, the bet stays as typed for the retry. A closed table shows a message instead, and the tab stays.
 - Balances show as chip stacks, with numbers that count up. With reduced motion they appear at once.
 - **Live updates:** the ranking, a person's page, the audit, the events list and an event's screen change by themselves when someone else changes something, with no reload. A phone catches up when it wakes, comes back online or reconnects, and keeps up while changes keep coming, however many movements and people there are. Ruleta and Administració update when opened or used.
 - **Codi QR per entrar:** at the top of **Administració**, for the admin only. A black-on-white code for the site's address, which friends scan to open it.
@@ -90,7 +96,7 @@ What the system does **now**. Each slice updates this file when it closes. Requi
 ## Security
 
 - Row Level Security is on for every table, and nothing is readable without a login.
-- The browser can't write to any table, and nobody can change a ledger row.
+- The browser can't write to any table, and nobody can change a ledger row. The admin's wipe is the only way to delete one.
 - Secret choices are in a schema the API doesn't expose, and in no Realtime publication. Realtime publishes only `profiles`, `ledger`, `events` and `event_participants`, applies Row Level Security to each message, and a pick changes none of them.
 - Every policy and public function checks that the user is active, so a removal takes effect even on an unexpired token.
 - There can only be one admin.
